@@ -13,7 +13,7 @@ import plag_submissions_checker.submission_checker_utils as scu
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--min_source_cnt", "-m", default=5, type=int)
+    parser.add_argument("--archive", "-a", required=True)
     parser.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
@@ -36,7 +36,7 @@ def main():
                     scu.CPYChecker(opts),
                     scu.CctChecker(opts),
                     scu.SspChecker(opts)]
-        metrics = [scu.SrcDocsCountMetric(args.min_source_cnt, opts.min_sent_per_src),
+        metrics = [scu.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
                 scu.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size)]
         for mod_type in scu.ModType.get_all_mods_type():
             metrics.append(scu.ModTypeRatioMetric(mod_type,
