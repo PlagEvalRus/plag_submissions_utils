@@ -182,8 +182,9 @@ class Chunk(object):
         return self._original_sents.get_text()
 
     def __str__(self):
-        chunk_str = "%d: %s, %s" %(
+        chunk_str = "%d (%s): %s, %s" %(
             self._chunk_num,
+            mod_type_to_str(self._mod_type),
             u" ".join(self._modified_sents.get_sents()).encode("utf8"),
             u"|".join(self._modified_sents.get_all_tokens()).encode("utf8"))
         return chunk_str
@@ -264,7 +265,7 @@ class IChecher(object):
 
 
 class BaseChunkSimChecker(IChecher):
-    def __init__(self, opts, low_level_thresh = 5):
+    def __init__(self, opts, low_level_thresh = 10):
         self._opts = opts
         self._diff_perc_dict = opts.diff_perc
         self._low_level_thresh = low_level_thresh
@@ -290,6 +291,8 @@ class BaseChunkSimChecker(IChecher):
             if etal_diff_perc_tuple[0] <= \
                diff_perc + self._low_level_thresh:
                 error_level = ErrSeverity.LOW
+            elif diff_perc < 3:
+                error_level = ErrSeverity.HIGH
             else:
                 error_level = ErrSeverity.NORM
         elif etal_diff_perc_tuple[1] < diff_perc:
@@ -416,7 +419,7 @@ class OrigSentChecker(IChecher):
 
 
         if not_found_cnt == len(orig_sents):
-            self._errors.append(ChunkError("Не было найдено предложение в документе-источнике",
+            self._errors.append(ChunkError("Оригинальное предложение не было найдено в документе-источнике",
                                            chunk.get_chunk_id(),
                                            ErrSeverity.HIGH))
 
@@ -435,10 +438,11 @@ class SourceDocsChecker(IChecher):
         self._found_sources_docs = self._init_sources_dict()
 
     def _get_filename(self, path):
-        try:
-            return fs.splitext(path)[0].decode("utf-8")
-        except Exception as e:
-            return fs.splitext(path)[0]
+        if isinstance(path, unicode):
+            uni_path = path
+        else:
+            uni_path = path.decode("utf-8")
+        return fs.splitext(uni_path)[0]
 
     def _init_sources_dict(self):
         sources_dict = {}
@@ -470,8 +474,9 @@ class SourceDocsChecker(IChecher):
 
             if not self._check_existance(chunk.get_orig_doc()):
                 self._errors.append(ChunkError("Документ '%s' не существует " %
-                                               chunk.get_orig_doc.encode("utf-8"),
-                                               chunk.get_chunk_id()))
+                                               chunk.get_orig_doc().encode("utf-8"),
+                                               chunk.get_chunk_id(),
+                                               ErrSeverity.HIGH))
 
 # end of checkers
 
@@ -608,14 +613,16 @@ class PocesssorOpts(object):
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {
             1 : (0, 0),
-            2 : (10, 30),
+            2 : (10, 35),
             3 : (30, 100),
             4 : (100, 100),
-            5 : (20, 30),
-            6 : (20, 30),
+            5 : (20, 35),
+            6 : (20, 35),
             7 : (0, 25),
             8 : (20, 80)
         }
+
+        self.errors_level = ErrSeverity.NORM
 
 class Processor(object):
     def __init__(self, opts, checkers,
@@ -673,7 +680,8 @@ class Processor(object):
         book = xlrd.open_workbook(self._opts.inp_file)
         sheet = book.sheet_by_index(0)
         chunks = []
-        for rownum in range(sheet.nrows):
+        errors = []
+        for rownum in range(1, sheet.nrows):
             row_vals = sheet.row_values(rownum)
 
             try:
@@ -682,12 +690,16 @@ class Processor(object):
                 chunks.append(chunk)
             except Exception as e:
                 logging.exception("failed to create chunk: %s ", str(e))
+                errors.append(Error("Не удалось проанализировать запись: '%s'" %
+                                    u";".join(row_vals).encode("utf8"),
+                                    ErrSeverity.HIGH))
 
-        return chunks
+
+        return chunks, errors
 
     def check(self):
 
-        chunks = self._create_chunks()
+        chunks, errors = self._create_chunks()
         stat = self._stat_collecter(chunks)
         logging.debug("collected stat: %s", stat)
         if stat.chunks_cnt == 0:
@@ -702,10 +714,10 @@ class Processor(object):
         for chunk in chunks:
             self._process_chunk(chunk, src_docs)
 
-        errors = []
         for checker in self._checkers:
             errors.extend(e for e in checker.get_errors())
 
+        errors = [e for e in errors if e.sev >= self._opts.errors_level]
         errors.sort(key=lambda e : e.sev, reverse = True)
 
         return errors, stat
@@ -737,7 +749,9 @@ def tok_sent(sent):
     return [s for s in tokens if not ispunct(s)]
 
 def convert_doc(doc_path):
+    #tika's pdf converter is not very good
     cmd = "/compiled/bin/tika --text %s" % pipes.quote(doc_path)
+    # cmd = "textract %s" % pipes.quote(doc_path)
     text = subprocess.check_output(cmd, shell=True)
     return text.decode("utf8")
 
@@ -763,7 +777,7 @@ class InvalidSubmission(Exception):
 
 def extract_submission(arch_path, dest_dir):
     """raise InvalidSubmission if submission is malformed"""
-    arc.Archive(arch_path).extractall(dest_dir)
+    arc.Archive(arch_path, backend="patool").extractall(dest_dir)
     sources_dir = ""
     sources_list_file = ""
 

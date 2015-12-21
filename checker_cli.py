@@ -50,14 +50,17 @@ def main():
                                                   opts.mod_type_ratios[mod_type]))
         errors, stat = scu.Processor(opts, checkers, metrics).check()
 
+        print "Статистика"
         for m in metrics:
-            print m, m.get_violation_level()
+            print "%s %s"  % ("!" * m.get_violation_level(), m)
 
+        print
+        print "Ошибки"
         print "\n".join(str(e) for e in errors)
     except Exception as e:
         logging.exception("Error: %s", e)
     finally:
         shutil.rmtree(temp_dir)
-    
+
 if __name__ == '__main__' :
     main()
