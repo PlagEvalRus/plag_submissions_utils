@@ -13,14 +13,7 @@ import plag_submissions_checker.submission_checker_utils as scu
 def main():
 
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--inp_file", "-i", required=True,
-    #                     help="config")
-    # parser.add_argument("--sources_dir", "-s", required=True)
-    parser.add_argument("--archive", "-a", required=True)
     parser.add_argument("--min_source_cnt", "-m", default=5, type=int)
-    parser.add_argument("--lpr_min_diff", default=0.08, type=float)
-    parser.add_argument("--lpr_max_diff", default=0.3, type=float)
-    parser.add_argument("--hpr_min_diff", default=0.3, type=float)
     parser.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
