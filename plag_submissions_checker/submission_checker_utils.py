@@ -4,6 +4,7 @@
 from collections import defaultdict
 import logging
 
+import difflib
 import os.path as fs
 import os
 import pipes
@@ -57,7 +58,7 @@ class ModType(object):
 
     @classmethod
     def get_all_mods_type(cls):
-        return range(1,9)
+        return range(0,9)
 
 def mod_type_to_str(mod_type):
     mod_type_dict = {
@@ -134,6 +135,8 @@ class SentsHolder(object):
             all_tokens.extend(t)
         return all_tokens
 
+    def get_tokens_list(self):
+        return self._sent_tokens
 
 
 
@@ -174,6 +177,9 @@ class Chunk(object):
 
     def get_orig_tokens(self):
         return self._original_sents.get_all_tokens()
+
+    def get_orig_tokens_list(self):
+        return self._original_sents.get_tokens_list()
 
     def get_mod_tokens(self):
         return self._modified_sents.get_all_tokens()
@@ -407,18 +413,18 @@ class OrigSentChecker(IChecher):
             return
 
         if chunk.get_mod_type() == ModType.CCT:
-            orig_sents = chunk.get_orig_sents()
+            orig_tokens_list = chunk.get_orig_tokens_list()
         else:
-            orig_sents = [chunk.get_orig_text()]
+            orig_tokens_list = [chunk.get_orig_tokens()]
 
         parsed_doc = src_docs[chunk.get_orig_doc()]
         not_found_cnt = 0
-        for sent in orig_sents:
-            if not parsed_doc.is_sent_in_doc(sent):
+        for tokens in orig_tokens_list:
+            if not parsed_doc.is_sent_in_doc(tokens):
                 not_found_cnt += 1
 
 
-        if not_found_cnt == len(orig_sents):
+        if not_found_cnt == len(orig_tokens_list):
             self._errors.append(ChunkError("Оригинальное предложение не было найдено в документе-источнике",
                                            chunk.get_chunk_id(),
                                            ErrSeverity.HIGH))
@@ -564,7 +570,7 @@ class ModTypeRatioMetric(IMetric):
         return self._mod_type_ratio
 
     def get_violation_level(self):
-        if self._mod_type_ratio == 0:
+        if self._mod_type_ratio == 0 and self._mod_type != ModType.UNK :
             return ViolationLevel.HIGH
 
         logging.debug("mod type %d, %s %f", self._mod_type,
@@ -601,6 +607,7 @@ class PocesssorOpts(object):
         self.min_sent_size     = 5
         self.min_real_sent_cnt = 150
         self.mod_type_ratios   = {
+            0 : (0,0),
             1 : (5, 20),
             2 : (10, 30),
             3 : (10, 20),
@@ -619,7 +626,7 @@ class PocesssorOpts(object):
             5 : (20, 35),
             6 : (20, 35),
             7 : (0, 25),
-            8 : (20, 80)
+            8 : (0, 80)
         }
 
         self.errors_level = ErrSeverity.NORM
@@ -744,13 +751,16 @@ def seg_text(text):
     return seg.split_single(text)
 
 def tok_sent(sent):
-    # tokens = tok.word_tokenizer(sent)
     tokens = tok.symbol_tokenizer(sent)
-    return [s for s in tokens if not ispunct(s)]
+    return [s.lower() for s in tokens if not ispunct(s)]
 
 def convert_doc(doc_path):
     #tika's pdf converter is not very good
-    cmd = "/compiled/bin/tika --text %s" % pipes.quote(doc_path)
+    if doc_path.endswith("pdf"):
+        cmd = "pdftotext %s -" % pipes.quote(doc_path)
+    else:
+        cmd = "/compiled/bin/tika --text %s" % pipes.quote(doc_path)
+    # textract html converter is not very good
     # cmd = "textract %s" % pipes.quote(doc_path)
     text = subprocess.check_output(cmd, shell=True)
     return text.decode("utf8")
@@ -758,14 +768,79 @@ def convert_doc(doc_path):
 def strip_text(sent):
     return u" ".join(tok_sent(sent))
 
-class SourceDoc(object):
-    def __init__(self, doc_path):
-        logging.debug("trying to parse %s", doc_path)
-        text = convert_doc(doc_path)
-        self._text = strip_text(text)
+def _gen_mega_regexp(text):
+    return ur"-?\s*".join(ch for ch in text if ch.isalnum())
 
-    def is_sent_in_doc(self, sent):
-        return self._text.find(strip_text(sent)) != -1
+class SourceDoc(object):
+    def __init__(self, doc_path, max_length_delta = 0,
+                 max_offs_delta = 22):
+        logging.debug("trying to parse %s", doc_path)
+        text                   = convert_doc(doc_path)
+        self._doc_tokens       = tok_sent(text)
+        self._text             = u" ".join(self._doc_tokens)
+        logging.debug("stripped source doc: %s", self._text)
+
+        self._max_length_delta = max_length_delta
+        self._max_offs_delta   = max_offs_delta
+
+    def _try_sequence_matcher(self, tokens):
+        matcher = difflib.SequenceMatcher(a = self._doc_tokens,
+                                          b = tokens,
+                                          autojunk = False)
+        #find seed
+        longest_match = matcher.find_longest_match(0, len(self._doc_tokens),
+                                                   0, len(tokens))
+
+        left_a_pos = longest_match.a - (longest_match.b - 1) - self._max_offs_delta
+        left_a_pos = max(0, left_a_pos)
+        right_a_pos = longest_match.a + longest_match.size + (len(tokens) - longest_match.b) + self._max_offs_delta
+        right_a_pos = min(len(self._doc_tokens), right_a_pos)
+
+        logging.debug("longest match: %s", longest_match)
+        logging.debug("left_a_pos: %d", left_a_pos)
+        logging.debug("right_a_pos: %d", right_a_pos)
+        matcher.set_seq1(self._doc_tokens[left_a_pos:right_a_pos])
+
+        matches = matcher.get_matching_blocks()
+        if len(matches) == 1:
+            return False
+        logging.debug("all matches: %s", matches)
+
+        ofs_diff = matches[-2].a + matches[-2].size - matches[0].a
+        matched_length = sum(m.size for m in matches)
+
+        logging.debug("text length: %d", len(tokens))
+        logging.debug("ofs_diff: %d", ofs_diff)
+        logging.debug("matched_length: %d", matched_length)
+
+        if max(ofs_diff - self._max_offs_delta, 0) < len(tokens):
+            if abs(len(tokens) - matched_length) <= self._max_length_delta:
+                return True
+
+        return False
+
+
+    def is_sent_in_doc(self, tokens_or_sent):
+        if not isinstance(tokens_or_sent, list):
+            tokens = tok_sent(tokens_or_sent)
+        else:
+            tokens = tokens_or_sent
+        text = u" ".join(tokens)
+        if not text:
+            raise RuntimeError("no tokens after text tokenization")
+        logging.debug("stripped text: %s", text)
+        #first approach
+        pos = self._text.find(text)
+        if pos != -1:
+            return True
+        logging.debug("failed to use dummy find, fallback to regexp")
+        #approach from siv
+        regexp = _gen_mega_regexp(text)
+        m = regex.search(regexp, self._text, regex.UNICODE)
+        if m is None:
+            logging.debug("failed to use regexp, fallback to seq matching")
+            return self._try_sequence_matcher(tokens)
+        return True
 
 # end doc operations
 
@@ -795,7 +870,7 @@ def extract_submission(arch_path, dest_dir):
         raise InvalidSubmission("Не удалось обнаружить файл sources_list.xlsx")
 
     return sources_dir, sources_list_file
-    
+
 
 #
 
