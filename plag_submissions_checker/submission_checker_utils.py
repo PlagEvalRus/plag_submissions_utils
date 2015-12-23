@@ -455,6 +455,8 @@ class SourceDocsChecker(IChecher):
         entries = os.listdir(self._opts.sources_dir)
         for entry in entries:
             doc_path = fs.join(self._opts.sources_dir, entry)
+            if not fs.isfile(doc_path):
+                continue
             filename = self._get_filename(entry)
             if filename in sources_dict:
                 self._errors.append(Error("Документы-источники дублируются", ErrSeverity.HIGH))
@@ -642,14 +644,12 @@ class Processor(object):
         self._stat_collecter = stat_collecter if stat_collecter is not None else StatCollector()
 
 
-    def _try_create_chunk(self, row_vals):
-        #throw if there is non-number
-        sent_num = int(row_vals[0])
+    def _try_create_chunk(self, row_vals, sent_num, vals_offs):
 
-        return Chunk(mod_text = row_vals[1],
-                     orig_text = row_vals[2],
-                     orig_doc = row_vals[3],
-                     mod_type_str = row_vals[4],
+        return Chunk(mod_text = row_vals[vals_offs + 0],
+                     orig_text = row_vals[vals_offs + 1],
+                     orig_doc = row_vals[vals_offs + 2],
+                     mod_type_str = row_vals[vals_offs + 3],
                      chunk_num = sent_num)
 
     def _process_chunk(self, chunk, src_docs):
@@ -673,6 +673,8 @@ class Processor(object):
             try:
                 doc_path = fs.join(self._opts.sources_dir, entry)
                 doc_path = fs.abspath(doc_path)
+                if not fs.isfile(doc_path):
+                    continue
                 filename = self._get_src_filename(entry)
                 if filename in sources_dict:
                     logging.warning("source document with such filename %s already exists", filename)
@@ -688,11 +690,18 @@ class Processor(object):
         sheet = book.sheet_by_index(0)
         chunks = []
         errors = []
+        if sheet.row_values(0)[0] != u"Номер предложения":
+            vals_offs = 0
+        else:
+            vals_offs = 1
         for rownum in range(1, sheet.nrows):
             row_vals = sheet.row_values(rownum)
 
             try:
-                chunk = self._try_create_chunk(row_vals)
+                chunk = self._try_create_chunk(
+                    row_vals,
+                    rownum if vals_offs == 0 else int(row_vals[0]),
+                    vals_offs)
                 logging.debug("parsed chunk: %s", chunk)
                 chunks.append(chunk)
             except Exception as e:
@@ -857,11 +866,14 @@ def extract_submission(arch_path, dest_dir):
     sources_list_file = ""
 
     for dirpath, dirnames, filenames in os.walk(dest_dir):
-        if "sources" in dirnames:
-            sources_dir = fs.join(dirpath, "sources")
+        for dirname in dirnames:
+            if dirname.lower().find("sources") != -1:
+                sources_dir = fs.join(dirpath, dirname)
 
-        if "sources_list.xlsx" in filenames:
-            sources_list_file = fs.join(dirpath, "sources_list.xlsx")
+        for filename in filenames:
+            if filename.lower().find("sources_list") != -1:
+                sources_list_file = fs.join(dirpath, filename)
+                break
 
     if not sources_dir:
         raise InvalidSubmission("Не удалось обнаружить папку sources")
