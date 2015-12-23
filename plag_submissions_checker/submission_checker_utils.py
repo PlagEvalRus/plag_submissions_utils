@@ -433,6 +433,14 @@ class OrigSentChecker(IChecher):
             self._errors.append(ChunkError("Некоторые предложения не были найдены в документе-источнике", chunk.get_chunk_id()))
 
 
+# sources
+def _get_src_filename(path):
+    if isinstance(path, unicode):
+        uni_path = path
+    else:
+        uni_path = path.decode("utf-8")
+    return fs.splitext(fs.basename(uni_path))[0]
+
 
 class SourceDocsChecker(IChecher):
     def __init__(self, opts):
@@ -443,13 +451,6 @@ class SourceDocsChecker(IChecher):
 
         self._found_sources_docs = self._init_sources_dict()
 
-    def _get_filename(self, path):
-        if isinstance(path, unicode):
-            uni_path = path
-        else:
-            uni_path = path.decode("utf-8")
-        return fs.splitext(uni_path)[0]
-
     def _init_sources_dict(self):
         sources_dict = {}
         entries = os.listdir(self._opts.sources_dir)
@@ -457,7 +458,7 @@ class SourceDocsChecker(IChecher):
             doc_path = fs.join(self._opts.sources_dir, entry)
             if not fs.isfile(doc_path):
                 continue
-            filename = self._get_filename(entry)
+            filename = _get_src_filename(entry)
             if filename in sources_dict:
                 self._errors.append(Error("Документы-источники дублируются", ErrSeverity.HIGH))
             else:
@@ -465,7 +466,7 @@ class SourceDocsChecker(IChecher):
         return sources_dict
 
     def _check_existance(self, orig_doc):
-        filename = self._get_filename(orig_doc)
+        filename = _get_src_filename(orig_doc)
         return filename in self._found_sources_docs
         #path = fs.join(self._opts.sources_dir, orig_doc)
         #return fs.exists(path)
@@ -660,12 +661,6 @@ class Processor(object):
             except Exception as e:
                 logging.exception("during proc %d: ", chunk.get_chunk_id())
 
-    def _get_src_filename(self, path):
-        try:
-            return fs.basename(path).decode("utf-8")
-        except Exception as e:
-            return fs.basename(path)
-
     def _load_sources_docs(self):
         sources_dict = {}
         entries = os.listdir(self._opts.sources_dir)
@@ -675,7 +670,7 @@ class Processor(object):
                 doc_path = fs.abspath(doc_path)
                 if not fs.isfile(doc_path):
                     continue
-                filename = self._get_src_filename(entry)
+                filename = _get_src_filename(entry)
                 if filename in sources_dict:
                     logging.warning("source document with such filename %s already exists", filename)
                 else:
