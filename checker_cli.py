@@ -35,7 +35,8 @@ def main():
                     scu.DelChecker(opts),
                     scu.CPYChecker(opts),
                     scu.CctChecker(opts),
-                    scu.SspChecker(opts)]
+                    scu.SspChecker(opts),
+                    scu.ORIGModTypeChecker()]
         metrics = [scu.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
                 scu.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size)]
         for mod_type in scu.ModType.get_all_mods_type():

@@ -159,6 +159,9 @@ class Chunk(object):
     def get_orig_doc(self):
         return self._orig_doc
 
+    def get_orig_doc_filename(self):
+        return _get_src_filename(self._orig_doc)
+
     def get_avg_original_words_cnt(self):
         return self._original_sents.get_avg_words_cnt()
 
@@ -189,7 +192,7 @@ class Chunk(object):
 
     def get_mod_text(self):
         return self._modified_sents.get_text()
-    
+
     def __str__(self):
         chunk_str = "%d (%s): %s, %s" %(
             self._chunk_num,
@@ -432,7 +435,8 @@ class OrigSentChecker(IChecher):
         if chunk.get_mod_type() == ModType.ORIG:
             return
 
-        if not chunk.get_orig_doc() in src_docs:
+        src_filename = chunk.get_orig_doc_filename()
+        if not src_filename  in src_docs:
             #this another error, that is checked in another place
             return
 
@@ -441,7 +445,7 @@ class OrigSentChecker(IChecher):
         else:
             orig_tokens_list = [chunk.get_orig_tokens()]
 
-        parsed_doc = src_docs[chunk.get_orig_doc()]
+        parsed_doc = src_docs[src_filename]
         not_found_cnt = 0
         for tokens in orig_tokens_list:
             if not parsed_doc.is_sent_in_doc(tokens):
@@ -490,7 +494,7 @@ class SourceDocsChecker(IChecher):
         return sources_dict
 
     def _check_existance(self, orig_doc):
-        filename = _get_src_filename(orig_doc)
+        filename = orig_doc
         return filename in self._found_sources_docs
         #path = fs.join(self._opts.sources_dir, orig_doc)
         #return fs.exists(path)
@@ -505,7 +509,7 @@ class SourceDocsChecker(IChecher):
         if chunk.get_orig_doc() not in self._used_source_docs_set:
             self._used_source_docs_set.add(chunk.get_orig_doc())
 
-            if not self._check_existance(chunk.get_orig_doc()):
+            if not self._check_existance(chunk.get_orig_doc_filename()):
                 self._errors.append(ChunkError("Документ '%s' не существует " %
                                                chunk.get_orig_doc().encode("utf-8"),
                                                chunk.get_chunk_id(),
@@ -709,7 +713,7 @@ class Processor(object):
         sheet = book.sheet_by_index(0)
         chunks = []
         errors = []
-        if sheet.row_values(0)[0] != u"Номер предложения":
+        if sheet.row_values(0)[0].lower().find(u"номер"):
             vals_offs = 0
         else:
             vals_offs = 1
@@ -719,7 +723,7 @@ class Processor(object):
             try:
                 chunk = self._try_create_chunk(
                     row_vals,
-                    rownum if vals_offs == 0 else int(row_vals[0]),
+                    rownum + 1 if vals_offs == 0 else int(row_vals[0]),
                     vals_offs)
                 logging.debug("parsed chunk: %s", chunk)
                 chunks.append(chunk)
