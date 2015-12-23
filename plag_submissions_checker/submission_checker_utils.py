@@ -187,6 +187,9 @@ class Chunk(object):
     def get_orig_text(self):
         return self._original_sents.get_text()
 
+    def get_mod_text(self):
+        return self._modified_sents.get_text()
+    
     def __str__(self):
         chunk_str = "%d (%s): %s, %s" %(
             self._chunk_num,
@@ -394,6 +397,27 @@ class CctChecker(BaseChunkSimChecker):
                 chunk.get_chunk_id(),
                 ErrSeverity.HIGH))
 
+class ORIGModTypeChecker(IChecher):
+    def __init__(self):
+        super(ORIGModTypeChecker, self).__init__()
+        self._errors = []
+
+    def get_errors(self):
+        return self._errors
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_mod_type() != ModType.ORIG:
+            return
+        if chunk.get_orig_text():
+            self._errors.append(ChunkError(
+                "Поле 'оригинальное предложение' должно быть пустым, если это предложением написано вами",
+                chunk.get_chunk_id(),
+                ErrSeverity.HIGH))
+        if not chunk.get_mod_text():
+            self._errors.append(ChunkError(
+                "Поле 'заимствованное предложение' должно быть заполнено, если это предложением написано вами",
+                chunk.get_chunk_id(),
+                ErrSeverity.HIGH))
 
 class OrigSentChecker(IChecher):
     def __init__(self, opts):
