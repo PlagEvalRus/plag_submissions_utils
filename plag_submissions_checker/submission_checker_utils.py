@@ -709,22 +709,36 @@ class Processor(object):
 
 
     def _create_chunks(self):
+        errors = []
         book = xlrd.open_workbook(self._opts.inp_file)
         sheet = book.sheet_by_index(0)
-        chunks = []
-        errors = []
-        if sheet.row_values(0)[0].lower().find(u"номер"):
-            vals_offs = 0
+        if sheet.nrows <= 2:
+            errors.append(Error("Sheet contains 2 or less rows!!",
+                                ErrSeverity.HIGH))
+            return [], errors
+
+        if sheet.row_values(0)[0].lower().find(u"номер") == -1:
+            #no one follows the guide
+            #there may be no header or it may be # or № or 'Меня зовут Вася'
+            try:
+                int(sheet.row_values(1)[0])
+                #hmm this column contains number it must be a 'Номер' column
+                main_content_offs = 1
+            except ValueError:
+                #it is not number
+                main_content_offs = 0
         else:
-            vals_offs = 1
+            main_content_offs = 1
+
+        chunks = []
         for rownum in range(1, sheet.nrows):
             row_vals = sheet.row_values(rownum)
 
             try:
                 chunk = self._try_create_chunk(
                     row_vals,
-                    rownum + 1 if vals_offs == 0 else int(row_vals[0]),
-                    vals_offs)
+                    rownum + 1 if main_content_offs == 0 else int(row_vals[0]),
+                    main_content_offs)
                 logging.debug("parsed chunk: %s", chunk)
                 chunks.append(chunk)
             except Exception as e:
