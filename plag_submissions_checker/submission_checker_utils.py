@@ -674,11 +674,16 @@ class Processor(object):
 
 
     def _try_create_chunk(self, row_vals, sent_num, vals_offs):
+        def check_str_cell(cell_val):
+            if not isinstance(cell_val, (str, unicode)):
+                raise RuntimeError("Sent # %d; Wrong value of the cell: %s"
+                                   % (sent_num, str(cell_val)))
+            return cell_val
 
         return Chunk(mod_text = row_vals[vals_offs + 0],
-                     orig_text = row_vals[vals_offs + 1],
+                     orig_text = check_str_cell(row_vals[vals_offs + 1]),
                      orig_doc = row_vals[vals_offs + 2],
-                     mod_type_str = row_vals[vals_offs + 3],
+                     mod_type_str = check_str_cell(row_vals[vals_offs + 3]),
                      chunk_num = sent_num)
 
     def _process_chunk(self, chunk, src_docs):
@@ -733,18 +738,19 @@ class Processor(object):
         chunks = []
         for rownum in range(1, sheet.nrows):
             row_vals = sheet.row_values(rownum)
-
+            sent_num = rownum + 1
             try:
+                sent_num = int(row_vals[0]) if main_content_offs == 1 else sent_num
                 chunk = self._try_create_chunk(
                     row_vals,
-                    rownum + 1 if main_content_offs == 0 else int(row_vals[0]),
+                    sent_num,
                     main_content_offs)
                 logging.debug("parsed chunk: %s", chunk)
                 chunks.append(chunk)
             except Exception as e:
                 logging.exception("failed to create chunk: %s ", str(e))
-                errors.append(Error("Не удалось проанализировать запись: '%s'" %
-                                    u";".join(row_vals).encode("utf8"),
+                errors.append(Error("Не удалось проанализировать ряд с номером %d: %s" %
+                                    (sent_num, str(e)),
                                     ErrSeverity.HIGH))
 
 
