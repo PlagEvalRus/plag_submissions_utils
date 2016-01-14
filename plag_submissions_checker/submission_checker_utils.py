@@ -75,7 +75,7 @@ def mod_type_to_str(mod_type):
     return mod_type_dict.get(mod_type, "unk")
 
 def _create_mod_type(mod_str):
-    mls = mod_str.lower()
+    mls = mod_str.strip().lower()
     if not mls:
         return ModType.ORIG
     elif mls == "cpy":
@@ -465,8 +465,10 @@ class OrigSentChecker(IChecher):
 def _get_src_filename(path):
     if isinstance(path, unicode):
         uni_path = path
-    else:
+    elif isinstance(path, str):
         uni_path = path.decode("utf-8")
+    else:
+        uni_path = str(path)
     return fs.splitext(fs.basename(uni_path))[0]
 
 
