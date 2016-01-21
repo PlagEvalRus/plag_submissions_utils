@@ -8,6 +8,7 @@ import difflib
 import os.path as fs
 import os
 import pipes
+import re
 import subprocess
 
 
@@ -742,7 +743,17 @@ class Processor(object):
             row_vals = sheet.row_values(rownum)
             sent_num = rownum + 1
             try:
-                sent_num = int(row_vals[0]) if main_content_offs == 1 else sent_num
+                if main_content_offs == 1:
+                    #no one follows the guide
+                    #There maybe be 1. 2.; 1!, 2!...
+                    if isinstance(row_vals[0], (str, unicode)):
+                        m = re.search(r"(\d+)", row_vals[0])
+                        if m is None:
+                            raise RuntimeError("Failed to extract sent number from 0 column")
+                        sent_num = int(m.group(1))
+
+                    elif isinstance(row_vals[0], (int, float)):
+                        sent_num = int(row_vals[0])
                 chunk = self._try_create_chunk(
                     row_vals,
                     sent_num,
