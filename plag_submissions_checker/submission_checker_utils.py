@@ -469,7 +469,7 @@ def _get_src_filename(path):
     elif isinstance(path, str):
         uni_path = path.decode("utf-8")
     else:
-        uni_path = str(path)
+        uni_path = unicode(str(path), encoding="utf8")
     return fs.splitext(fs.basename(uni_path))[0]
 
 
@@ -494,6 +494,7 @@ class SourceDocsChecker(IChecher):
                 self._errors.append(Error("Документы-источники дублируются", ErrSeverity.HIGH))
             else:
                 sources_dict[filename] = doc_path
+        logging.debug("found sources: %s", ", ".join(k.encode("utf8") for k in sources_dict))
         return sources_dict
 
     def _check_existance(self, orig_doc):
@@ -513,6 +514,9 @@ class SourceDocsChecker(IChecher):
             self._used_source_docs_set.add(chunk.get_orig_doc())
 
             if not self._check_existance(chunk.get_orig_doc_filename()):
+
+                logging.debug("this doc does not exist!! %s", chunk.get_orig_doc())
+                logging.debug("this doc does not exist!! %s", chunk.get_orig_doc_filename())
                 self._errors.append(ChunkError("Документ '%s' не существует " %
                                                chunk.get_orig_doc().encode("utf-8"),
                                                chunk.get_chunk_id(),
@@ -654,12 +658,12 @@ class PocesssorOpts(object):
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {
             1 : (0, 0),
-            2 : (10, 35),
+            2 : (10, 75),
             3 : (30, 100),
             4 : (100, 100),
-            5 : (20, 35),
-            6 : (20, 35),
-            7 : (0, 25),
+            5 : (20, 70),
+            6 : (20, 70),
+            7 : (0, 75),
             8 : (0, 80)
         }
 
@@ -697,6 +701,8 @@ class Processor(object):
             except Exception as e:
                 logging.exception("during proc %d: ", chunk.get_chunk_id())
 
+    #TODO: move to distinct function,
+    # unite with _init_sources_dict
     def _load_sources_docs(self):
         sources_dict = {}
         entries = os.listdir(self._opts.sources_dir)
@@ -713,7 +719,31 @@ class Processor(object):
                     sources_dict[filename] = SourceDoc(doc_path)
             except Exception as e:
                 logging.warning("failed to parse %s: %s", doc_path, e)
+
         return sources_dict
+
+    def _try_to_extract_sent_num(self, rownum, is_col_num_cell_found,
+                                 col_num_cell_content):
+        #+1 for header row
+        dummy_sent_num = rownum + 1
+        if is_col_num_cell_found:
+            #there is a column with numbers
+            #no one follows the guide
+            #There maybe be 1. 2.; 1!, 2!...
+            if isinstance(col_num_cell_content, (str, unicode)):
+                if not col_num_cell_content:
+                    #cell is empty, may be they forgot to continue numeration...
+                    return dummy_sent_num
+                m = re.search(r"(\d+)", col_num_cell_content)
+                if m is None:
+                    raise RuntimeError("Failed to extract sent number from 0 column")
+                return int(m.group(1))
+
+            elif isinstance(col_num_cell_content, (int, float)):
+                return int(col_num_cell_content)
+
+        else:
+            return dummy_sent_num
 
 
     def _create_chunks(self):
@@ -741,19 +771,10 @@ class Processor(object):
         chunks = []
         for rownum in range(1, sheet.nrows):
             row_vals = sheet.row_values(rownum)
-            sent_num = rownum + 1
             try:
-                if main_content_offs == 1:
-                    #no one follows the guide
-                    #There maybe be 1. 2.; 1!, 2!...
-                    if isinstance(row_vals[0], (str, unicode)):
-                        m = re.search(r"(\d+)", row_vals[0])
-                        if m is None:
-                            raise RuntimeError("Failed to extract sent number from 0 column")
-                        sent_num = int(m.group(1))
-
-                    elif isinstance(row_vals[0], (int, float)):
-                        sent_num = int(row_vals[0])
+                sent_num = self._try_to_extract_sent_num(rownum,
+                                                         main_content_offs == 1,
+                                                         row_vals[0])
                 chunk = self._try_create_chunk(
                     row_vals,
                     sent_num,
@@ -763,7 +784,7 @@ class Processor(object):
             except Exception as e:
                 logging.exception("failed to create chunk: %s ", str(e))
                 errors.append(Error("Не удалось проанализировать ряд с номером %d: %s" %
-                                    (sent_num, str(e)),
+                                    (rownum, str(e)),
                                     ErrSeverity.HIGH))
 
 
