@@ -1,0 +1,13 @@
+- hosts: localhost
+  vars:
+    ansible_connection: local 
+  pre_tasks:
+    - name: install dependencies needed for launching pip role
+      apt: name={{item}} state=present update_cache=yes cache_valid_time=3600
+      with_items:
+        - openssl
+        - ca-certificates
+      become: yes
+
+  roles:
+  - role: checker_role
