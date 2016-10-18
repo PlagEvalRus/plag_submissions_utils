@@ -40,7 +40,7 @@
 
 
 - name: ensure important directories exist
-  file: path={{item}} state=directory owner={{ansible_ssh_user}}
+  file: path={{item}} state=directory owner={{ansible_user_id}}
   with_items:
     - /compiled/share/java
     - /compiled/bin
@@ -53,7 +53,7 @@
     checksum: sha1:e0649edcc26563f59f7fc37f223d83f4988d5566
 
 - name: copy tika to bin
-  copy: src=tika dest=/compiled/bin/tika mode=755
+  copy: src=tika dest=/compiled/bin/tika mode=755 force=no
 
 - name: set up apache2
   include: ./apache.yml
