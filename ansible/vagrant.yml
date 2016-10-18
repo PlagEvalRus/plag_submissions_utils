@@ -1,0 +1,16 @@
+
+- hosts: all
+  vars:
+    proj_dir: /vagrant
+
+  pre_tasks:
+    - name: install dependencies needed for launching pip role
+      apt: name={{item}} state=present update_cache=yes cache_valid_time=3600
+      with_items:
+        - openssl
+        - ca-certificates
+      become: yes
+      become_method: sudo
+
+  roles:
+    - role: checker_role

@@ -1,0 +1,30 @@
+<VirtualHost *:80>
+
+DocumentRoot {{proj_dir}}/data/html
+<Directory />
+        Options FollowSymLinks
+        AllowOverride None
+</Directory>
+<Directory {{proj_dir}}/data/html>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride None
+        Require all granted
+</Directory>
+
+ScriptAlias /cgi-bin/ {{proj_dir}}/bin/
+<Directory "{{proj_dir}}/bin/">
+        SetEnv LANG en_US.UTF-8
+
+        AllowOverride None
+        Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+        Require all granted
+</Directory>
+
+ErrorLog ${APACHE_LOG_DIR}/error.log
+
+# Possible values include: debug, info, notice, warn, error, crit,
+# alert, emerg.
+LogLevel warn
+
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>

@@ -1,0 +1,8 @@
+dependencies:
+  - role: pip
+  - role: apache2
+    apache_create_vhosts: false
+    apache_remove_default_vhost: true
+    apache_mods_enabled:
+      - cgi.load
+    become: yes

@@ -1,0 +1,12 @@
+
+- name: copy apache configuration
+  template: src=apache.conf.j2 dest=/etc/apache2/sites-available/checker.conf
+  notify:
+    - restart apache
+
+- name: activate vhosts
+  command: a2ensite checker.conf
+  args:
+    creates: /etc/apache2/sites-enabled/checker.conf
+  notify:
+    - restart apache

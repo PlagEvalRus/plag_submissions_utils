@@ -1,0 +1,60 @@
+---
+# tasks file for checker_role
+
+- name: install auxiliary packages
+  apt: name={{ item }} state=present
+  with_items:
+    - software-properties-common
+    - lsb-release
+  become: yes
+
+- name: Reread ansible_lsb facts
+  setup: filter=ansible_lsb* 
+ 
+- name: add non-free repository
+  apt_repository:
+    repo: 'deb http://httpredir.debian.org/debian {{ ansible_lsb.codename }} contrib non-free'
+    state: present
+    filename: non_free
+  become: yes
+
+- name: install dependencies from apt
+  apt: name={{item}} state=present update_cache=yes cache_valid_time=3600
+  with_items:
+    - g++
+    - python-dev
+    #tika
+    - default-jre
+    #rar
+    - unrar
+
+  become: yes
+  become_method: sudo
+
+- name: install dependencies from pip
+  pip: 
+    chdir: "{{proj_dir}}"
+    requirements: requirements.txt
+    state: present
+  become: yes
+
+
+- name: ensure important directories exist
+  file: path={{item}} state=directory owner={{ansible_ssh_user}}
+  with_items:
+    - /compiled/share/java
+    - /compiled/bin
+  become: yes
+
+- name: download tika 1.13
+  get_url:
+    url: http://apache-mirror.rbc.ru/pub/apache/tika/tika-app-1.13.jar
+    dest: /compiled/share/java/tika-app-1.13.jar
+    checksum: sha1:e0649edcc26563f59f7fc37f223d83f4988d5566
+
+- name: copy tika to bin
+  copy: src=tika dest=/compiled/bin/tika mode=755
+
+- name: set up apache2
+  include: ./apache.yml
+  become: yes

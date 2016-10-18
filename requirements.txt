@@ -1,0 +1,7 @@
+segtok
+Distance
+pyunpack
+regex
+xlrd
+patool
+jinja2

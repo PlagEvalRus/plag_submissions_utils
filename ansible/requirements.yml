@@ -1,0 +1,5 @@
+- name: pip
+  src: https://github.com/bobbyrenwick/ansible-pip
+
+- name: apache2
+  src: https://github.com/geerlingguy/ansible-role-apache

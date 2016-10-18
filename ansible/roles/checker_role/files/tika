@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#it is supposed to be a bin dir of some tree
+script_dir=`dirname "$0"`
+#normalize path
+jar_dir="$(readlink -m $script_dir/../share/java)"
+
+tika_jars_cnt=$(find $jar_dir -name 'tika*.jar' | wc -l)
+
+
+if [ $tika_jars_cnt -gt 1 ]
+then
+    echo "Too many tika jar executables in $jar_dir. Leave only one"
+    exit 3
+elif [ $tika_jars_cnt -lt 1 ]
+then
+
+    echo "Failed to find tika in $jar_dir.  Check your installation"
+    exit 1
+fi
+
+java -jar $jar_dir/tika*.jar "$@"

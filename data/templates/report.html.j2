@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Submission Checker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <style type="text/css">
+      .container {
+        max-width: 500px;
+        padding-top: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h3>Статистика:</h3>
+      <ul>
+        {% for m in metrics %}
+        <li>
+          {% if m.get_violation_level() == 2 %}
+          <font color="red">
+          {% else %}
+          <font color="black">
+          {% endif %}
+            {{m.__str__().decode("utf-8")}}
+          </font>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <h3>Ошибки:</h3>
+      <ol>
+        {% for e in errors %}
+        <li>
+          {% if e.sev == 2 %}
+          <font color="red">
+          {% elif e.sev == 1 %}
+          <font color="orange">
+          {% else %}
+          <font color="black">
+          {% endif %}
+            {% if e.chunk_num is defined %}
+            Предложение № {{e.chunk_num}}:
+            {% endif %}
+            {{e.msg.decode("utf-8")}}
+          </font>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  </body>
+</html>

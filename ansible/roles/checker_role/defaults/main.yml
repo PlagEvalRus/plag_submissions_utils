@@ -1,0 +1,4 @@
+---
+# defaults file for checker_role
+
+proj_dir: /vagrant

@@ -515,7 +515,6 @@ class SourceDocsChecker(IChecher):
 
             if not self._check_existance(chunk.get_orig_doc_filename()):
 
-                logging.debug("this doc does not exist!! %s", chunk.get_orig_doc())
                 logging.debug("this doc does not exist!! %s", chunk.get_orig_doc_filename())
                 self._errors.append(ChunkError("Документ '%s' не существует " %
                                                chunk.get_orig_doc().encode("utf-8"),
@@ -608,7 +607,14 @@ class ModTypeRatioMetric(IMetric):
         return self._mod_type_ratio
 
     def get_violation_level(self):
-        if self._mod_type_ratio == 0 and self._mod_type != ModType.UNK :
+        if self._mod_type_ratio != 0 and \
+           self._mod_type == ModType.UNK:
+            return ViolationLevel.HIGH
+
+        if self._mod_type_ratio == 0 and \
+           self._mod_type != ModType.UNK and \
+           self._mod_type != ModType.CPY and \
+           self._mod_type != ModType.ORIG:
             return ViolationLevel.HIGH
 
         logging.debug("mod type %d, %s %f", self._mod_type,
@@ -631,8 +637,14 @@ class ModTypeRatioMetric(IMetric):
         self._mod_type_ratio = round(self._mod_type_ratio, 1)
 
     def __str__(self):
-        return "%.1f%% предложений имеют тип: %s" % (
+        common = "%.1f%% предложений имеют тип: %s" % (
             self.get_value(), mod_type_to_str(self._mod_type))
+        if self._mod_type == ModType.UNK:
+            return common + " (UNK означает неизвестный тип сокрытия. "\
+                "Скорее всего в названии некоторых типов сокрытий опечатка.)"
+        else:
+            return common
+
 
 # end of metrics
 
@@ -649,7 +661,7 @@ class PocesssorOpts(object):
             1 : (5, 20),
             2 : (10, 30),
             3 : (10, 20),
-            4 : (10, 30),
+            4 : (0, 30),
             5 : (20, 30),
             6 : (15, 25),
             7 : (5, 15),
