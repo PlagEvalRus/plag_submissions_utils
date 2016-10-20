@@ -625,7 +625,7 @@ class ModTypeRatioMetric(IMetric):
            self._mod_type != ModType.ORIG:
             return ViolationLevel.HIGH
 
-        if self._mod_type.CPY:
+        if self._mod_type == ModType.CPY:
             return self.strict_mod()
 
         # all other modes are
