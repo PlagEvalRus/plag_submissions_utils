@@ -658,7 +658,7 @@ class PocesssorOpts(object):
         self.min_real_sent_cnt = 150
         self.mod_type_ratios   = {
             0 : (0,0),
-            1 : (5, 20),
+            1 : (0, 10),
             2 : (10, 30),
             3 : (10, 20),
             4 : (0, 30),
