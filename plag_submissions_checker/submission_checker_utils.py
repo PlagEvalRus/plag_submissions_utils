@@ -606,6 +606,14 @@ class ModTypeRatioMetric(IMetric):
     def get_value(self):
         return self._mod_type_ratio
 
+    def strict_mod(self):
+        if self._ratio_interval[0] > self._mod_type_ratio:
+                return ViolationLevel.HIGH
+        elif self._ratio_interval[1] < self._mod_type_ratio:
+            return ViolationLevel.HIGH
+        else:
+            return ViolationLevel.OK
+
     def get_violation_level(self):
         if self._mod_type_ratio != 0 and \
            self._mod_type == ModType.UNK:
@@ -617,6 +625,11 @@ class ModTypeRatioMetric(IMetric):
            self._mod_type != ModType.ORIG:
             return ViolationLevel.HIGH
 
+        if self._mod_type.CPY:
+            return self.strict_mod()
+
+        # all other modes are
+        #non strict (there may be some fluctuations from required interval)
         logging.debug("mod type %d, %s %f", self._mod_type,
                       self._ratio_interval, self._mod_type_ratio)
         if self._ratio_interval[0] > self._mod_type_ratio:
