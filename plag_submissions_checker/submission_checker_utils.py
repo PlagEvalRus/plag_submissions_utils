@@ -278,7 +278,7 @@ class IChecher(object):
 
 
 class BaseChunkSimChecker(IChecher):
-    def __init__(self, opts, low_level_thresh = 10):
+    def __init__(self, opts, low_level_thresh = 5):
         self._opts = opts
         self._diff_perc_dict = opts.diff_perc
         self._low_level_thresh = low_level_thresh
@@ -683,13 +683,13 @@ class PocesssorOpts(object):
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {
             1 : (0, 0),
-            2 : (10, 75),
-            3 : (30, 100),
+            2 : (20, 75),
+            3 : (45, 100),
             4 : (100, 100),
-            5 : (20, 70),
-            6 : (20, 70),
-            7 : (0, 75),
-            8 : (0, 80)
+            5 : (15, 70),
+            6 : (15, 70),
+            7 : (0, 80),
+            8 : (0, 85)
         }
 
         self.errors_level = ErrSeverity.NORM

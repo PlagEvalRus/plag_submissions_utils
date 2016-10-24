@@ -4,10 +4,8 @@
 import argparse
 
 import logging
-import shutil
-import tempfile
 
-import plag_submissions_checker.submission_checker_utils as scu
+from . import common_runner
 
 
 def main():
@@ -22,27 +20,9 @@ def main():
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format = FORMAT)
 
-    temp_dir = tempfile.mkdtemp()
     try:
 
-        #TODO: parse opts from config
-        opts = scu.PocesssorOpts(*scu.extract_submission(args.archive.decode("utf8"),
-                                                         temp_dir))
-        checkers = [scu.OrigSentChecker(opts),
-                    scu.SourceDocsChecker(opts),
-                    scu.PRChecker(opts),
-                    scu.AddChecker(opts),
-                    scu.DelChecker(opts),
-                    scu.CPYChecker(opts),
-                    scu.CctChecker(opts),
-                    scu.SspChecker(opts),
-                    scu.ORIGModTypeChecker()]
-        metrics = [scu.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
-                scu.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size)]
-        for mod_type in scu.ModType.get_all_mods_type():
-            metrics.append(scu.ModTypeRatioMetric(mod_type,
-                                                  opts.mod_type_ratios[mod_type]))
-        errors, stat = scu.Processor(opts, checkers, metrics).check()
+        metrics, errors, stat = common_runner.run(args.archive.decode("utf8"))
 
         print "Статистика"
         for m in metrics:
@@ -53,8 +33,6 @@ def main():
         print "\n".join(str(e) for e in errors)
     except Exception as e:
         logging.exception("Error: %s", e)
-    finally:
-        shutil.rmtree(temp_dir)
 
 if __name__ == '__main__' :
     main()
