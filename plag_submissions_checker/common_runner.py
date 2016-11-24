@@ -17,8 +17,12 @@ def serious_errors_cnt(metrics, errors, stat):
     return _metrics_violations_cnt(metrics, scu.ViolationLevel.HIGH) + \
         _errors_cnt(errors, scu.ErrSeverity.HIGH)
 
-def medium_errors_cnt(metrics, errors, stat):
-    return _metrics_violations_cnt(metrics, scu.ViolationLevel.MEDIUM) + \
+def medium_errors_cnt(metrics, errors, stat, count_metrics = True):
+    if count_metrics:
+        errs = _metrics_violations_cnt(metrics, scu.ViolationLevel.MEDIUM)
+    else:
+        errs = 0
+    return errs + \
         _errors_cnt(errors, scu.ErrSeverity.NORM)
 
 
