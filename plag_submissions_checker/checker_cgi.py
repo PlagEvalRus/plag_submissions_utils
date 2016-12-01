@@ -51,7 +51,8 @@ def main():
             f.write(upl_file_form.file.read())
             f.flush()
 
-        metrics, errors, stat = common_runner.run(arch_path)
+        metrics, errors, stat = common_runner.run(arch_path,
+                                                  form.getvalue("version", "1"))
 
         data_dir = \
         fs.dirname(fs.dirname(fs.realpath(__file__)))

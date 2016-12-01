@@ -7,12 +7,21 @@ import logging
 
 from . import common_runner
 
+def run_v1(opts):
+    return common_runner.run(opts.archive.decode("utf8"), "1")
 
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--archive", "-a", required=True)
-    parser.add_argument("--verbose", "-v", action="store_true")
+
+    subparsers = parser.add_subparsers(help='different versions')
+
+    v1_parser = subparsers.add_parser('v1',
+                                      help='help of set')
+
+    v1_parser.add_argument("--archive", "-a", required=True)
+    v1_parser.add_argument("--verbose", "-v", action="store_true")
+    v1_parser.set_defaults(func = run_v1)
 
     args = parser.parse_args()
 
@@ -22,7 +31,7 @@ def main():
 
     try:
 
-        metrics, errors, stat = common_runner.run(args.archive.decode("utf8"))
+        metrics, errors, stat = args.func(args)
 
         print "Статистика"
         for m in metrics:

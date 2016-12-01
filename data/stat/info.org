@@ -1,0 +1,228 @@
+* first experiment (001)
+** warnings
+count of failed chunks (probably chunks with the wrong filename).
+
+#+BEGIN_SRC bash
+grep 'WARNING' 001/nohup.out | wc -l
+#+END_SRC
+
+#+RESULTS:
+: 2246
+** normal chunks
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' 001/all_offsets | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' 001/all_offsets | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0' 001/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 22902 |
+| chunks with not found orig sent |  9469 |
+| literally found orig sents      | 18993 |
+*** chunks with not literal matching
+#+BEGIN_SRC bash
+echo "light change, $(grep -P '\d+,\d+,\d+,\d+,[1-9]$' 001/all_offsets | wc -l)"
+echo "medium, $(grep -P '\d+,\d+,\d+,\d+,\d{2}$' 001/all_offsets | wc -l)"
+echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}$' 001/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| light change | 2645 |
+| medium       | 1078 |
+| high         |  186 |
+* second (002) 
+fixed two bugs (test1 and test2 [[file:~/Programms/PYWorkspace/plag_submissions_checker/plag_submissions_checker/common/tests/test_source_doc.py::class%20SpecificSeqMatcherCases(unittest.TestCase):][there]])
+and added isjunk = lambda x: x is " " in SequenceMatcher constructor
+** warnings
+
+#+BEGIN_SRC bash
+grep 'WARNING' 002/nohup.out | wc -l
+#+END_SRC
+
+#+RESULTS:
+: 2247
+** normal chunks
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' 002/all_offsets | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' 002/all_offsets | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0' 002/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 30273 |
+| chunks with not found orig sent |  2094 |
+| literally found orig sents      | 21109 |
+
+*** chunks with not literal matching
+#+BEGIN_SRC bash
+echo "light change, $(grep -P '\d+,\d+,\d+,\d+,[1-9]$' 002/all_offsets | wc -l)"
+echo "medium, $(grep -P '\d+,\d+,\d+,\d+,\d{2}$' 002/all_offsets | wc -l)"
+echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' 002/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| light change | 7559 |
+| medium       | 1385 |
+| high         |  220 |
+|              | 9164 |
+#+TBLFM: $2=vsum(@1..@-1)
+* third (003) 
+removed isjunk = lambda x: x is " " in SequenceMatcher constructor
+** warnings
+
+#+BEGIN_SRC bash
+grep 'WARNING' 003/nohup.out | wc -l
+#+END_SRC
+
+#+RESULTS:
+: 2247
+** normal chunks
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' 003/all_offsets | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' 003/all_offsets | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0' 003/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 30273 |
+| chunks with not found orig sent |  2094 |
+| literally found orig sents      | 21109 |
+
+*** chunks with not literal matching
+#+BEGIN_SRC bash
+echo "light change, $(grep -P '\d+,\d+,\d+,\d+,[1-9]$' 003/all_offsets | wc -l)"
+echo "medium, $(grep -P '\d+,\d+,\d+,\d+,\d{2}$' 003/all_offsets | wc -l)"
+echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' 003/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| light change | 7559 |
+| medium       | 1385 |
+| high         |  220 |
+#+TBLFM: $2=vsum(@1..@-1)
+* fourth (004)
+fixed multiple bugs (test3-test6 [[file:~/Programms/PYWorkspace/plag_submissions_checker/plag_submissions_checker/common/tests/test_source_doc.py::class%20SpecificSeqMatcherCases(unittest.TestCase):][there]])
+added CCT handling (therefore more chunks extracted from 32k -> 36k)
+** warnings
+#+BEGIN_SRC bash
+grep 'WARNING' 004/nohup.out | wc -l
+#+END_SRC
+
+#+RESULTS:
+: 2247
+** normal chunks
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' 004/all_offsets | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' 004/all_offsets | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0$' 004/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 35743 |
+| chunks with not found orig sent |  1137 |
+| literally found orig sents      | 30826 |
+
+*** chunks with not literal matching
+#+BEGIN_SRC bash
+echo "light change, $(grep -P '\d+,\d+,\d+,\d+,[1-9]$' 004/all_offsets | wc -l)"
+echo "medium, $(grep -P '\d+,\d+,\d+,\d+,\d{2}$' 004/all_offsets | wc -l)"
+echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' 004/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| light change | 3785 |
+| medium       |  981 |
+| high         |  151 |
+|              | 4917 |
+#+TBLFM: $2=vsum(@1..@-1)
+
+* fifth (005)
+replaced ' ' with \p{Blank} [[file:~/Programms/PYWorkspace/plag_submissions_checker/plag_submissions_checker/common/text_proc.py::text%20=%20u"%20".join(p%20for%20p%20in%20regex.split(ur'\p{Blank}',%20text)%20if%20p)][here]] 
+** warnings
+#+BEGIN_SRC bash
+grep 'WARNING' 005/nohup.out | wc -l
+#+END_SRC
+
+#+RESULTS:
+: 2246
+** normal chunks
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' 005/all_offsets | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' 005/all_offsets | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0$' 005/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 35902 |
+| chunks with not found orig sent |  1124 |
+| literally found orig sents      | 30997 |
+
+*** chunks with not literal matching
+#+BEGIN_SRC bash
+echo "light change, $(grep -P '\d+,\d+,\d+,\d+,[1-9]$' 005/all_offsets | wc -l)"
+echo "medium, $(grep -P '\d+,\d+,\d+,\d+,\d{2}$' 005/all_offsets | wc -l)"
+echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' 005/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| light change | 4167 |
+| medium       |  584 |
+| high         |  154 |
+|              | 4905 |
+#+TBLFM: $2=vsum(@1..@-1)
+
+* check ok statuses
+
+** ok statuses
+#+NAME: ok_statuses
+| 126 |
+| 110 |
+|  42 |
+| 105 |
+| 111 |
+|   8 |
+| 173 |
+| 102 |
+|  27 |
+|  39 |
+| 121 |
+| 211 |
+|  24 |
+| 191 |
+| 131 |
+|  79 |
+| 103 |
+| 195 |
+| 243 |
+|  86 |
+| 257 |
+|  49 |
+| 137 |
+|  55 |
+| 148 |
+| 138 |
+| 246 |
+** extract them
+#+BEGIN_SRC bash :var ids=ok_statuses :results silent
+  for id in "${ids[@]}"; do
+      id_str="$(printf %03d $id)"
+      grep -P "^$id_str," 005/all_offsets >> 005/ok_statuses
+  done
+#+END_SRC
+** check them
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' 005/ok_statuses | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' 005/ok_statuses | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0' 005/ok_statuses | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 3953 |
+| chunks with not found orig sent |    9 |
+| literally found orig sents      | 3388 |
