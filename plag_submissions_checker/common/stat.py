@@ -50,14 +50,15 @@ class StatCollector(object):
     def __call__(self, chunks):
         stat = SubmissionStat(len(chunks))
         for chunk in chunks:
-            stat.orig_sent_lengths.append((chunk.get_chunk_id(),
-                                           chunk.get_avg_original_words_cnt()))
+            if chunk.get_mod_type() != ModType.ORIG:
+                stat.orig_sent_lengths.append((chunk.get_chunk_id(),
+                                               chunk.get_avg_original_words_cnt()))
+                stat.docs_freqs[chunk.get_orig_doc()] += 1
+
 
             stat.mod_sent_lengths.append((chunk.get_chunk_id(),
                                           chunk.get_avg_modified_words_cnt()))
 
             stat.mod_type_freqs[chunk.get_mod_type()] += 1
-            if chunk.get_mod_type() != ModType.ORIG:
-                stat.docs_freqs[chunk.get_orig_doc()] += 1
 
         return stat

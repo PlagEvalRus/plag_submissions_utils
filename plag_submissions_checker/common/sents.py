@@ -25,8 +25,15 @@ class SentsHolder(object):
     """
     def __init__(self, text):
         super(SentsHolder, self).__init__()
-        self._text       = text
-        self._sents      = text_proc.seg_text_as_list(text)
+        if isinstance(text, (list, )):
+            #It is possible in essays of version 2.
+            #Original text is already segmented by writer!
+            self._text = '\n'.join(text)
+            self._sents = text
+        else:
+            self._text       = text
+            self._sents      = text_proc.seg_text_as_list(text)
+
         self._sent_tokens = [text_proc.tok_sent(s) for s in self._sents]
         self._sent_infos = [SentInfo(len(t)) for t in self._sent_tokens]
 

@@ -14,6 +14,7 @@ from .common.extract_utils import extract_submission
 from .common.source_doc import load_sources_docs
 from .common import src_mapping
 from .v1 import processor as v1_proc
+from .v2 import processor as v2_proc
 
 
 class DumbDumper(object):
@@ -31,11 +32,11 @@ class Generator(object):
     def __init__(self, opts, out_pipes):
         self._opts = opts
         self._out_pipes = out_pipes
-        if opts.mapping is not None:
-            self._mapping = src_mapping.SrcMap()
-            self._mapping.from_csv(opts.mapping)
-        else:
-            self._mapping = create_mapping(opts.subm_dir)
+        # if opts.mapping is not None:
+        #     self._mapping = src_mapping.SrcMap()
+        #     self._mapping.from_csv(opts.mapping)
+        # else:
+        #     self._mapping = create_mapping(opts.subm_dir)
 
     def process_chunk(self, susp_id, chunk, sources):
         if chunk.get_mod_type() == ModType.ORIG:
@@ -55,7 +56,7 @@ class Generator(object):
         if self._opts.version == "1":
             chunks, _ = v1_proc.create_chunks(meta_filepath)
         elif self._opts.version == "2":
-            chunks = None
+            chunks, _ = v2_proc.create_chunks(meta_filepath)
         else:
             raise RuntimeError("Unknown version: %s" % self._opts.version)
 
@@ -216,7 +217,6 @@ if __name__ == '__main__' :
 class Opts(object):
     def __init__(self):
         self.version = "1"
-        self.create_sources = False
 
 def test():
 
@@ -225,3 +225,10 @@ def test():
     gener.process_archive(u"/home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/148/148.zip", "148")
     # process_archive("/home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/024/024.tar", "1", "1")
     # process_archive(u"/home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/039/Юсков - Сетевой маркетинг.rar", "039", "1")
+
+def test_v2():
+    pipes = [DumbDumper()]
+    opts = Opts()
+    opts.version = "2"
+    gener = Generator(opts, pipes)
+    gener.process_archive("data/test_data_v2/test.zip", "999")

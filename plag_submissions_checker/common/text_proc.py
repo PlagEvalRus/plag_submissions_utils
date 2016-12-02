@@ -48,12 +48,12 @@ def preprocess_text(text):
     text = text.replace(u"\u2010", u"\u002d")
     text = text.replace(u"\u00ad", u"\u002d")
 
-    #remove double spaces '  ' or ' \t' and non-breaking spaces
-    text = u" ".join(p for p in regex.split(ur'\p{Blank}', text) if p)
-
     #remove unnecessary \n inside sentences
     text_spans = seg.rewrite_line_separators(
         seg.to_unix_linebreaks(text),
         seg.MAY_CROSS_ONE_LINE)
     text = u"".join(text_spans)
+
+    #remove double spaces '  ' or ' \t' and non-breaking spaces
+    text = u" ".join(p for p in regex.split(ur'\p{Blank}', text) if p)
     return text

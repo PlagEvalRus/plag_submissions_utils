@@ -59,8 +59,9 @@ class BasicProcessor(object):
         stat = self._stat_collecter(chunks)
         logging.debug("collected stat: %s", stat)
         if stat.chunks_cnt == 0:
-            return [Error("Не удалось проанализировать ни один фрагмент",
-                          ErrSeverity.HIGH)], stat
+            errors.append(Error("Не удалось проанализировать ни один фрагмент",
+                                ErrSeverity.HIGH))
+            return  errors, stat
 
 
         for metric in self._metrics:

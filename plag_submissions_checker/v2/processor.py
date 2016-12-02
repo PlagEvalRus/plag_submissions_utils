@@ -56,6 +56,23 @@ class Processor(BasicProcessor):
     def _create_chunks(self):
         return create_chunks(self._opts.inp_file)
 
+def _check_headers(first_row):
+    if first_row[0].lower().find(u"номер") == -1:
+        return "Failed to find a column with row number!"
+
+    if first_row[1].lower().find(u"файла документа") == -1:
+        return "Failed to find a column with source filename!"
+
+    if first_row[2].lower().find(u"типы сокрытия") == -1:
+        return "Failed to find a column with type of obfuscation!"
+
+    if first_row[3].lower().find(u"фрагменты текста эссе") == -1:
+        return "Failed to find a column with modified text!"
+
+    if first_row[4].lower().find(u"исходное предложение") == -1:
+        return "Failed to find a column with original text!"
+
+    return None
 
 def create_chunks(inp_file):
     errors = []
@@ -66,30 +83,23 @@ def create_chunks(inp_file):
                             ErrSeverity.HIGH))
         return [], errors
 
-    if sheet.row_values(0)[0].lower().find(u"номер") == -1:
-        #no one follows the guide
-        #there may be no header or it may be # or № or 'Меня зовут Вася'
-        try:
-            int(sheet.row_values(1)[0])
-            #hmm this column contains number it must be a 'Номер' column
-            main_content_offs = 1
-        except ValueError:
-            #it is not number
-            main_content_offs = 0
-    else:
-        main_content_offs = 1
+    first_row = sheet.row_values(0)
+    err = _check_headers(first_row)
+    if err is not None:
+        errors.append(Error(err,
+                            ErrSeverity.HIGH))
+        return [], errors
 
     chunks = []
     for rownum in range(1, sheet.nrows):
         row_vals = sheet.row_values(rownum)
         try:
-            sent_num = _try_to_extract_sent_num(rownum,
-                                                main_content_offs == 1,
-                                                row_vals[0])
+            sent_num = int(row_vals[0])
             chunk = _try_create_chunk(
                 row_vals,
-                sent_num,
-                main_content_offs)
+                sent_num)
+            if chunk is None:
+                continue
             logging.debug("parsed chunk: %s", chunk)
             chunks.append(chunk)
         except Exception as e:
@@ -101,38 +111,35 @@ def create_chunks(inp_file):
 
     return chunks, errors
 
-def _try_to_extract_sent_num(rownum, is_col_num_cell_found,
-                             col_num_cell_content):
-    #+1 for header row
-    dummy_sent_num = rownum + 1
-    if is_col_num_cell_found:
-        #there is a column with numbers
-        #no one follows the guide
-        #There maybe be 1. 2.; 1!, 2!...
-        if isinstance(col_num_cell_content, (str, unicode)):
-            if not col_num_cell_content:
-                #cell is empty, may be they forgot to continue numeration...
-                return dummy_sent_num
-            m = re.search(r"(\d+)", col_num_cell_content)
-            if m is None:
-                raise RuntimeError("Failed to extract sent number from 0 column")
-            return int(m.group(1))
 
-        elif isinstance(col_num_cell_content, (int, float)):
-            return int(col_num_cell_content)
-
-    else:
-        return dummy_sent_num
-
-def _try_create_chunk(row_vals, sent_num, vals_offs):
+def _try_create_chunk(row_vals, sent_num):
     def check_str_cell(cell_val):
         if not isinstance(cell_val, (str, unicode)):
             raise RuntimeError("Sent # %d; Wrong value of the cell: %s"
                                % (sent_num, str(cell_val)))
         return cell_val
 
-    return Chunk(mod_text = row_vals[vals_offs + 0],
-                 orig_text = check_str_cell(row_vals[vals_offs + 1]),
-                 orig_doc = row_vals[vals_offs + 2],
-                 mod_type_str = check_str_cell(row_vals[vals_offs + 3]),
+
+    orig_text = []
+    #collect original text
+    orig_text_col = 4
+    while True:
+        try:
+            val = row_vals[orig_text_col]
+        except IndexError:
+            break
+        if val:
+            orig_text.append(check_str_cell(val))
+            orig_text_col+=1
+        else:
+            break
+
+    mod_text = row_vals[3]
+    if not mod_text:
+        return None
+
+    return Chunk(mod_text = mod_text,
+                 orig_text = orig_text,
+                 orig_doc = row_vals[1],
+                 mod_type_str = check_str_cell(row_vals[2]),
                  chunk_num = sent_num)
