@@ -1,3 +1,12 @@
+* common commads
+get dump for the 1st version:
+#+BEGIN_SRC bash
+nohup ./bin/gen_corpus -V1 -L1 dump -i /home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/ -o all_offsets &
+#+END_SRC
+and for the 2nd:
+#+BEGIN_SRC bash
+nohup ./bin/gen_corpus -V2 -L2 dump -i /home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/ -o all_offsets &
+#+END_SRC
 * first experiment (001)
 ** warnings
 count of failed chunks (probably chunks with the wrong filename).
@@ -139,7 +148,6 @@ echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' 004/all_offsets | wc -l)"
 | high         |  151 |
 |              | 4917 |
 #+TBLFM: $2=vsum(@1..@-1)
-
 * fifth (005)
 replaced ' ' with \p{Blank} [[file:~/Programms/PYWorkspace/plag_submissions_checker/plag_submissions_checker/common/text_proc.py::text%20=%20u"%20".join(p%20for%20p%20in%20regex.split(ur'\p{Blank}',%20text)%20if%20p)][here]] 
 ** warnings
@@ -174,6 +182,80 @@ echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' 005/all_offsets | wc -l)"
 | medium       |  584 |
 | high         |  154 |
 |              | 4905 |
+#+TBLFM: $2=vsum(@1..@-1)
+* sixth (006)
+changed order of operations [[file:~/Programms/PYWorkspace/plag_submissions_checker/plag_submissions_checker/common/text_proc.py::text%20=%20u"%20".join(p%20for%20p%20in%20regex.split(ur'\p{Blank}',%20text)%20if%20p)][here]] 
+made splitting last.
+I split logging and writing dump to a distinct file.
+This is the reason for some fluctuations in chunks amount.
+
+** warnings
+#+BEGIN_SRC bash
+grep 'WARNING' 006/nohup.out | wc -l
+#+END_SRC
+
+#+RESULTS:
+: 2266
+** normal chunks
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' 006/all_offsets | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' 006/all_offsets | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0$' 006/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 36396 |
+| chunks with not found orig sent |  1149 |
+| literally found orig sents      | 34577 |
+
+*** chunks with not literal matching
+#+BEGIN_SRC bash
+echo "light change, $(grep -P '\d+,\d+,\d+,\d+,[1-9]$' 006/all_offsets | wc -l)"
+echo "medium, $(grep -P '\d+,\d+,\d+,\d+,\d{2}$' 006/all_offsets | wc -l)"
+echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' 006/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| light change | 1211 |
+| medium       |  486 |
+| high         |  122 |
+|              | 1819 |
+#+TBLFM: $2=vsum(@1..@-1)
+
+* first v2 (v2_001)
+** warnings
+#+BEGIN_SRC bash
+grep 'WARNING' v2_001/nohup.out | wc -l
+#+END_SRC
+
+#+RESULTS:
+: 363
+** normal chunks
+
+#+BEGIN_SRC bash
+echo "chunks with found orig sent, $(grep -P '\d+,\d+,\d+,\d+,\d+' v2_001/all_offsets | wc -l)"
+echo "chunks with not found orig sent, $(grep -P '\d+,\d+,-1,-1,-1' v2_001/all_offsets | wc -l)"
+echo "literally found orig sents, $(grep -P '\d+,\d+,\d+,\d+,0$' v2_001/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| chunks with found orig sent     | 3784 |
+| chunks with not found orig sent |  644 |
+| literally found orig sents      | 3611 |
+
+*** chunks with not literal matching
+#+BEGIN_SRC bash
+echo "light change, $(grep -P '\d+,\d+,\d+,\d+,[1-9]$' v2_001/all_offsets | wc -l)"
+echo "medium, $(grep -P '\d+,\d+,\d+,\d+,\d{2}$' v2_001/all_offsets | wc -l)"
+echo "high, $(grep -P '\d+,\d+,\d+,\d+,\d{3}' v2_001/all_offsets | wc -l)"
+#+END_SRC
+
+#+RESULTS:
+| light change | 126 |
+| medium       |  36 |
+| high         |  11 |
+|              | 173 |
 #+TBLFM: $2=vsum(@1..@-1)
 
 * check ok statuses

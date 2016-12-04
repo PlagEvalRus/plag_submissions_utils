@@ -81,7 +81,7 @@ class SourceDoc(object):
 
         matches = matcher.get_matching_blocks()
         if len(matches) == 1:
-            return False
+            return None
         logging.debug("all matches: %s", matches)
 
         #how many letters between first matches and the last one

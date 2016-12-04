@@ -31,7 +31,7 @@ def run(archive_path):
                     chks.ORIGModTypeChecker()]
         metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
                    mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size)]
-        for mod_type in ModType.get_all_mods_type():
+        for mod_type in ModType.get_all_mod_types_v1():
             metrics.append(mtrks.ModTypeRatioMetric(mod_type,
                                                     opts.mod_type_ratios[mod_type]))
         errors, stat = Processor(opts, checkers, metrics).check()

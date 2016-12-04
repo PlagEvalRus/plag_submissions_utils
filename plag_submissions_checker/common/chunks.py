@@ -22,8 +22,11 @@ class ModType(object):
     SYN  = 11
 
     @classmethod
-    def get_all_mods_type(cls):
+    def get_all_mod_types_v1(cls):
         return range(0,9)
+
+def mod_types_to_str(mod_types):
+    return ",".join(mod_type_to_str(m) for m in mod_types)
 
 def mod_type_to_str(mod_type):
     mod_type_dict = {
@@ -41,6 +44,9 @@ def mod_type_to_str(mod_type):
         11 : "SYN"
     }
     return mod_type_dict.get(mod_type, "unk")
+
+def _create_mod_types(mods_str):
+    return [_create_mod_type(m) for m in mods_str.split(',')]
 
 def _create_mod_type(mod_str):
     mls = mod_str.strip().lower()
@@ -76,7 +82,7 @@ class Chunk(object):
         self._chunk_num           = chunk_num
         self._original_sents      = sents.SentsHolder(orig_text)
         self._modified_sents      = sents.SentsHolder(mod_text)
-        self._mod_type            = _create_mod_type(mod_type_str)
+        self._mod_types           = _create_mod_types(mod_type_str)
         self._orig_doc            = orig_doc
 
 
@@ -84,7 +90,19 @@ class Chunk(object):
         return self._chunk_num
 
     def get_mod_type(self):
-        return self._mod_type
+        """If chunk has only one modification type, this one will be returned.
+        If there are many types (like in v2), UNK is returned.
+        """
+        if len(self._mod_types) == 1:
+            return self._mod_types[0]
+        else:
+            return ModType.UNK
+
+    def get_all_mod_types(self):
+        return self._mod_types
+
+    def has_mod_type(self, mod_type):
+        return mod_type in self._mod_types
 
     def get_orig_doc(self):
         return self._orig_doc
@@ -126,7 +144,7 @@ class Chunk(object):
     def __str__(self):
         chunk_str = "%d (%s): %s, %s" %(
             self._chunk_num,
-            mod_type_to_str(self._mod_type),
+            mod_types_to_str(self._mod_types),
             u" ".join(self._modified_sents.get_sents()).encode("utf8"),
             u"|".join(self._modified_sents.get_all_tokens()).encode("utf8"))
         return chunk_str

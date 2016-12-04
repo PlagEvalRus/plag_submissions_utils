@@ -2,6 +2,7 @@
 # coding: utf-8
 
 
+import types
 import logging
 import re
 
@@ -66,13 +67,22 @@ def _check_headers(first_row):
     if first_row[2].lower().find(u"типы сокрытия") == -1:
         return "Failed to find a column with type of obfuscation!"
 
-    if first_row[3].lower().find(u"фрагменты текста эссе") == -1:
+    if first_row[3].lower().find(u"эссе") == -1:
         return "Failed to find a column with modified text!"
 
     if first_row[4].lower().find(u"исходное предложение") == -1:
         return "Failed to find a column with original text!"
 
     return None
+
+def _try_to_extract_sent_num(row_val):
+    if isinstance(row_val, types.StringTypes):
+        m = re.search(r"(\d+)", row_val)
+        if m is None:
+            raise RuntimeError("Failed to extract sent number from 0 column")
+        return int(m.group(1))
+    else:
+        return int(row_val)
 
 def create_chunks(inp_file):
     errors = []
@@ -94,7 +104,7 @@ def create_chunks(inp_file):
     for rownum in range(1, sheet.nrows):
         row_vals = sheet.row_values(rownum)
         try:
-            sent_num = int(row_vals[0])
+            sent_num = _try_to_extract_sent_num(row_vals[0])
             chunk = _try_create_chunk(
                 row_vals,
                 sent_num)
