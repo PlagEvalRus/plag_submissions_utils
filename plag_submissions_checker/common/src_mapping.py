@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import argparse
+import logging
 import csv
 import hashlib
 
@@ -41,6 +43,9 @@ class Src(object):
     def get_ext_id(self):
         return self._ext_id
 
+    def set_ext_id(self, ext_id):
+        self._ext_id = ext_id
+
     def get_res_id(self):
         return self._res_id
 
@@ -57,11 +62,16 @@ class SrcMap(object):
 
     def add(self, susp_id, src_filename, src_path, ext_id):
         src = Src(susp_id, src_filename, src_path, ext_id)
+        self.update_src(src)
+
+    def update_src(self, src):
         self._srcs[src.get_res_id()] = src
 
     def get_src_by_filename(self, susp_id, src_filename):
         return self._srcs[gen_res_id(susp_id, src_filename)]
 
+    def get_src(self, res_id):
+        return self._srcs[res_id]
 
     def to_csv(self, out):
         out.write("\n".join(s.to_csv_record() for s in self._srcs.viewvalues()))
@@ -85,3 +95,53 @@ def add_src_from_dir(susp_id, sources_dir, src_map):
                     src_dict[src],
                     (int(susp_id)<<6) + num)
 
+
+
+def update_src_mapping(mapping_file, updates_file):
+    mapping = SrcMap()
+    mapping.from_csv(mapping_file)
+    with open(updates_file, 'r') as f:
+        for line in f:
+            res_id, ext_id = line.strip().split(',')
+            src = mapping.get_src(res_id)
+            src.set_ext_id(ext_id)
+            mapping.update_src(src)
+
+    with open(mapping_file, 'w') as f:
+        mapping.to_csv(f)
+
+
+#some cli
+
+def update(opts):
+    update_src_mapping(opts.input_mapping, opts.updates_file)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--verbose", "-v", action="store_true", default = False)
+
+
+    subparsers = parser.add_subparsers(help='sub-command help')
+
+    update_parser = subparsers.add_parser('update', help='help of update')
+
+    update_parser.add_argument("--updates_file", "-i", required=True,
+                               help = "file with res_id and new ext_id")
+    update_parser.add_argument("--input_mapping", "-m", default = "src_mapping.csv",
+                               help = "src mapping file")
+    update_parser.set_defaults(func = update)
+
+    args = parser.parse_args()
+
+    FORMAT="%(asctime)s %(levelname)s: %(name)s: %(message)s"
+    logging.basicConfig(level = logging.DEBUG if args.verbose else logging.INFO,
+                        format = FORMAT)
+    try:
+
+        args.func(args)
+    except Exception as e:
+        logging.exception("failed to update: %s ", e)
+
+
+if __name__ == '__main__' :
+    main()
