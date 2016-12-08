@@ -53,12 +53,13 @@ class StatCollector(object):
             if chunk.get_mod_type() != ModType.ORIG:
                 stat.orig_sent_lengths.append((chunk.get_chunk_id(),
                                                chunk.get_avg_original_words_cnt()))
-                stat.docs_freqs[chunk.get_orig_doc()] += 1
+                stat.docs_freqs[chunk.get_orig_doc_filename()] += 1
 
 
             stat.mod_sent_lengths.append((chunk.get_chunk_id(),
                                           chunk.get_avg_modified_words_cnt()))
 
-            stat.mod_type_freqs[chunk.get_mod_type()] += 1
+            for mod_type in chunk.get_all_mod_types():
+                stat.mod_type_freqs[mod_type] += 1
 
         return stat

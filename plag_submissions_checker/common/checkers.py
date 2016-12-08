@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os
-import os.path as fs
 import logging
 
 from . import source_doc
 from . import chunks
 from .chunks import ModType
-from . import errors
 from .errors import ErrSeverity
 from .errors import ChunkError
 
@@ -21,11 +18,11 @@ class IChecher(object):
 
 
 class BaseChunkSimChecker(IChecher):
-    def __init__(self, opts, low_level_thresh = 5):
-        self._opts = opts
-        self._diff_perc_dict = opts.diff_perc
-        self._low_level_thresh = low_level_thresh
-        self._errors = []
+    def __init__(self, opts, fluctuation_delta = 3):
+        self._opts              = opts
+        self._diff_perc_dict    = opts.diff_perc
+        self._fluctuation_delta = fluctuation_delta
+        self._errors            = []
 
     def get_errors(self):
         return self._errors
@@ -42,10 +39,10 @@ class BaseChunkSimChecker(IChecher):
 
         error_level = None
         etal_diff_perc_tuple = self._diff_perc_dict[chunk.get_mod_type()]
-        if etal_diff_perc_tuple[0] > diff_perc:
+        if diff_perc < etal_diff_perc_tuple[0]:
             msg = "малы"
-            if etal_diff_perc_tuple[0] <= \
-               diff_perc + self._low_level_thresh:
+            if diff_perc + self._fluctuation_delta >= \
+               etal_diff_perc_tuple[0]:
                 error_level = ErrSeverity.LOW
             elif diff_perc < 3:
                 error_level = ErrSeverity.HIGH
@@ -54,7 +51,7 @@ class BaseChunkSimChecker(IChecher):
         elif etal_diff_perc_tuple[1] < diff_perc:
             msg = "слишком велики"
             if etal_diff_perc_tuple[1] >= \
-               diff_perc - self._low_level_thresh:
+               diff_perc - self._fluctuation_delta:
                 error_level = ErrSeverity.LOW
             else:
                 error_level = ErrSeverity.NORM
@@ -71,8 +68,8 @@ class BaseChunkSimChecker(IChecher):
                        error_level))
 
 class PRChecker(BaseChunkSimChecker):
-    def __init__(self, opts):
-        super(PRChecker, self).__init__(opts)
+    def __init__(self, opts, fluctuation_delta=3):
+        super(PRChecker, self).__init__(opts, fluctuation_delta)
 
     def __call__(self, chunk, src_docs):
         if chunk.get_mod_type() != ModType.LPR and chunk.get_mod_type() != ModType.HPR:
@@ -80,8 +77,8 @@ class PRChecker(BaseChunkSimChecker):
         super(PRChecker, self).__call__(chunk, src_docs)
 
 class AddChecker(BaseChunkSimChecker):
-    def __init__(self, opts):
-        super(AddChecker, self).__init__(opts)
+    def __init__(self, opts, fluctuation_delta=3):
+        super(AddChecker, self).__init__(opts, fluctuation_delta)
 
     def __call__(self, chunk, src_docs):
         if chunk.get_mod_type() != ModType.ADD:
@@ -96,8 +93,8 @@ class AddChecker(BaseChunkSimChecker):
                            ErrSeverity.HIGH))
 
 class DelChecker(BaseChunkSimChecker):
-    def __init__(self, opts):
-        super(DelChecker, self).__init__(opts)
+    def __init__(self, opts, fluctuation_delta=3):
+        super(DelChecker, self).__init__(opts, fluctuation_delta)
 
     def __call__(self, chunk, src_docs):
         if chunk.get_mod_type() != ModType.DEL:
@@ -112,8 +109,8 @@ class DelChecker(BaseChunkSimChecker):
                            ErrSeverity.HIGH))
 
 class CPYChecker(BaseChunkSimChecker):
-    def __init__(self, opts):
-        super(CPYChecker, self).__init__(opts)
+    def __init__(self, opts, fluctuation_delta=3):
+        super(CPYChecker, self).__init__(opts, fluctuation_delta)
 
     def __call__(self, chunk, src_docs):
         if chunk.get_mod_type() != ModType.CPY:
@@ -121,28 +118,55 @@ class CPYChecker(BaseChunkSimChecker):
         super(CPYChecker, self).__call__(chunk, src_docs)
 
 class SspChecker(BaseChunkSimChecker):
-    def __init__(self, opts):
-        super(SspChecker, self).__init__(opts)
+    def __init__(self, opts, fluctuation_delta=3):
+        super(SspChecker, self).__init__(opts, fluctuation_delta)
 
     def __call__(self, chunk, src_docs):
-        if chunk.get_mod_type() != ModType.SSP:
+        if chunk.get_mod_type() != ModType.SSP and \
+           chunk.get_mod_type() != ModType.SEP:
             return
         super(SspChecker, self).__call__(chunk, src_docs)
 
+
+
 class CctChecker(BaseChunkSimChecker):
-    def __init__(self, opts):
-        super(CctChecker, self).__init__(opts)
+    def __init__(self, opts, fluctuation_delta=3):
+        super(CctChecker, self).__init__(opts, fluctuation_delta)
 
     def __call__(self, chunk, src_docs):
-        if chunk.get_mod_type() != ModType.CCT:
+
+        if not chunk.has_mod_type(ModType.CCT):
             return
-        super(CctChecker, self).__call__(chunk, src_docs)
+
         orig_sents = chunk.get_orig_sents()
         if len(orig_sents) < 2:
             self._errors.append(ChunkError(
                 "Тип заимствования CCT: оригинальный фрагмент должен содержать несколько предложений ",
                 chunk.get_chunk_id(),
                 ErrSeverity.HIGH))
+
+        if chunk.get_mod_type() != ModType.CCT:
+            return
+        super(CctChecker, self).__call__(chunk, src_docs)
+
+class SHFChecker(BaseChunkSimChecker):
+    def __init__(self, opts, fluctuation_delta=3):
+        super(SHFChecker, self).__init__(opts, fluctuation_delta)
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_mod_type() != ModType.SHF:
+            return
+        super(SHFChecker, self).__call__(chunk, src_docs)
+
+class SYNChecker(BaseChunkSimChecker):
+    def __init__(self, opts, fluctuation_delta=3):
+        super(SYNChecker, self).__init__(opts, fluctuation_delta)
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_mod_type() != ModType.SYN:
+            return
+        super(SYNChecker, self).__call__(chunk, src_docs)
+
 
 class ORIGModTypeChecker(IChecher):
     def __init__(self):
@@ -193,12 +217,16 @@ class OrigSentChecker(IChecher):
 
 
         if not_found_cnt == len(sents):
-            self._errors.append(ChunkError("Оригинальное предложение не было найдено в документе-источнике",
-                                           chunk.get_chunk_id(),
-                                           ErrSeverity.HIGH))
+            self._errors.append(ChunkError(
+                "Оригинальное предложение не было найдено в документе-источнике",
+                chunk.get_chunk_id(),
+                ErrSeverity.HIGH))
 
         elif not_found_cnt != 0:
-            self._errors.append(ChunkError("Некоторые предложения не были найдены в документе-источнике", chunk.get_chunk_id()))
+            self._errors.append(ChunkError(
+                "Некоторые предложения не были найдены в документе-источнике",
+                chunk.get_chunk_id(),
+                ErrSeverity.HIGH))
 
 
 # sources
@@ -242,3 +270,37 @@ class SourceDocsChecker(IChecher):
                                                chunk.get_orig_doc().encode("utf-8"),
                                                chunk.get_chunk_id(),
                                                ErrSeverity.HIGH))
+
+
+class LexicalSimChecker(IChecher):
+    def __init__(self, opts, fluctuation_delta = 10):
+        self._opts              = opts
+        self._fluctuation_delta = fluctuation_delta
+        self._errors            = []
+
+    def get_errors(self):
+        return self._errors
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_mod_type() == ModType.ORIG:
+            return
+
+        lex_dist = chunk.lexical_dist()
+        lex_dist *= 100
+        logging.debug("LexicalSimChecker:: lex_dist=%f", lex_dist)
+
+        err_sev = None
+        if lex_dist < self._opts.min_lexical_dist:
+            err_sev = ErrSeverity.NORM
+            if lex_dist + self._fluctuation_delta < self._opts.min_lexical_dist:
+                err_sev = ErrSeverity.HIGH
+
+
+        if err_sev is not None:
+            common_msg = "Значительное совпадение по лексике у оригинального "\
+                         "и модифицированного предложений (различаются на %f%%)"
+            self._errors.append(
+                ChunkError(common_msg % lex_dist,
+                           chunk.get_chunk_id(),
+                           err_sev))
+

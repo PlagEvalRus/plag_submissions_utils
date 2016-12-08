@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import logging
 import distance
 
 from . import sents
@@ -24,6 +25,10 @@ class ModType(object):
     @classmethod
     def get_all_mod_types_v1(cls):
         return range(0,9)
+
+    @classmethod
+    def get_all_mod_types_v2(cls):
+        return range(0,8) + range(9,12)
 
 def mod_types_to_str(mod_types):
     return ",".join(mod_type_to_str(m) for m in mod_types)
@@ -82,6 +87,8 @@ class Chunk(object):
         self._chunk_num           = chunk_num
         self._original_sents      = sents.SentsHolder(orig_text)
         self._modified_sents      = sents.SentsHolder(mod_text)
+
+        logging.debug("input mode type string: %s", mod_type_str)
         self._mod_types           = _create_mod_types(mod_type_str)
         self._orig_doc            = orig_doc
 
@@ -119,6 +126,10 @@ class Chunk(object):
     def measure_dist(self):
         return distance.nlevenshtein(self._original_sents.get_all_tokens(),
                                      self._modified_sents.get_all_tokens())
+
+    def lexical_dist(self):
+        return distance.jaccard(self._original_sents.get_all_tokens(),
+                                self._modified_sents.get_all_tokens())
 
     def get_orig_sents(self):
         return self._original_sents.get_sents()

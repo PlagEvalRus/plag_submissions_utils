@@ -7,6 +7,7 @@ from .common.errors import ErrSeverity
 from .common.version import determine_version_by_id
 
 from .v1 import runner as v1run
+from .v2 import runner as v2run
 from .v1 import processor as v1_proc
 from .v2 import processor as v2_proc
 
@@ -34,7 +35,7 @@ def run(archive_path, version):
     if version == "1":
         return v1run.run(archive_path)
     elif version == "2":
-        pass
+        return v2run.run(archive_path)
     else:
         raise RuntimeError("Unknown version: %s!" % version)
 

@@ -48,10 +48,10 @@ class SrcDocsCountMetric(IMetric):
 
 class DocSizeMetric(IMetric):
     def __init__(self, min_real_sent_cnt, min_sent_size,
-                 medium_thresh = 10):
+                 fluctuation_delta = 10):
         self._min_real_sent_cnt = min_real_sent_cnt
         self._min_sent_size     = min_sent_size
-        self._medium_thresh     = medium_thresh
+        self._fluctuation_delta = fluctuation_delta
         self._real_sent_cnt     = 0
 
     def get_value(self):
@@ -60,7 +60,7 @@ class DocSizeMetric(IMetric):
     def get_violation_level(self):
         if self._min_real_sent_cnt > self._real_sent_cnt:
             if self._min_real_sent_cnt <= \
-               self._real_sent_cnt + self._medium_thresh:
+               self._real_sent_cnt + self._fluctuation_delta:
                 return ViolationLevel.MEDIUM
             else:
                 return ViolationLevel.HIGH
@@ -77,10 +77,10 @@ class DocSizeMetric(IMetric):
 
 class ModTypeRatioMetric(IMetric):
     def __init__(self, mod_type, ratio_interval,
-                 medium_thresh = 5):
+                 fluctuation_delta = 3):
         self._mod_type      = mod_type
         self._ratio_interval = ratio_interval
-        self._medium_thresh = medium_thresh
+        self._fluctuation_delta = fluctuation_delta
         self._mod_type_ratio = 0
 
     def get_value(self):
@@ -88,7 +88,7 @@ class ModTypeRatioMetric(IMetric):
 
     def strict_mod(self):
         if self._ratio_interval[0] > self._mod_type_ratio:
-                return ViolationLevel.HIGH
+            return ViolationLevel.HIGH
         elif self._ratio_interval[1] < self._mod_type_ratio:
             return ViolationLevel.HIGH
         else:
@@ -112,9 +112,9 @@ class ModTypeRatioMetric(IMetric):
         #non strict (there may be some fluctuations from required interval)
         logging.debug("mod type %d, %s %f", self._mod_type,
                       self._ratio_interval, self._mod_type_ratio)
-        if self._ratio_interval[0] > self._mod_type_ratio:
-            if self._ratio_interval[0] <= \
-               self._mod_type_ratio + self._medium_thresh:
+        if self._mod_type_ratio < self._ratio_interval[0]:
+            if self._mod_type_ratio + self._fluctuation_delta >= \
+               self._ratio_interval[0]:
                 return ViolationLevel.MEDIUM
             else:
                 return ViolationLevel.HIGH

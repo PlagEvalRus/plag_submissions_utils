@@ -19,33 +19,38 @@ from plag_submissions_checker.common.chunks import ModType
 class ProcessorOpts(BasicProcesssorOpts):
     def __init__(self, sources_dir, inp_file):
         super(ProcessorOpts, self).__init__(sources_dir, inp_file)
-        #TODO adjust params!!
         self.min_src_docs      = 5
-        self.min_sent_per_src  = 4
+        self.min_sent_per_src  = 5
         self.min_sent_size     = 5
-        self.min_real_sent_cnt = 150
+        self.min_real_sent_cnt = 100
         self.mod_type_ratios   = {
-            ModType.UNK : (0,0),
-            ModType.CPY : (0, 10),
-            ModType.LPR : (10, 30),
-            ModType.HPR : (10, 20),
-            ModType.ORIG : (0, 30),
-            ModType.DEL : (20, 30),
-            ModType.ADD : (15, 25),
-            ModType.CCT : (5, 15),
-            ModType.SSP : (5, 15)
+            ModType.UNK : (0, 0),
+            ModType.CPY : (0, 0),
+            ModType.LPR : (10, 50),
+            ModType.HPR : (20, 50),
+            ModType.ORIG : (6, 15),
+            ModType.DEL : (10, 40),
+            ModType.ADD : (10, 40),
+            ModType.CCT : (5, 20),
+            ModType.SEP : (5, 20),
+            ModType.SYN : (10, 40),
+            ModType.SHF : (10, 40)
         }
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {
             ModType.CPY : (0, 0),
-            ModType.LPR : (23, 75),
-            ModType.HPR : (45, 100),
+            ModType.LPR : (20, 50),
+            ModType.HPR : (50, 100),
             ModType.ORIG : (100, 100),
-            ModType.DEL : (15, 70),
-            ModType.ADD : (15, 70),
+            ModType.DEL : (15, 50),
+            ModType.ADD : (15, 50),
             ModType.CCT : (0, 80),
-            ModType.SSP : (0, 85)
+            ModType.SEP : (0, 80),
+            ModType.SYN : (30, 80),
+            ModType.SHF : (20, 100)
         }
+
+        self.min_lexical_dist = 30 #%
 
 class Processor(BasicProcessor):
     def __init__(self, opts, checkers,

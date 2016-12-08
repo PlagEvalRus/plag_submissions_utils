@@ -10,18 +10,25 @@ from . import common_runner
 def run_v1(opts):
     return common_runner.run(opts.archive.decode("utf8"), "1")
 
+def run_v2(opts):
+    return common_runner.run(opts.archive.decode("utf8"), "2")
+
 def main():
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--verbose", "-v", action="store_true")
 
     subparsers = parser.add_subparsers(help='different versions')
 
-    v1_parser = subparsers.add_parser('v1',
-                                      help='help of set')
+    v1_parser = subparsers.add_parser('v1', help='help of set')
 
     v1_parser.add_argument("--archive", "-a", required=True)
-    v1_parser.add_argument("--verbose", "-v", action="store_true")
     v1_parser.set_defaults(func = run_v1)
+
+    v2_parser = subparsers.add_parser('v2', help='help of set')
+
+    v2_parser.add_argument("--archive", "-a", required=True)
+    v2_parser.set_defaults(func = run_v2)
 
     args = parser.parse_args()
 
