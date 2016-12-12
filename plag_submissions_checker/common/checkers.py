@@ -176,6 +176,27 @@ class ORIGModTypeChecker(IChecher):
     def get_errors(self):
         return self._errors
 
+
+    def _try_find_chunk_in_src(self, chunk, src_docs):
+        for src in src_docs:
+            sent_holder = chunk.get_mod_sent_holder()
+            sents = sent_holder.get_sents()
+            found_sents = 0
+            for num, sent in enumerate(sents):
+                if sent_holder.get_sent_info(num).word_cnt < 6:
+                    continue
+                if src_docs[src].is_sent_in_doc(sent):
+                    found_sents += 1
+            if found_sents == len(sents):
+                self._errors.append(ChunkError(
+                    "Оригинальное предложение было найдено в документе '%s'" % \
+                    src.encode("utf8"),
+                    chunk.get_chunk_id(),
+                    ErrSeverity.HIGH))
+                break
+
+
+
     def __call__(self, chunk, src_docs):
         if chunk.get_mod_type() != ModType.ORIG:
             return
@@ -189,6 +210,9 @@ class ORIGModTypeChecker(IChecher):
                 "Поле 'заимствованное предложение' должно быть заполнено, если это предложением написано вами",
                 chunk.get_chunk_id(),
                 ErrSeverity.HIGH))
+
+        self._try_find_chunk_in_src(chunk, src_docs)
+
 
 class OrigSentChecker(IChecher):
     def __init__(self, opts):

@@ -41,8 +41,8 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.ORIG : (100, 100),
             ModType.DEL : (15, 70),
             ModType.ADD : (15, 70),
-            ModType.CCT : (0, 80),
-            ModType.SSP : (0, 85)
+            ModType.CCT : (0, 100),
+            ModType.SSP : (0, 100)
         }
 
 class Processor(BasicProcessor):

@@ -27,6 +27,10 @@
     - default-jre
     #rar
     - unrar
+    #pdf
+    - poppler-utils
+    #7z
+    - p7zip-full
 
   become: yes
   become_method: sudo

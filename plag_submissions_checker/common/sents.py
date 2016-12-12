@@ -38,8 +38,13 @@ class SentsHolder(object):
         self._sent_infos = [SentInfo(len(t)) for t in self._sent_tokens]
 
     def get_avg_words_cnt(self):
+        if not self._sent_infos:
+            return 0.0
         words_cnt = sum(si.word_cnt for si in self._sent_infos)
         return float(words_cnt)/ len(self._sent_infos)
+
+    def get_sent_info(self, sent_num):
+        return self._sent_infos[sent_num]
 
     def get_sents(self):
         return self._sents

@@ -44,8 +44,8 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.ORIG : (100, 100),
             ModType.DEL : (15, 50),
             ModType.ADD : (15, 50),
-            ModType.CCT : (0, 80),
-            ModType.SEP : (0, 80),
+            ModType.CCT : (0, 100),
+            ModType.SEP : (0, 100),
             ModType.SYN : (30, 80),
             ModType.SHF : (20, 100)
         }
@@ -153,8 +153,17 @@ def _try_create_chunk(row_vals, sent_num):
     if not mod_text:
         return None
 
+    orig_doc = row_vals[1]
+    mod_type_str = check_str_cell(row_vals[2])
+
+    defined_cols = 0
+    defined_cols += bool(orig_doc) + bool(mod_type_str) + bool(orig_text)
+
+    if defined_cols != 0 and defined_cols != 3:
+        raise RuntimeError("Неправильный формат!")
+
     return Chunk(mod_text = mod_text,
                  orig_text = orig_text,
-                 orig_doc = row_vals[1],
-                 mod_type_str = check_str_cell(row_vals[2]),
+                 orig_doc = orig_doc,
+                 mod_type_str = mod_type_str,
                  chunk_num = sent_num)

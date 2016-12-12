@@ -131,6 +131,12 @@ class Chunk(object):
         return distance.jaccard(self._original_sents.get_all_tokens(),
                                 self._modified_sents.get_all_tokens())
 
+    def get_mod_sent_holder(self):
+        return self._modified_sents
+
+    def get_orig_sent_holder(self):
+        return self._original_sents
+
     def get_orig_sents(self):
         return self._original_sents.get_sents()
 

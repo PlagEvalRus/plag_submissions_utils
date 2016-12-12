@@ -8,6 +8,10 @@ import plag_submissions_checker.common.checkers  as chks
 from plag_submissions_checker.common.chunks import Chunk
 from plag_submissions_checker.common.errors import ErrSeverity
 
+from plag_submissions_checker.v1.processor import ProcessorOpts
+from plag_submissions_checker.v1.processor import Processor
+
+
 class Opts(object):
     """Documentation for Opts
 
@@ -42,3 +46,15 @@ class LexicalSimCheckerTestCase(unittest.TestCase):
         errors = self.checker.get_errors()
         self.assertEqual(1, len(errors))
         self.assertEqual(ErrSeverity.NORM, errors[0].sev)
+
+
+class ORIGModTypeCheckerTestCase(unittest.TestCase):
+    def setUp(self):
+        self.checkers = [chks.ORIGModTypeChecker()]
+
+    def test_submission(self):
+        opts = ProcessorOpts("data/test_data/test_orig_mod_type/sources",
+                             "data/test_data/test_orig_mod_type/sources_list.xlsx")
+        errors, _ = Processor(opts, self.checkers, []).check()
+
+        self.assertEqual(2, len(errors))
