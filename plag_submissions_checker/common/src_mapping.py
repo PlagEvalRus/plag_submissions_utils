@@ -71,7 +71,10 @@ class SrcMap(object):
         return self._srcs[gen_res_id(susp_id, src_filename)]
 
     def get_src(self, res_id):
-        return self._srcs[res_id]
+        try:
+            return self._srcs[res_id]
+        except KeyError:
+            return None
 
     def to_csv(self, out):
         out.write("\n".join(s.to_csv_record() for s in self._srcs.viewvalues()))
@@ -104,6 +107,8 @@ def update_src_mapping(mapping_file, updates_file):
         for line in f:
             res_id, ext_id = line.strip().split(',')
             src = mapping.get_src(res_id)
+            if src is None:
+                continue
             src.set_ext_id(ext_id)
             mapping.update_src(src)
 

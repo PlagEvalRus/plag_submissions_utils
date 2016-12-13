@@ -54,7 +54,7 @@ class SrcRetrievalMetaGenerator(object):
             susp_id,
             chunk.get_orig_doc_filename()).get_ext_id()
 
-        self._src_map[src_id] += 1
+        self._src_map[src_id] += len(chunk.get_modified_sents())
 
     def on_susp_end(self, susp_doc):
         #TODO lang
@@ -68,7 +68,7 @@ class SrcRetrievalMetaGenerator(object):
             if self._src_map[src_id] < self._opts.min_sent_cnt:
                 continue
             meta["plagiarism"].append({
-                "sent_cnt": self._src_map[src_id],
+                "reused_sent_cnt": self._src_map[src_id],
                 "id": src_id
             })
 
@@ -77,7 +77,7 @@ class SrcRetrievalMetaGenerator(object):
 
         out_path = fs.join(
             self._opts.src_retr_out_dir,
-            "suspicious-document%s.json" % susp_id)
+            "%s.json" % susp_id)
         with open(out_path, 'w') as out:
             json.dump(meta, out,
                       indent=4, separators=(',', ': '))
