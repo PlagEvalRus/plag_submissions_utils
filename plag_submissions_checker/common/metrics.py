@@ -10,6 +10,7 @@ class ViolationLevel(object):
     OK = 0
     MEDIUM = 1
     HIGH = 2
+    FATAL = 3
 
 class IMetric(object):
     """Documentation for IMetric
@@ -26,15 +27,20 @@ class IMetric(object):
         raise NotImplementedError("should implement this!")
 
 class SrcDocsCountMetric(IMetric):
-    def __init__(self, min_docs_cnt, min_sent_per_src):
+    def __init__(self, min_docs_cnt, min_sent_per_src,
+                 acceptance_perc = 0.6):
         self._min_docs_cnt     = min_docs_cnt
         self._min_sent_per_src = min_sent_per_src
+        self._acceptance_perc  = acceptance_perc
         self._docs_cnt         = 0
 
     def get_value(self):
         return self._docs_cnt
 
     def get_violation_level(self):
+        if round(self._min_docs_cnt * self._acceptance_perc) >= self._docs_cnt:
+            return ViolationLevel.FATAL
+
         if self._min_docs_cnt > self._docs_cnt:
             return ViolationLevel.HIGH
         else:
@@ -48,16 +54,21 @@ class SrcDocsCountMetric(IMetric):
 
 class DocSizeMetric(IMetric):
     def __init__(self, min_real_sent_cnt, min_sent_size,
-                 fluctuation_delta = 10):
+                 fluctuation_delta = 10,
+                 acceptance_perc = 0.8):
         self._min_real_sent_cnt = min_real_sent_cnt
         self._min_sent_size     = min_sent_size
         self._fluctuation_delta = fluctuation_delta
+        self._acceptance_perc   = acceptance_perc
         self._real_sent_cnt     = 0
 
     def get_value(self):
         return self._real_sent_cnt
 
     def get_violation_level(self):
+        if round(self._min_real_sent_cnt * self._acceptance_perc) > self._real_sent_cnt:
+            return ViolationLevel.FATAL
+
         if self._min_real_sent_cnt > self._real_sent_cnt:
             if self._min_real_sent_cnt <= \
                self._real_sent_cnt + self._fluctuation_delta:

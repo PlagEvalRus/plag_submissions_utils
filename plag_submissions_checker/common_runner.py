@@ -30,6 +30,9 @@ def medium_errors_cnt(metrics, errors, stat, count_metrics = True):
     return errs + \
         _errors_cnt(errors, ErrSeverity.NORM)
 
+def fatal_errors_cnt(metrics, errors, stat):
+    return _metrics_violations_cnt(metrics, ViolationLevel.FATAL)
+
 
 def run(archive_path, version):
     if version == "1":

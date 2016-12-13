@@ -18,7 +18,9 @@
       <ul>
         {% for m in metrics %}
         <li>
-          {% if m.get_violation_level() == 2 %}
+          {% if m.get_violation_level() == 3 %}
+          <font size="4" color="red">
+          {% elif m.get_violation_level() == 2 %}
           <font color="red">
           {% else %}
           <font color="black">
