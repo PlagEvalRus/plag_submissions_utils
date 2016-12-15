@@ -22,6 +22,7 @@ def run(archive_path):
         opts = ProcessorOpts(*extract_submission(archive_path,
                                                  temp_dir))
         checkers = [
+            chks.OriginalityChecker(opts),
             chks.OrigSentChecker(opts),
             chks.SourceDocsChecker(opts),
             chks.PRChecker(opts),
@@ -34,6 +35,7 @@ def run(archive_path):
             chks.SYNChecker(opts),
             chks.LexicalSimChecker(opts),
             chks.ORIGModTypeChecker()
+
         ]
 
         metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),

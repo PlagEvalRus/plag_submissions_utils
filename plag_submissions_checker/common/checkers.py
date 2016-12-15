@@ -8,6 +8,8 @@ from . import chunks
 from .chunks import ModType
 from .errors import ErrSeverity
 from .errors import ChunkError
+from .errors import Error
+from .simple_detector import calc_originality
 
 class IChecher(object):
     def get_errors(self):
@@ -328,3 +330,30 @@ class LexicalSimChecker(IChecher):
                            chunk.get_chunk_id(),
                            err_sev))
 
+
+
+class OriginalityChecker(IChecher):
+    def __init__(self, opts):
+        self._opts          = opts
+        self._modified_text = []
+        self._orig_text     = []
+
+
+    def get_errors(self):
+        orig= calc_originality("\n".join(self._modified_text),
+                               "\n".join(self._orig_text))
+
+        if orig < self._opts.min_originality:
+            return [
+                Error("Оригинальность текста слишком низкая: %.2f%%."
+                      " Необходимо увеличить оригинальность до %.2f%%!" % (
+                          orig * 100.0,
+                          self._opts.min_originality * 100.0),
+                      ErrSeverity.HIGH)
+            ]
+        else:
+            return []
+
+    def __call__(self, chunk, src_docs):
+        self._modified_text.append(chunk.get_mod_text())
+        self._orig_text.append(chunk.get_orig_text())

@@ -27,30 +27,31 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.UNK : (0, 0),
             ModType.CPY : (0, 0),
             ModType.LPR : (10, 50),
-            ModType.HPR : (20, 50),
+            ModType.HPR : (10, 50),
             ModType.ORIG : (6, 15),
             ModType.DEL : (10, 40),
             ModType.ADD : (10, 40),
-            ModType.CCT : (5, 20),
-            ModType.SEP : (5, 20),
+            ModType.CCT : (4, 20),
+            ModType.SEP : (4, 20),
             ModType.SYN : (10, 40),
             ModType.SHF : (10, 40)
         }
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {
             ModType.CPY : (0, 0),
-            ModType.LPR : (20, 50),
+            ModType.LPR : (20, 100),
             ModType.HPR : (50, 100),
             ModType.ORIG : (100, 100),
-            ModType.DEL : (15, 50),
-            ModType.ADD : (15, 50),
+            ModType.DEL : (15, 95),
+            ModType.ADD : (15, 95),
             ModType.CCT : (0, 100),
             ModType.SEP : (0, 100),
-            ModType.SYN : (30, 80),
+            ModType.SYN : (30, 100),
             ModType.SHF : (20, 100)
         }
 
-        self.min_lexical_dist = 30 #%
+        self.min_lexical_dist = 25 #%
+        self.min_originality = 0.77
 
 class Processor(BasicProcessor):
     def __init__(self, opts, checkers,
