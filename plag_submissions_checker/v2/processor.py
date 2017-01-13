@@ -22,7 +22,8 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.min_src_docs      = 5
         self.min_sent_per_src  = 5
         self.min_sent_size     = 5
-        self.min_real_sent_cnt = 100
+        self.min_real_sent_cnt = 50
+        self.min_src_sents_cnt = 100
         self.mod_type_ratios   = {
             ModType.UNK : (0, 0),
             ModType.CPY : (0, 0),

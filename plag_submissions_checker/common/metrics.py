@@ -50,9 +50,11 @@ class SrcDocsCountMetric(IMetric):
         self._docs_cnt = sum(1 for k in stat.docs_freqs if stat.docs_freqs[k] >= self._min_sent_per_src)
 
     def __str__(self):
-        return "Количество документов-источников, из которых взято более %d предложений : %d" % (self._min_sent_per_src, self._docs_cnt)
+        return "Количество документов-источников, из которых взято"\
+            " более %d предложений : %d" % (self._min_sent_per_src,
+                                            self._docs_cnt)
 
-class DocSizeMetric(IMetric):
+class SentsCountMetric(IMetric):
     def __init__(self, min_real_sent_cnt, min_sent_size,
                  fluctuation_delta = 10,
                  acceptance_perc = 0.8):
@@ -79,11 +81,38 @@ class DocSizeMetric(IMetric):
             return ViolationLevel.OK
 
     def __call__(self, stat, chunks):
+        raise NotImplementedError("should implement SentsCountMetric.__call__")
+
+    def __str__(self):
+        raise NotImplementedError("should implement SentsCountMetric.__str__")
+
+
+class DocSizeMetric(SentsCountMetric):
+    def __init__(self, min_real_sent_cnt, min_sent_size,
+                 fluctuation_delta = 10,
+                 acceptance_perc = 0.8):
+        super(DocSizeMetric, self).__init__(min_real_sent_cnt, min_sent_size,
+                                            fluctuation_delta, acceptance_perc)
+
+
+    def __call__(self, stat, chunks):
         self._real_sent_cnt = sum(1 for t in stat.mod_sent_lengths if t[1] > self._min_sent_size)
 
     def __str__(self):
         return "Количество предложений, размер которых превышает %d слов: %d" % (
             self._min_sent_size, self._real_sent_cnt)
+
+class SrcSentsCountMetric(SentsCountMetric):
+    def __init__(self, min_real_sent_cnt, fluctuation_delta = 10,
+                 acceptance_perc = 0.8):
+        super(SrcSentsCountMetric, self).__init__(min_real_sent_cnt, 0,
+                                                  fluctuation_delta, acceptance_perc)
+
+    def __call__(self, stat, chunks):
+        self._real_sent_cnt += stat.src_sents_cnt
+
+    def __str__(self):
+        return "Количество использованных из источников предложений: %d" % self._real_sent_cnt
 
 
 class ModTypeRatioMetric(IMetric):

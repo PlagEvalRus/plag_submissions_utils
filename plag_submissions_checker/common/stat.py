@@ -14,13 +14,15 @@ class SubmissionStat(object):
                  orig_sent_lengths = None,
                  mod_sent_lengths = None,
                  mod_type_freqs = None,
-                 docs_freqs = None):
+                 docs_freqs = None,
+                 src_sents_cnt = 0):
         super(SubmissionStat, self).__init__()
         self.chunks_cnt        = chunks_cnt
         self.orig_sent_lengths = orig_sent_lengths if orig_sent_lengths is not None else []
         self.mod_sent_lengths  = mod_sent_lengths if mod_sent_lengths is not None else []
         self.mod_type_freqs    = mod_type_freqs if mod_type_freqs is not None else defaultdict(lambda : 0)
         self.docs_freqs        = docs_freqs if docs_freqs is not None else defaultdict(lambda : 0)
+        self.src_sents_cnt     = src_sents_cnt
 
     def _defdict_to_str(self, defdict, val_trans = lambda v: v, key_trans = lambda k : k):
         return "\n".join("%s : %s" % (key_trans(k), val_trans(v)) for k, v in defdict.iteritems())
@@ -54,6 +56,7 @@ class StatCollector(object):
                 stat.orig_sent_lengths.append((chunk.get_chunk_id(),
                                                chunk.get_avg_original_words_cnt()))
                 stat.docs_freqs[chunk.get_orig_doc_filename()] += 1
+                stat.src_sents_cnt += len(chunk.get_orig_sents())
 
 
             stat.mod_sent_lengths.append((chunk.get_chunk_id(),

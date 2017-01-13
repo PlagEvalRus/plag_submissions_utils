@@ -98,9 +98,13 @@ class TextAlignmentMetaGenerator(object):
             self._mapping = create_mapping(opts.subm_dir)
 
         self._xml_map = {}
+        self._pairs = []
 
         if not fs.exists(opts.text_align_out_dir):
             os.makedirs(opts.text_align_out_dir)
+        if fs.exists(fs.join(self._opts.text_align_out_dir, "pairs")):
+            os.remove(fs.join(self._opts.text_align_out_dir, "pairs"))
+
 
     def __call__(self, susp_doc, chunk, ofs_info):
         if ofs_info is None:
@@ -111,9 +115,12 @@ class TextAlignmentMetaGenerator(object):
             susp_id,
             chunk.get_orig_doc_filename()).get_ext_id()
 
+        susp_filename = susp_id + ".txt"
+        src_filename = src_id + ".txt"
         if src_id not in self._xml_map:
             #TODO add version
-            self._xml_map[src_id] = ET.Element('document', reference=susp_id + ".txt")
+            self._xml_map[src_id] = ET.Element('document', reference=susp_filename)
+            self._pairs.append((susp_filename, src_filename))
 
         src_offs_beg, src_offs_end,err = ofs_info
 
@@ -121,7 +128,7 @@ class TextAlignmentMetaGenerator(object):
                        name='plagiarism',
                        this_offset=str(susp_doc.get_offs_for_text(chunk.get_chunk_id())),
                        this_length=str(len(chunk.get_mod_text())),
-                       source_reference=src_id + ".txt",
+                       source_reference=src_filename,
                        source_offset=str(src_offs_beg),
                        source_length=str(src_offs_end - src_offs_beg),
                        type="manual",
@@ -157,6 +164,11 @@ class TextAlignmentMetaGenerator(object):
         for src_id in self._xml_map:
             self._finalize_pair(susp_id, src_id)
         self._xml_map = {}
+        #update pairs
+        with open(fs.join(self._opts.text_align_out_dir, "pairs"), 'a') as f:
+            for pair in self._pairs:
+                f.write("%s %s\n" % pair)
+        self._pairs = []
 
 
     def get_name(self):

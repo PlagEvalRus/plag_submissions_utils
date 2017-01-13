@@ -39,7 +39,8 @@ def run(archive_path):
         ]
 
         metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
-                   mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size)]
+                   mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size),
+                   mtrks.SrcSentsCountMetric(opts.min_src_sents_cnt)]
 
         for mod_type in ModType.get_all_mod_types_v2():
             metrics.append(mtrks.ModTypeRatioMetric(mod_type,
