@@ -61,6 +61,7 @@ def main():
         jinja_html_template = Template(template.decode("utf-8"))
 
         print_resp(jinja_html_template.render({
+            "checked_filename": upl_file_form.filename,
             "errors" : errors,
             "metrics": metrics
         }))
