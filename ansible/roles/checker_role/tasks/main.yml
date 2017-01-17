@@ -23,6 +23,7 @@
   with_items:
     - g++
     - python-dev
+    - enca
     #tika
     - default-jre
     #rar

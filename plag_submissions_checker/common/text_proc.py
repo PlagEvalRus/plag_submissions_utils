@@ -36,6 +36,8 @@ def convert_doc(doc_path):
     #tika's pdf converter is not very good
     if doc_path.endswith("pdf"):
         cmd = "pdftotext %s -" % pipes.quote(doc_path)
+    elif doc_path.endswith("txt"):
+        cmd = "enca -Lrussian -x utf-8 %s && cat %s" % ((pipes.quote(doc_path), )*2)
     else:
         cmd = "/compiled/bin/tika --text %s" % pipes.quote(doc_path)
     # textract html converter is not very good
