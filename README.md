@@ -10,10 +10,15 @@ sudo apt-get install libffi-dev python-dev libssl-dev sshpass python-pip
 sudo pip install -U pyasn1 netaddr ansible==2.1.2
 ```
 
-TODO - выкачать из гит
+Выкачать исходники из git.
+
+```bash
+sudo apt-get install git
+git clone https://github.com/PlagEvalRus/plag_submissions_utils plag_submissions_utils
+```
 Установить зависимости ansible
 ```bash
-cd plag_submissions_checker
+cd plag_submissions_utils
 sudo ansible-galaxy install -r ansible/requirements.yml
 ```
 Запусить процесс настройки программы.
