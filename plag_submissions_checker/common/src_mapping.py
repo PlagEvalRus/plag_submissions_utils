@@ -91,12 +91,18 @@ class SrcMap(object):
 
 
 
-def add_src_from_dir(susp_id, sources_dir, src_map):
+def add_src_from_dir(susp_id, sources_dir, src_map,
+                     use_filename_as_id = False):
     src_dict = find_src_paths(sources_dir)
     for num, src in enumerate(src_dict):
+        if use_filename_as_id:
+            ext_id = int(src)
+        else:
+            ext_id = (int(susp_id)<<6) + num
+
         src_map.add(susp_id, src,
                     src_dict[src],
-                    (int(susp_id)<<6) + num)
+                    ext_id)
 
 
 

@@ -34,7 +34,8 @@ class SrcRetrievalMetaGenerator(object):
             self._mapping = src_mapping.SrcMap()
             self._mapping.from_csv(opts.mapping)
         else:
-            self._mapping = create_mapping(opts.subm_dir)
+            self._mapping = create_mapping(opts.subm_dir,
+                                           use_filename_as_id = opts.use_filename_as_id)
 
         self._src_map = None
         self._init_src_map()
@@ -95,7 +96,8 @@ class TextAlignmentMetaGenerator(object):
             self._mapping = src_mapping.SrcMap()
             self._mapping.from_csv(opts.mapping)
         else:
-            self._mapping = create_mapping(opts.subm_dir)
+            self._mapping = create_mapping(opts.subm_dir,
+                                           use_filename_as_id = opts.use_filename_as_id)
 
         self._xml_map = {}
         self._pairs = []
@@ -296,11 +298,13 @@ def write_sources_to_files(mapping, susp_id, sources, out_dir):
 
 
 
-def create_mapping(subm_dir, limit_by_version = None):
+def create_mapping(subm_dir, limit_by_version = None,
+                   use_filename_as_id = False):
     mapping = src_mapping.SrcMap()
 
     def arc_proc(susp_id, sources_dir, _):
-        src_mapping.add_src_from_dir(susp_id, sources_dir, mapping)
+        src_mapping.add_src_from_dir(susp_id, sources_dir, mapping,
+                                     use_filename_as_id)
 
     run_over_submissions(subm_dir, arc_proc, limit_by_version)
     return mapping
@@ -414,6 +418,7 @@ def main():
                                    default="01-manual-plagiarism")
     text_align_parser.add_argument("--mapping", "-m", default = "src_mapping.csv",
                                    help = "mapping file path")
+    text_align_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
     text_align_parser.set_defaults(func = create_text_align_meta)
 
     src_retr_parser = subparsers.add_parser('src_retr',
@@ -424,6 +429,7 @@ def main():
     src_retr_parser.add_argument("--mapping", "-m", default = "src_mapping.csv",
                                  help = "mapping file path")
     src_retr_parser.add_argument("--min_sent_cnt", "-s", default=4, type=int)
+    src_retr_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
     src_retr_parser.set_defaults(func = create_src_retr_meta)
 
     pan_parser = subparsers.add_parser('pan',
@@ -434,6 +440,7 @@ def main():
                             help = "mapping file path")
     pan_parser.add_argument("--src_retr_out_dir", "-s", default="src_retrieval")
     pan_parser.add_argument("--min_sent_cnt", "-c", default=4, type=int)
+    pan_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
     pan_parser.add_argument("--text_align_out_dir", "-t",
                             default="01-manual-plagiarism")
     pan_parser.set_defaults(func = create_pan_meta)
