@@ -5,10 +5,10 @@
 import tempfile
 import shutil
 
-from plag_submissions_checker.common.extract_utils import extract_submission
-import plag_submissions_checker.common.checkers as chks
-import plag_submissions_checker.common.metrics as mtrks
-from plag_submissions_checker.common.chunks import ModType
+from plag_submissions_utils.common.extract_utils import extract_submission
+import plag_submissions_utils.common.checkers as chks
+import plag_submissions_utils.common.metrics as mtrks
+from plag_submissions_utils.common.chunks import ModType
 
 from .processor import ProcessorOpts
 from .processor import Processor

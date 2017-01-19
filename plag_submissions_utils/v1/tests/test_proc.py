@@ -3,7 +3,7 @@
 
 import unittest
 
-import plag_submissions_checker.v1.runner as runner
+import plag_submissions_utils.v1.runner as runner
 
 class ProcessorTestCase(unittest.TestCase):
 

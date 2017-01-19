@@ -8,12 +8,12 @@ import re
 
 import xlrd
 
-from plag_submissions_checker.common.processor import BasicProcessor
-from plag_submissions_checker.common.processor import BasicProcesssorOpts
-from plag_submissions_checker.common.errors import ErrSeverity
-from plag_submissions_checker.common.errors import Error
-from plag_submissions_checker.common.chunks import Chunk
-from plag_submissions_checker.common.chunks import ModType
+from plag_submissions_utils.common.processor import BasicProcessor
+from plag_submissions_utils.common.processor import BasicProcesssorOpts
+from plag_submissions_utils.common.errors import ErrSeverity
+from plag_submissions_utils.common.errors import Error
+from plag_submissions_utils.common.chunks import Chunk
+from plag_submissions_utils.common.chunks import ModType
 
 class ProcessorOpts(BasicProcesssorOpts):
     def __init__(self, sources_dir, inp_file):

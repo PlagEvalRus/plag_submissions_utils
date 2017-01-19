@@ -4,7 +4,7 @@
 import unittest
 import mock
 
-from plag_submissions_checker.common.source_doc import SourceDoc
+from plag_submissions_utils.common.source_doc import SourceDoc
 
 def dummy_doc(path):
     return u"""text
@@ -28,7 +28,7 @@ SEQ_MATCHER_SENT2=u"Sentence for hyphen test!"
 
 class FindSentInSrcTestCase(unittest.TestCase):
 
-    @mock.patch("plag_submissions_checker.common.text_proc.convert_doc",
+    @mock.patch("plag_submissions_utils.common.text_proc.convert_doc",
                 dummy_doc)
     def setUp(self):
         self.source_doc = SourceDoc("/dev/null",
@@ -82,7 +82,7 @@ class FindSentInSrcTestCase(unittest.TestCase):
                          dummy_doc("temp")[offs_beg:offs_end])
 
 
-    @mock.patch("plag_submissions_checker.common.text_proc.convert_doc",
+    @mock.patch("plag_submissions_utils.common.text_proc.convert_doc",
                 dummy_doc)
     def test_offs_with_large_delta(self):
 
@@ -119,7 +119,7 @@ def make_doc_from_txt(text):
 
 class SpecificSeqMatcherCases(unittest.TestCase):
 
-    @mock.patch("plag_submissions_checker.common.text_proc.convert_doc",
+    @mock.patch("plag_submissions_utils.common.text_proc.convert_doc",
                 make_doc_from_txt)
     def create_source_doc(self, text, offs_delta = 160):
         return SourceDoc(text, max_offs_delta=offs_delta)

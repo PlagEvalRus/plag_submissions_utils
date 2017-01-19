@@ -3,10 +3,10 @@
 
 import unittest
 
-import plag_submissions_checker.v2.runner as runner
-from plag_submissions_checker.common.chunks import ModType
-from plag_submissions_checker.common_runner import _metrics_violations_cnt
-from plag_submissions_checker.common.metrics import ViolationLevel
+import plag_submissions_utils.v2.runner as runner
+from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common_runner import _metrics_violations_cnt
+from plag_submissions_utils.common.metrics import ViolationLevel
 
 class ProcessorTestCase(unittest.TestCase):
 

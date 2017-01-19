@@ -1,3 +1,4 @@
 /.projectile
 /.settings.el
 *.pyc
+/.vagrant

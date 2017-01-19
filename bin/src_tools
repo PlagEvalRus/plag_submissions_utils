@@ -8,7 +8,7 @@ import os.path as fs
 sys.path.insert(0,
                 fs.dirname(fs.dirname(fs.realpath(__file__))))
 
-import plag_submissions_checker.common.src_mapping as cli
+import plag_submissions_utils.common.src_mapping as cli
 
 
 if __name__ == '__main__':

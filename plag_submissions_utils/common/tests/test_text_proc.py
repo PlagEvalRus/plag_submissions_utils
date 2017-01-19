@@ -6,7 +6,7 @@ import unittest
 import segtok.segmenter as seg
 import segtok.tokenizer as tok
 
-import plag_submissions_checker.common.text_proc as text_proc
+import plag_submissions_utils.common.text_proc as text_proc
 
 class SegtokTestCase(object):
     def test(self):

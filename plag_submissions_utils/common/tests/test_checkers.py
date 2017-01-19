@@ -4,12 +4,12 @@
 import logging
 import unittest
 
-import plag_submissions_checker.common.checkers  as chks
-from plag_submissions_checker.common.chunks import Chunk
-from plag_submissions_checker.common.errors import ErrSeverity
+import plag_submissions_utils.common.checkers  as chks
+from plag_submissions_utils.common.chunks import Chunk
+from plag_submissions_utils.common.errors import ErrSeverity
 
-from plag_submissions_checker.v1.processor import ProcessorOpts
-from plag_submissions_checker.v1.processor import Processor
+from plag_submissions_utils.v1.processor import ProcessorOpts
+from plag_submissions_utils.v1.processor import Processor
 
 
 class Opts(object):

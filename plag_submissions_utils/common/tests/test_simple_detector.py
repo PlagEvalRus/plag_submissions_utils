@@ -3,9 +3,9 @@
 
 import unittest
 
-from plag_submissions_checker.common.simple_detector import SimpleDetector
-from plag_submissions_checker.common.simple_detector import SimpleDetectorOpts
-from plag_submissions_checker.common.simple_detector import calc_originality_by_detections
+from plag_submissions_utils.common.simple_detector import SimpleDetector
+from plag_submissions_utils.common.simple_detector import SimpleDetectorOpts
+from plag_submissions_utils.common.simple_detector import calc_originality_by_detections
 
 class SimpleDetectorTestCase(unittest.TestCase):
     def setUp(self):

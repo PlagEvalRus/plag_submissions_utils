@@ -4,7 +4,7 @@
 
 import unittest
 
-from plag_submissions_checker.common.chunks import Chunk
+from plag_submissions_utils.common.chunks import Chunk
 
 class PartialRecordTestCase(unittest.TestCase):
     def test_missing_orig_sent(self):

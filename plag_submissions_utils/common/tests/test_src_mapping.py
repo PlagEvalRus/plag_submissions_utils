@@ -5,8 +5,8 @@ import tempfile
 
 import unittest
 
-from plag_submissions_checker.common.extract_utils import extract_submission
-from plag_submissions_checker.common import src_mapping
+from plag_submissions_utils.common.extract_utils import extract_submission
+from plag_submissions_utils.common import src_mapping
 
 
 class SrcMapTestCase(unittest.TestCase):
