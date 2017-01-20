@@ -285,15 +285,20 @@ class SuspDocGenerator(object):
             self.add_text(chunk.get_chunk_id(),
                           chunk.get_mod_text())
 
-def write_sources_to_files(mapping, susp_id, sources, out_dir):
+def write_sources_to_files(mapping, susp_id, sources, out_dir,
+                           ext_id_as_filename = False):
     if not fs.exists(out_dir):
         os.makedirs(out_dir)
 
-    for src in sources:
-        source_doc = sources[src]
+    for src_filename in sources:
+        source_doc = sources[src_filename]
+        src = mapping.get_src_by_filename(susp_id, src_filename)
+        if ext_id_as_filename:
+            filename = src.get_ext_id()
+        else:
+            filename = src.get_res_id()
         filepath = fs.join(
-            out_dir,
-            mapping.get_src_by_filename(susp_id, src).get_res_id() + ".txt")
+            out_dir, filename + ".txt")
         source_doc.write_text_to_file(filepath)
 
 
@@ -334,7 +339,8 @@ def dumb_dump(opts):
     gener.process_submissions()
 
 def gen_map(opts):
-    mapping = create_mapping(opts.subm_dir, opts.limit_by_version)
+    mapping = create_mapping(opts.subm_dir, opts.limit_by_version,
+                             opts.use_filename_as_id)
     with open(opts.mapping_file, 'w') as f:
         mapping.to_csv(f)
 
@@ -344,7 +350,8 @@ def create_sources(opts):
 
     def arc_proc(susp_id, sources_dir, _):
         sources = load_sources_docs(sources_dir)
-        write_sources_to_files(mapping, susp_id, sources, opts.out_dir)
+        write_sources_to_files(mapping, susp_id, sources, opts.out_dir,
+                               opts.ext_id_as_filename)
 
     run_over_submissions(opts.subm_dir, arc_proc, opts.limit_by_version)
 
@@ -391,6 +398,8 @@ def main():
                                 help = "directory with submissions")
     gen_map_parser.add_argument("--mapping_file", "-o", default = "src_mapping.csv",
                                 help = "mapping file path")
+    gen_map_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
+
     gen_map_parser.set_defaults(func = gen_map)
 
     create_src_parser = subparsers.add_parser('create_src',
@@ -401,6 +410,7 @@ def main():
     create_src_parser.add_argument("--mapping", "-m", default = "src_mapping.csv",
                                    help = "mapping file path")
     create_src_parser.add_argument("--out_dir", "-o", default="essay_src")
+    create_src_parser.add_argument("--ext_id_as_filename", "-e", action="store_true")
     create_src_parser.set_defaults(func = create_sources)
 
     create_susp_parser = subparsers.add_parser('create_susp',
@@ -467,9 +477,7 @@ def test():
 
     pipes = [DumbDumper()]
     gener = Generator(Opts(), pipes)
-    gener.process_archive(u"/home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/148/148.zip", "148")
-    # process_archive("/home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/024/024.tar", "1", "1")
-    # process_archive(u"/home/denin/Yandex.Disk/workspace/sci/plag/corpora/our_plag_corp/submissions/039/Юсков - Сетевой маркетинг.rar", "039", "1")
+    gener.process_archive("data/test_data/test.zip", "4")
 
 def test_v2():
     pipes = [DumbDumper()]
