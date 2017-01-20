@@ -37,17 +37,19 @@ echo "generate sources map..."
 ./bin/gen_corpus gen_map -i "$data_dir" -u
 
 echo "generate suspicious documents..."
-./bin/gen_corpus create_susp -i "$data_dir" -o "$SR_dir"/susp/"$batch"
+./bin/gen_corpus create_susp -i "$data_dir" -o "$TA_dir"/susp
 check_rcode $? " error: failed to generate suspicious documents!"
 
 echo "zip suspicious documents..."
-zip -r "$SR_dir"/susp/"$batch".zip "$SR_dir"/susp/"$batch"
+zip -r "$TA_dir"/susp.zip "$TA_dir"/susp
 check_rcode $? " error: failed to zip suspicious documents!"
 
-echo "copy suspicious documents to text_aligment..."
-mkdir -p "$TA_dir"
-cp -r "$SR_dir"/susp/"$batch".zip "$TA_dir"/susp.zip
+echo "copy suspicious documents to text_alignment..."
+mkdir -p "$SR_dir"/susp/
+cp -r "$TA_dir"/susp "$SR_dir"/susp/"$batch"
 check_rcode $? " error: failed to copy suspicious documents!"
+zip -r "$SR_dir"/susp/"$batch".zip "$SR_dir"/susp/"$batch"
+check_rcode $? " error: failed to zip suspicious documents2!"
 
 
 echo "generate sources for text alignment..."
