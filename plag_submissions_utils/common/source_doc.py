@@ -84,10 +84,10 @@ class SourceDoc(object):
             return None
         logging.debug("all matches: %s", matches)
 
-        #how many letters between first matches and the last one
-        #matches[-1] is reserved by difflib creator
         offs_beg = left_a_pos + matches[0].a
+        #matches[-1] is reserved by difflib creator
         offs_end = left_a_pos + matches[-2].a + matches[-2].size
+        #how many letters between first matches and the last one.
         ofs_diff = offs_end - offs_beg
         matched_length = sum(m.size for m in matches)
 
@@ -98,7 +98,8 @@ class SourceDoc(object):
         if max(ofs_diff - self._max_offs_delta, 0) < len(sent):
             if abs(len(sent) - matched_length) <= self._max_length_delta:
                 return (offs_beg, offs_end,
-                        # ofs_diff - len(sent) + len(sent) - matched_length
+                        # this is count of erroneous symbols
+                        # (ofs_diff - len(sent)) + (len(sent) - matched_length)
                         ofs_diff - matched_length)
 
         return None
