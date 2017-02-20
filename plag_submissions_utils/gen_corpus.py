@@ -19,6 +19,7 @@ from .common.extract_utils import extract_submission
 from .common.source_doc import load_sources_docs
 from .common import src_mapping
 from .common.submissions import run_over_submissions
+from .common.gen_utils import generate_end_of_sentence
 from . import common_runner
 
 
@@ -260,21 +261,24 @@ class SuspDocGenerator(object):
     """Documentation for SuspDocGenerator
 
     """
-    def __init__(self, susp_id, out):
+    def __init__(self, susp_id, out, max_new_lines = 5):
         super(SuspDocGenerator, self).__init__()
         self._susp_id = susp_id
         self._out = out
         self._cur_offset = 0
         self._offsets_dict = {}
+        self._max_new_lines = max_new_lines
 
     def get_susp_id(self):
         return self._susp_id
 
     def add_text(self, text_id, text):
-        self._out.write(text.encode("utf-8") + "\n")
+        suffix = generate_end_of_sentence(self._max_new_lines)
+
+        self._out.write(text.encode("utf-8") + suffix)
         text_offs = self._cur_offset
         self._offsets_dict[text_id] = text_offs
-        self._cur_offset += len(text) + 1
+        self._cur_offset += len(text) + len(suffix)
         return text_offs
 
     def get_offs_for_text(self, text_id):
