@@ -10,6 +10,5 @@ if [  -z "$base_path" ]; then
 fi
 
 subm_dir="$1"
-dir="submissions"
 shopt -s extglob
-./bin/submission_checker v2 -a $base_path/$dir/$subm_dir/*@(.rar|.zip)
+./bin/submission_checker v2 -a $base_path/$subm_dir/*@(.rar|.zip)

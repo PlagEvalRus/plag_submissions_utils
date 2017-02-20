@@ -2,14 +2,10 @@
 # coding: utf-8
 
 import logging
-import os
-import os.path as fs
-import re
 
+from .stat import collect_stat
 from .errors import ErrSeverity
 from .errors import Error
-from .stat import StatCollector
-from .source_doc import SourceDoc
 from . import source_doc
 
 class BasicProcesssorOpts(object):
@@ -28,13 +24,11 @@ class BasicProcesssorOpts(object):
 
 class BasicProcessor(object):
     def __init__(self, opts, checkers,
-                 metrics,
-                 stat_collecter = None):
+                 metrics):
         self._opts           = opts
 
         self._checkers       = checkers
         self._metrics        = metrics
-        self._stat_collecter = stat_collecter if stat_collecter is not None else StatCollector()
 
 
     def _process_chunk(self, chunk, src_docs):
@@ -56,7 +50,7 @@ class BasicProcessor(object):
     def check(self):
 
         chunks, errors = self._create_chunks()
-        stat = self._stat_collecter(chunks)
+        stat = collect_stat(chunks)
         logging.debug("collected stat: %s", stat)
         if stat.chunks_cnt == 0:
             errors.append(Error("Не удалось проанализировать ни один фрагмент",

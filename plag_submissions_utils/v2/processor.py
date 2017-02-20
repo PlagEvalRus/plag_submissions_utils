@@ -56,10 +56,9 @@ class ProcessorOpts(BasicProcesssorOpts):
 
 class Processor(BasicProcessor):
     def __init__(self, opts, checkers,
-                 metrics,
-                 stat_collecter = None):
+                 metrics):
         super(Processor, self).__init__(opts, checkers,
-                                        metrics, stat_collecter)
+                                        metrics)
 
     def _create_chunks(self):
         return create_chunks(self._opts.inp_file)

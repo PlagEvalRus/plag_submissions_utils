@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import itertools
 from collections import defaultdict
 
 
 from .chunks import ModType
+from .chunks import mod_types_to_str
 
 class SubmissionStat(object):
     """Documentation for SubmissionStat
@@ -20,7 +22,10 @@ class SubmissionStat(object):
         self.chunks_cnt        = chunks_cnt
         self.orig_sent_lengths = orig_sent_lengths if orig_sent_lengths is not None else []
         self.mod_sent_lengths  = mod_sent_lengths if mod_sent_lengths is not None else []
-        self.mod_type_freqs    = mod_type_freqs if mod_type_freqs is not None else defaultdict(lambda : 0)
+        self.mod_type_freqs    = mod_type_freqs if mod_type_freqs is not None else \
+                                 defaultdict(lambda : 0)
+        self.mod_type_co_occur = defaultdict(lambda : 0)
+
         self.docs_freqs        = docs_freqs if docs_freqs is not None else defaultdict(lambda : 0)
         self.src_sents_cnt     = src_sents_cnt
 
@@ -47,22 +52,50 @@ Docs frequencies: %s""" %(self.chunks_cnt,
 
 class StatCollector(object):
     def __init__(self):
-        pass
+        self._stat = SubmissionStat(0)
+
+    def _update_co_occurs(self, mod_types, stat):
+        for comb_size in [2,3,4,5]:
+            for comb in itertools.combinations(mod_types, comb_size):
+                t = tuple(sorted(comb))
+                stat.mod_type_co_occur[t] += 1
+
+    def get_stat(self):
+        return self._stat
+
+    def mod_types_stat(self):
+        items = self._stat.mod_type_co_occur.items()
+        items.sort(key = lambda t : t[1], reverse=True)
+        return items, self._stat.mod_type_freqs
 
     def __call__(self, chunks):
-        stat = SubmissionStat(len(chunks))
+        self._stat.chunks_cnt += len(chunks)
         for chunk in chunks:
             if chunk.get_mod_type() != ModType.ORIG:
-                stat.orig_sent_lengths.append((chunk.get_chunk_id(),
-                                               chunk.get_avg_original_words_cnt()))
-                stat.docs_freqs[chunk.get_orig_doc_filename()] += 1
-                stat.src_sents_cnt += len(chunk.get_orig_sents())
+                self._stat.orig_sent_lengths.append((chunk.get_chunk_id(),
+                                                     chunk.get_avg_original_words_cnt()))
+                self._stat.docs_freqs[chunk.get_orig_doc_filename()] += 1
+                self._stat.src_sents_cnt += len(chunk.get_orig_sents())
 
 
-            stat.mod_sent_lengths.append((chunk.get_chunk_id(),
-                                          chunk.get_avg_modified_words_cnt()))
+            self._stat.mod_sent_lengths.append((chunk.get_chunk_id(),
+                                                chunk.get_avg_modified_words_cnt()))
 
             for mod_type in chunk.get_all_mod_types():
-                stat.mod_type_freqs[mod_type] += 1
+                self._stat.mod_type_freqs[mod_type] += 1
+            self._update_co_occurs(chunk.get_all_mod_types(), self._stat)
 
-        return stat
+        return self._stat
+
+def collect_stat(chunks):
+    return StatCollector()(chunks)
+
+def print_mod_types_stat(stat_holder, out):
+    co_occur, freqs = stat_holder.mod_types_stat()
+    out.write("Types frequencies\n")
+    for freq in freqs:
+        out.write("%s: %d\n" % (mod_types_to_str([freq]), freqs[freq]))
+
+    out.write("Co-occurrences:\n")
+    for types, freq in co_occur:
+        out.write("%s: %d\n" % (mod_types_to_str(types), freq))
