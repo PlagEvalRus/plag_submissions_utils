@@ -48,6 +48,6 @@ for sid in ids:
              cr.medium_errors_cnt(metrics, errors, stat,
                                   count_metrics=False)))
     except Exception as e:
-        print "failed to process %d: %s" % (sid, e)
+        print "failed to process %s: %s" % (sid, e)
 
 print "\n".join(["%s,%s,%s,%s"%res for res in results])
