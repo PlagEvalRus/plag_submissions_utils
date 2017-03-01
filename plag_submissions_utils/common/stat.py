@@ -3,6 +3,7 @@
 
 import itertools
 from collections import defaultdict
+from collections import Counter
 
 
 from .chunks import ModType
@@ -89,6 +90,32 @@ class StatCollector(object):
 
 def collect_stat(chunks):
     return StatCollector()(chunks)
+
+
+class SrcStatCollector(object):
+    def __init__(self):
+        self._docs_cnt_stat     = Counter()
+        self._sents_in_src_stat = Counter()
+
+    def get_stat(self):
+        return self._docs_cnt_stat, self._sents_in_src_stat
+
+    def __call__(self, chunks):
+        docs_freqs = Counter(c.get_orig_doc_filename() for c in chunks
+                             if c.get_mod_type() != ModType.ORIG)
+
+        self._docs_cnt_stat[len(docs_freqs)] += 1
+        self._sents_in_src_stat.update(min(x, 100) / 10 for x in docs_freqs.itervalues())
+
+    def print_stat(self, out):
+        out.write("Src count stat:\n")
+
+        for src_cnt in self._docs_cnt_stat:
+            out.write("%d,%d\n" % (src_cnt, self._docs_cnt_stat[src_cnt]))
+
+        out.write("Sentence amount histogram:\n")
+        for i in range(0,11):
+            out.write("%d,%d\n" % (i, self._sents_in_src_stat[i]))
 
 def print_mod_types_stat(stat_holder, out):
     co_occur, freqs = stat_holder.mod_types_stat()

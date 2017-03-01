@@ -9,6 +9,7 @@ import logging
 from . import common_runner
 from .common.submissions import run_over_submissions
 from .common.stat import StatCollector
+from .common.stat import SrcStatCollector
 from .common.stat import print_mod_types_stat
 
 def run_v1(opts):
@@ -39,6 +40,16 @@ def collect_stat(opts):
     run_over_submissions(opts.archive_dir, proc_arc)
     print_mod_types_stat(stat_collector, sys.stdout)
 
+def collect_src_stat(opts):
+    stat_collector = SrcStatCollector()
+    def proc_arc(susp_id, _, meta_file_path):
+        chunks, _ = common_runner.create_chunks(
+            susp_id, meta_file_path)
+        stat_collector(chunks)
+
+    run_over_submissions(opts.archive_dir, proc_arc)
+    stat_collector.print_stat(sys.stdout)
+
 
 
 def main():
@@ -61,6 +72,10 @@ def main():
     stat_parser = subparsers.add_parser('stat')
     stat_parser.add_argument("--archive_dir", "-d", required=True)
     stat_parser.set_defaults(func = collect_stat)
+
+    src_stat_parser = subparsers.add_parser('src_stat')
+    src_stat_parser.add_argument("--archive_dir", "-d", required=True)
+    src_stat_parser.set_defaults(func = collect_src_stat)
 
     args = parser.parse_args()
 
