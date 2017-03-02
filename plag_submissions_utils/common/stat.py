@@ -105,7 +105,8 @@ class SrcStatCollector(object):
                              if c.get_mod_type() != ModType.ORIG)
 
         self._docs_cnt_stat[len(docs_freqs)] += 1
-        self._sents_in_src_stat.update(min(x, 100) / 10 for x in docs_freqs.itervalues())
+        self._sents_in_src_stat.update(min(x, 100) / 10 for x in docs_freqs.itervalues()
+                                       if x >= 4)
 
     def print_stat(self, out):
         out.write("Src count stat:\n")
