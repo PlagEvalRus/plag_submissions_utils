@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import pipes
-import re
 import subprocess
 
 import segtok.segmenter as seg

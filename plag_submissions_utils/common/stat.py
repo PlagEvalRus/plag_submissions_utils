@@ -80,7 +80,7 @@ class StatCollector(object):
 
 
             self._stat.mod_sent_lengths.append((chunk.get_chunk_id(),
-                                                chunk.get_avg_modified_words_cnt()))
+                                                chunk.get_avg_mod_words_cnt()))
 
             for mod_type in chunk.get_all_mod_types():
                 self._stat.mod_type_freqs[mod_type] += 1

@@ -55,7 +55,7 @@ class SrcRetrievalMetaGenerator(object):
             susp_id,
             chunk.get_orig_doc_filename()).get_ext_id()
 
-        self._src_map[src_id] += len(chunk.get_modified_sents())
+        self._src_map[src_id] += len(chunk.get_mod_sents())
 
     def on_susp_end(self, susp_doc):
         #TODO lang

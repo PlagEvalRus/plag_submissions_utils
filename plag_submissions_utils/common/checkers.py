@@ -3,6 +3,9 @@
 
 import logging
 
+from segtok import segmenter
+import regex
+
 from . import source_doc
 from . import chunks
 from .chunks import ModType
@@ -10,6 +13,8 @@ from .errors import ErrSeverity
 from .errors import ChunkError
 from .errors import Error
 from .simple_detector import calc_originality
+
+
 
 class IChecher(object):
     def get_errors(self):
@@ -70,6 +75,8 @@ class BaseChunkSimChecker(IChecher):
                        error_level))
 
 class PRChecker(BaseChunkSimChecker):
+    """Paraphrases checker.
+    """
     def __init__(self, opts, fluctuation_delta=3):
         super(PRChecker, self).__init__(opts, fluctuation_delta)
 
@@ -357,3 +364,42 @@ class OriginalityChecker(IChecher):
     def __call__(self, chunk, src_docs):
         self._modified_text.append(chunk.get_mod_text())
         self._orig_text.append(chunk.get_orig_text())
+
+
+class SentCorrectnessChecker(IChecher):
+    def __init__(self, mods = None):
+        super(SentCorrectnessChecker, self).__init__()
+        self._errors = []
+        self._mods = mods
+
+    def get_errors(self):
+        return self._errors
+
+    def _check_term_in_the_end(self, chunk):
+        if self._mods and "term_in_the_end" not in self._mods:
+            return
+        text = chunk.get_mod_sents()[-1]
+
+        if text[-1] not in segmenter.SENTENCE_TERMINALS:
+            self._errors.append(ChunkError(
+                "Предложение должно заканчиваться точкой (или !?)!",
+                chunk.get_chunk_id(),
+                ErrSeverity.NORM))
+
+    def _check_title_case(self, chunk):
+        if self._mods and "title_case" not in self._mods:
+            return
+
+        first_token = chunk.get_mod_sents()[0].split(None, 1)[0]
+
+        #allow up to 2 punctuation characters before upper letter or digit.
+        m = regex.search(ur"^\p{P}{0,2}(\p{Lu}|\d)", first_token)
+        if m is None:
+            self._errors.append(ChunkError(
+                "Предложение должно начинаться с заглавной буквы!",
+                chunk.get_chunk_id(),
+                ErrSeverity.NORM))
+
+    def __call__(self, chunk, _):
+        self._check_term_in_the_end(chunk)
+        self._check_title_case(chunk)

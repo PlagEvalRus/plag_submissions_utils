@@ -58,3 +58,49 @@ class ORIGModTypeCheckerTestCase(unittest.TestCase):
         errors, _ = Processor(opts, self.checkers, []).check()
 
         self.assertEqual(2, len(errors))
+
+
+class SentCorrectnessCheckerTestCase(unittest.TestCase):
+
+    def test_term_in_the_end(self):
+        checker = chks.SentCorrectnessChecker(['term_in_the_end'])
+        chunk = Chunk("", "Correct sent with trailing spaces!!!!!  ", "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "Boring sent.", "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "Question mark?", "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+
+        chunk = Chunk("", "Without term   ", "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(1, len(checker.get_errors()))
+
+
+    def test_title_case(self):
+        checker = chks.SentCorrectnessChecker(['title_case'])
+        chunk = Chunk("", u"Корректное предложение!", "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+
+        chunk = Chunk("", u"Из-за дефиса не работает str.istitle.", "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", u'"Цитата: текст"', "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", u'2009 number is ok.', "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", u"маленькая буква.", "", "", 1)
+        checker(chunk, None)
+        self.assertEqual(1, len(checker.get_errors()))

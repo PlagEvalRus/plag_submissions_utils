@@ -120,7 +120,7 @@ class Chunk(object):
     def get_avg_original_words_cnt(self):
         return self._original_sents.get_avg_words_cnt()
 
-    def get_avg_modified_words_cnt(self):
+    def get_avg_mod_words_cnt(self):
         return self._modified_sents.get_avg_words_cnt()
 
     def measure_dist(self):
@@ -140,7 +140,7 @@ class Chunk(object):
     def get_orig_sents(self):
         return self._original_sents.get_sents()
 
-    def get_modified_sents(self):
+    def get_mod_sents(self):
         return self._modified_sents.get_sents()
 
     def get_orig_tokens(self):
