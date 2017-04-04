@@ -5,7 +5,10 @@ import logging
 
 from segtok import segmenter
 import regex
+import hunspell
+import langdetect
 
+from . import text_proc
 from . import source_doc
 from . import chunks
 from .chunks import ModType
@@ -403,3 +406,97 @@ class SentCorrectnessChecker(IChecher):
     def __call__(self, chunk, _):
         self._check_term_in_the_end(chunk)
         self._check_title_case(chunk)
+
+
+
+
+class SpellChecker(IChecher):
+    DICT_PREFIX = '/usr/share/hunspell'
+
+    def __init__(self, high_rate = 0.1, norm_rate = 0.01,
+                 lang_hint = 'ru'):
+        super(SpellChecker, self).__init__()
+        self._last_lang                = lang_hint
+        self._errors                   = []
+        self._dicts                    = {}
+
+        self._tokens_cnt               = 0
+        self._wrong_spelled_tokens_cnt = 0
+        self._sents_with_typos         = set()
+
+        #error rates
+        self._high_rate                = high_rate
+        self._norm_rate                = norm_rate
+
+
+
+
+    def get_errors(self):
+        if self._tokens_cnt == 0:
+            return self._errors
+
+        logging.debug("SpellChecker: typos cnt: %s, all tokens: %s",
+                      self._wrong_spelled_tokens_cnt,
+                      self._tokens_cnt)
+
+
+        err_msg = "Слишком много опечаток в заимствованном тексте! " \
+                  "Проверьте следующие предложения: %s" % \
+                  ", ".join(str(s) for s in sorted(self._sents_with_typos))
+
+        typos_rate = self._wrong_spelled_tokens_cnt / float(self._tokens_cnt)
+        if typos_rate > self._high_rate:
+            self._errors.append(
+                Error(err_msg, ErrSeverity.HIGH))
+        elif typos_rate > self._norm_rate:
+            self._errors.append(Error(err_msg, ErrSeverity.NORM))
+
+        return self._errors
+
+
+    def _detect_lang(self, chunk):
+        lang = langdetect.detect(chunk.get_mod_text())
+        if lang not in ['ru', 'en']:
+            logging.debug("Failed to detect lang; Fallback to last detected: %s",
+                          self._last_lang)
+            return self._last_lang
+        else:
+            self._last_lang = lang
+            return lang
+
+    def _get_dict(self, chunk):
+        lang = self._detect_lang(chunk)
+
+        if lang in self._dicts:
+            return self._dicts[lang]
+
+        if lang == 'ru':
+            dict_name = 'ru_RU'
+        else:
+            dict_name = 'en_US'
+
+        self._dicts[lang] = hunspell.HunSpell(
+            '%s/%s.dic' % (self.DICT_PREFIX, dict_name),
+            '%s/%s.aff' % (self.DICT_PREFIX, dict_name))
+
+        return self._dicts[lang]
+
+
+
+    def __call__(self, chunk, _):
+        spell_dict = self._get_dict(chunk)
+        if spell_dict is None:
+            return
+
+        tokens = [t for s in chunk.get_mod_sents()
+                  for t in text_proc.tok_sent(s, make_lower = False)]
+
+        for token in tokens:
+            #yeah we're gonna skip the first word in the sentence.
+            #but we also skip all named entities (poor man's named entity recognition)
+            if token[0].isupper():
+                continue
+            self._tokens_cnt += 1
+            if not spell_dict.spell(token):
+                self._wrong_spelled_tokens_cnt += 1
+                self._sents_with_typos.add(chunk.get_chunk_id())

@@ -29,7 +29,8 @@ def run(archive_path):
                     chks.CctChecker(opts, fluctuation_delta = 5),
                     chks.SspChecker(opts, fluctuation_delta = 5),
                     chks.ORIGModTypeChecker(),
-                    chks.SentCorrectnessChecker()]
+                    chks.SentCorrectnessChecker(),
+                    chks.SpellChecker()]
 
         metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
                    mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size)]

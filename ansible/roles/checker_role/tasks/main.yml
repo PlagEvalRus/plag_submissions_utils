@@ -33,6 +33,10 @@
     - poppler-utils
     #7z
     - p7zip-full
+    #spell-check
+    - libhunspell-dev
+    - hunspell-ru
+    - hunspell-en-us
 
   become: yes
   become_method: sudo

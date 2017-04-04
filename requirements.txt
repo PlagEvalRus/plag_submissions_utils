@@ -5,3 +5,5 @@ regex
 xlrd
 patool
 jinja2
+hunspell
+langdetect

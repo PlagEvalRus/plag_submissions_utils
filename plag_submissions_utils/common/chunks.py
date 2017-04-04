@@ -150,6 +150,8 @@ class Chunk(object):
         return self._original_sents.get_tokens_list()
 
     def get_mod_tokens(self):
+        """Tokens are lowercased.
+        """
         return self._modified_sents.get_all_tokens()
 
     def get_orig_text(self):
@@ -162,6 +164,6 @@ class Chunk(object):
         chunk_str = "%d (%s): %s, %s" %(
             self._chunk_num,
             mod_types_to_str(self._mod_types),
-            u" ".join(self._modified_sents.get_sents()).encode("utf8"),
-            u"|".join(self._modified_sents.get_all_tokens()).encode("utf8"))
+            u" ".join(self.get_mod_sents()).encode("utf8"),
+            u"|".join(self.get_mod_tokens()).encode("utf8"))
         return chunk_str

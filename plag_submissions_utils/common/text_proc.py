@@ -27,9 +27,13 @@ def seg_text(text):
     text = regex.sub(ur"(\p{Ll})\s?\.\s?(\p{Lu})", ur"\1. \2", text)
     return seg.split_multi(text)
 
-def tok_sent(sent):
+def tok_sent(sent, make_lower = True):
     tokens = tok.symbol_tokenizer(sent)
-    return [s.lower() for s in tokens if not ispunct(s)]
+
+    proc = lambda s : s
+    if make_lower:
+        proc = lambda s: s.lower()
+    return [proc(s) for s in tokens if not ispunct(s)]
 
 def convert_doc(doc_path):
     #tika's pdf converter is not very good

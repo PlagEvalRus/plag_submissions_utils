@@ -104,3 +104,41 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
         chunk = Chunk("", u"маленькая буква.", "", "", 1)
         checker(chunk, None)
         self.assertEqual(1, len(checker.get_errors()))
+
+class SpellCheckerTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.checker = chks.SpellChecker()
+
+    def test_without_typos(self):
+        chunk = Chunk("", u"Этот текст точно без ошибок!", "", "", 1)
+        self.checker(chunk, None)
+        self.assertEqual(0, len(self.checker.get_errors()))
+
+    def test_with_typos(self):
+        chunk = Chunk("", u"я визиал и атправил вам я нарушел", "", "", 1)
+        logging.debug(chunk)
+        self.checker(chunk, None)
+        errors = self.checker.get_errors()
+        logging.debug("Errors: %s", "\n".join(str(e) for e in errors))
+        self.assertEqual(1, len(errors))
+        self.assertEqual(ErrSeverity.HIGH, errors[0].sev)
+
+    def test_named_entities(self):
+        chunk = Chunk("", u"не учитываем имена собственные:"\
+                          u" Кишенев, Кипелов, Чубайс, МЭИ", "", "", 1)
+        logging.debug(chunk)
+        self.checker(chunk, None)
+        self.assertEqual(0, len(self.checker.get_errors()))
+
+    def test_eng(self):
+        chunk = Chunk("", u"This is a sentence without any error!", "", "", 1)
+        logging.debug(chunk)
+        self.checker(chunk, None)
+        self.assertEqual(0, len(self.checker.get_errors()))
+
+    def test_eng_with_typos(self):
+        chunk = Chunk("", u"I failed to wite good english, shame on me!", "", "", 1)
+        logging.debug(chunk)
+        self.checker(chunk, None)
+        self.assertEqual(1, len(self.checker.get_errors()))

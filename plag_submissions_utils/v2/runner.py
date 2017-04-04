@@ -35,7 +35,8 @@ def run(archive_path):
             chks.SYNChecker(opts),
             chks.LexicalSimChecker(opts),
             chks.ORIGModTypeChecker(),
-            chks.SentCorrectnessChecker()
+            chks.SentCorrectnessChecker(),
+            chks.SpellChecker()
         ]
 
         metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
