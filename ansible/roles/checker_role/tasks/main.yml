@@ -35,11 +35,13 @@
     - p7zip-full
     #spell-check
     - libhunspell-dev
-    - hunspell-ru
     - hunspell-en-us
 
   become: yes
-  become_method: sudo
+
+- name: install Russian dictionary with support of 'ё'
+  apt: deb=https://launchpad.net/~andrew-crew-kuznetsov/+archive/ubuntu/crew/+files/hunspell-ru-ie-yo_0.3.9-3-0xenial_all.deb
+  become: yes
 
 - name: install dependencies from pip
   pip: 

@@ -137,6 +137,17 @@ class SpellCheckerTestCase(unittest.TestCase):
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
+
+    def test_yo(self):
+        chunk = Chunk("", u"также превращён в музей", "", "", 1)
+        self.checker(chunk, None)
+        self.assertEqual(0, len(self.checker.get_errors()))
+
+    def test_years(self):
+        chunk = Chunk("", u"В 60-ых годах началось резкое развитие", "", "", 1)
+        self.checker(chunk, None)
+        self.assertEqual(0, len(self.checker.get_errors()))
+
     def test_eng_with_typos(self):
         chunk = Chunk("", u"I failed to wite good english, shame on me!", "", "", 1)
         logging.debug(chunk)

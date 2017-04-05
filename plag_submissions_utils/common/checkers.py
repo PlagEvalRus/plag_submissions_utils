@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import logging
+from collections import Counter
 
 from segtok import segmenter
 import regex
@@ -423,10 +424,13 @@ class SpellChecker(IChecher):
         self._tokens_cnt               = 0
         self._wrong_spelled_tokens_cnt = 0
         self._sents_with_typos         = set()
+        self._all_sents                = 0
 
         #error rates
         self._high_rate                = high_rate
         self._norm_rate                = norm_rate
+
+        self._counter = Counter()
 
 
 
@@ -444,8 +448,10 @@ class SpellChecker(IChecher):
                   "Проверьте следующие предложения: %s" % \
                   ", ".join(str(s) for s in sorted(self._sents_with_typos))
 
+        err_msg += "\n\n" + ", ".join("%s: %s" % (k.encode('utf8'), v) for k, v in self._counter.iteritems())
         typos_rate = self._wrong_spelled_tokens_cnt / float(self._tokens_cnt)
-        if typos_rate > self._high_rate:
+        sents_with_typos_rate = float(len(self._sents_with_typos))/ self._all_sents
+        if sents_with_typos_rate > 0.3 or typos_rate > self._high_rate:
             self._errors.append(
                 Error(err_msg, ErrSeverity.HIGH))
         elif typos_rate > self._norm_rate:
@@ -484,6 +490,7 @@ class SpellChecker(IChecher):
 
 
     def __call__(self, chunk, _):
+        self._all_sents += 1
         spell_dict = self._get_dict(chunk)
         if spell_dict is None:
             return
@@ -496,7 +503,11 @@ class SpellChecker(IChecher):
             #but we also skip all named entities (poor man's named entity recognition)
             if token[0].isupper():
                 continue
+            if len(token) <= 2:
+                continue
+
             self._tokens_cnt += 1
             if not spell_dict.spell(token):
+                self._counter[token.lower()] +=1
                 self._wrong_spelled_tokens_cnt += 1
                 self._sents_with_typos.add(chunk.get_chunk_id())
