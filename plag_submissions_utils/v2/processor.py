@@ -29,7 +29,7 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.CPY : (0, 0),
             ModType.LPR : (10, 50),
             ModType.HPR : (10, 50),
-            ModType.ORIG : (6, 15),
+            ModType.ORIG : (0, 15),
             ModType.DEL : (10, 40),
             ModType.ADD : (10, 40),
             ModType.CCT : (4, 20),

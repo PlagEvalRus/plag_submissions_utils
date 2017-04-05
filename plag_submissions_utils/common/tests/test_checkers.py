@@ -153,3 +153,10 @@ class SpellCheckerTestCase(unittest.TestCase):
         logging.debug(chunk)
         self.checker(chunk, None)
         self.assertEqual(1, len(self.checker.get_errors()))
+
+    def test_tf(self):
+        self.checker._typo_max_tf = 3
+        chunk = Chunk("", u"Это не ашибка, это не ашибка, это не ашибка.", "", "", 1)
+        logging.debug(chunk)
+        self.checker(chunk, None)
+        self.assertEqual(0, len(self.checker.get_errors()))

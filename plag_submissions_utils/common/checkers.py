@@ -3,6 +3,8 @@
 
 import logging
 from collections import Counter
+from collections import defaultdict
+import itertools
 
 from segtok import segmenter
 import regex
@@ -421,35 +423,54 @@ class SpellChecker(IChecher):
         self._errors                   = []
         self._dicts                    = {}
 
+
         self._tokens_cnt               = 0
-        self._wrong_spelled_tokens_cnt = 0
-        self._sents_with_typos         = set()
+        self._typo_max_tf              = 8
+        self._sents_with_typos         = defaultdict(lambda : [])
         self._all_sents                = 0
 
         #error rates
         self._high_rate                = high_rate
         self._norm_rate                = norm_rate
 
-        self._counter = Counter()
+        self._counter                  = Counter()
 
 
+
+    def _drop_most_common(self):
+        """ "typos" that are encountered more than 8 times are not typos...
+        """
+        for typo in self._counter.keys():
+            if self._counter[typo] >= self._typo_max_tf:
+                del self._sents_with_typos[typo]
+                del self._counter[typo]
+
+    def _get_stat(self):
+        self._drop_most_common()
+        sents_set =  set(itertools.chain(*self._sents_with_typos.itervalues()))
+        wrong_spelled_tokens = len(self._counter)
+        return sents_set, wrong_spelled_tokens
 
 
     def get_errors(self):
         if self._tokens_cnt == 0:
             return self._errors
 
+        sents_set, wrong_spelled_tokens = self._get_stat()
+
         logging.debug("SpellChecker: typos cnt: %s, all tokens: %s",
-                      self._wrong_spelled_tokens_cnt,
+                      wrong_spelled_tokens,
                       self._tokens_cnt)
 
 
         err_msg = "Слишком много опечаток в заимствованном тексте! " \
                   "Проверьте следующие предложения: %s" % \
-                  ", ".join(str(s) for s in sorted(self._sents_with_typos))
+                  ", ".join(str(s) for s in sorted(sents_set))
 
-        err_msg += "\n\n" + ", ".join("%s: %s" % (k.encode('utf8'), v) for k, v in self._counter.iteritems())
-        typos_rate = self._wrong_spelled_tokens_cnt / float(self._tokens_cnt)
+        err_msg += "\n\n" + ", ".join("%s: %s" % (k.encode('utf8'), v)
+                                      for k, v in self._counter.iteritems())
+
+        typos_rate = wrong_spelled_tokens / float(self._tokens_cnt)
         sents_with_typos_rate = float(len(self._sents_with_typos))/ self._all_sents
         if sents_with_typos_rate > 0.3 or typos_rate > self._high_rate:
             self._errors.append(
@@ -508,6 +529,6 @@ class SpellChecker(IChecher):
 
             self._tokens_cnt += 1
             if not spell_dict.spell(token):
-                self._counter[token.lower()] +=1
-                self._wrong_spelled_tokens_cnt += 1
-                self._sents_with_typos.add(chunk.get_chunk_id())
+                token_key = token.lower()
+                self._counter[token_key] +=1
+                self._sents_with_typos[token_key].append(chunk.get_chunk_id())
