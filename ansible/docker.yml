@@ -1,0 +1,37 @@
+- hosts: localhost
+  vars:
+    base_image: python:2.7
+    docker_hostname: build_submissions_utils
+
+  tasks:
+    - name: start up a docker container by running bash
+      local_action: >-
+        docker_container
+        image={{base_image}}
+        name={{docker_hostname}}
+        detach=yes
+        tty=yes
+        command=bash
+    - name: add the host
+      add_host: name={{ docker_hostname }}
+
+- hosts: build_submissions_utils
+  connection: docker
+  vars:
+    proj_dir: /var/www/submission_utils/
+  pre_tasks:
+    - name: install sudo
+      apt: name=sudo
+
+    - file: path={{proj_dir}} state=directory
+    - copy:
+        src: "{{playbook_dir}}/../requirements.txt"
+        dest: "{{proj_dir}}"
+
+    - name: add source repository
+      apt_repository:
+        repo: 'deb-src http://httpredir.debian.org/debian jessie main'
+        filename: deb_src_docker
+
+  roles:
+    - role: checker_role
