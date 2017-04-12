@@ -50,7 +50,12 @@
             {% if e.chunk_num is defined %}
             Предложение № {{e.chunk_num}}:
             {% endif %}
-            {{e.msg.decode("utf-8")}}
+            {{e.msg}}
+            {% if e.extra %}
+              <br/>
+              {{e.extra|join('<br/>')}}
+            {% endif %}
+
           </font>
         </li>
         {% endfor %}

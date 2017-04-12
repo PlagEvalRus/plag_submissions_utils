@@ -426,7 +426,7 @@ class SpellChecker(IChecher):
 
         self._tokens_cnt               = 0
         self._typo_max_tf              = 8
-        self._sents_with_typos         = defaultdict(lambda : [])
+        self._typo_sents_dict         = defaultdict(lambda : [])
         self._all_sents                = 0
 
         #error rates
@@ -442,14 +442,25 @@ class SpellChecker(IChecher):
         """
         for typo in self._counter.keys():
             if self._counter[typo] >= self._typo_max_tf:
-                del self._sents_with_typos[typo]
+                del self._typo_sents_dict[typo]
                 del self._counter[typo]
 
     def _get_stat(self):
         self._drop_most_common()
-        sents_set =  set(itertools.chain(*self._sents_with_typos.itervalues()))
+        sents_set =  set(itertools.chain(*self._typo_sents_dict.itervalues()))
         wrong_spelled_tokens = len(self._counter)
         return sents_set, wrong_spelled_tokens
+
+    def _make_err_msg(self):
+        typo_with_sents = self._typo_sents_dict.items()
+        typo_with_sents.sort(key= lambda p : p[1][0])
+        typo_with_sents_str = [u"%s: № %s" % (t,
+                                              u", ".join(str(s) for s in sents))
+                               for t, sents in typo_with_sents]
+        err_msg = "Слишком много опечаток в заимствованном тексте! " \
+                  "Проверьте следующие предложения:\n"
+
+        return err_msg, typo_with_sents_str
 
 
     def get_errors(self):
@@ -463,20 +474,15 @@ class SpellChecker(IChecher):
                       self._tokens_cnt)
 
 
-        err_msg = "Слишком много опечаток в заимствованном тексте! " \
-                  "Проверьте следующие предложения: %s" % \
-                  ", ".join(str(s) for s in sorted(sents_set))
-
-        err_msg += "\n\n" + ", ".join("%s: %s" % (k.encode('utf8'), v)
-                                      for k, v in self._counter.iteritems())
+        err_msg, extra = self._make_err_msg()
 
         typos_rate = wrong_spelled_tokens / float(self._tokens_cnt)
-        sents_with_typos_rate = float(len(self._sents_with_typos))/ self._all_sents
+        sents_with_typos_rate = float(len(sents_set))/ self._all_sents
         if sents_with_typos_rate > 0.3 or typos_rate > self._high_rate:
             self._errors.append(
-                Error(err_msg, ErrSeverity.HIGH))
+                Error(err_msg, ErrSeverity.HIGH, extra))
         elif typos_rate > self._norm_rate:
-            self._errors.append(Error(err_msg, ErrSeverity.NORM))
+            self._errors.append(Error(err_msg, ErrSeverity.NORM, extra))
 
         return self._errors
 
@@ -531,4 +537,4 @@ class SpellChecker(IChecher):
             if not spell_dict.spell(token):
                 token_key = token.lower()
                 self._counter[token_key] +=1
-                self._sents_with_typos[token_key].append(chunk.get_chunk_id())
+                self._typo_sents_dict[token_key].append(chunk.get_chunk_id())
