@@ -80,13 +80,20 @@ def _create_mod_type(mod_str):
     else:
         return ModType.UNK
 
+class ChunkOpts(object):
+    def __init__(self, normalize = False,
+                 skip_stop_words = False):
+        self.normalize = normalize
+        self.skip_stop_words = skip_stop_words
+
 
 class Chunk(object):
     def __init__(self, orig_text, mod_text,
-                 mod_type_str, orig_doc, chunk_num):
+                 mod_type_str, orig_doc, chunk_num,
+                 opts = ChunkOpts()):
         self._chunk_num           = chunk_num
-        self._original_sents      = sents.SentsHolder(orig_text)
-        self._modified_sents      = sents.SentsHolder(mod_text)
+        self._original_sents      = sents.SentsHolder(orig_text, opts)
+        self._modified_sents      = sents.SentsHolder(mod_text, opts)
 
         logging.debug("input mode type string: %s", mod_type_str)
         self._mod_types           = _create_mod_types(mod_type_str)
@@ -124,12 +131,12 @@ class Chunk(object):
         return self._modified_sents.get_avg_words_cnt()
 
     def measure_dist(self):
-        return distance.nlevenshtein(self._original_sents.get_all_tokens(),
-                                     self._modified_sents.get_all_tokens())
+        return distance.nlevenshtein(self.get_orig_tokens(),
+                                     self.get_mod_tokens())
 
     def lexical_dist(self):
-        return distance.jaccard(self._original_sents.get_all_tokens(),
-                                self._modified_sents.get_all_tokens())
+        return distance.jaccard(self.get_orig_tokens(),
+                                self.get_mod_tokens())
 
     def get_mod_sent_holder(self):
         return self._modified_sents

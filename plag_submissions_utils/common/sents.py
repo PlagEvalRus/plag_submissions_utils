@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import segtok.segmenter as seg
-import segtok.tokenizer as tok
-
 from . import text_proc
 
 class SentInfo(object):
@@ -23,7 +20,7 @@ class SentsHolder(object):
     """Documentation for SentsHolder
 
     """
-    def __init__(self, text):
+    def __init__(self, text, opts):
         super(SentsHolder, self).__init__()
         if isinstance(text, (list, )):
             #It is possible in essays of version 2.
@@ -34,7 +31,9 @@ class SentsHolder(object):
             self._text       = text
             self._sents      = text_proc.seg_text_as_list(text)
 
-        self._sent_tokens = [text_proc.tok_sent(s) for s in self._sents]
+        self._sent_tokens = [text_proc.tok_sent(s, normalize = opts.normalize,
+                                                skip_stop_words = opts.skip_stop_words)
+                             for s in self._sents]
         self._sent_infos = [SentInfo(len(t)) for t in self._sent_tokens]
 
     def get_avg_words_cnt(self):

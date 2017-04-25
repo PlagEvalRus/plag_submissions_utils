@@ -6,7 +6,18 @@ import subprocess
 
 import segtok.segmenter as seg
 import segtok.tokenizer as tok
+import pymorphy2
 import regex
+
+MORPH_ANALYZER = None
+STOP_POS = ['PREP', 'CONJ', 'PRCL', 'INTJ']
+
+def _get_morph_analyzer():
+    global MORPH_ANALYZER
+    if MORPH_ANALYZER is None:
+        MORPH_ANALYZER = pymorphy2.MorphAnalyzer()
+    return MORPH_ANALYZER
+
 
 def ispunct(st):
     # return all(ch in string.punctuation for ch in st)
@@ -27,8 +38,37 @@ def seg_text(text):
     text = regex.sub(ur"(\p{Ll})\s?\.\s?(\p{Lu})", ur"\1. \2", text)
     return seg.split_multi(text)
 
-def tok_sent(sent, make_lower = True):
+def _normalize(analyzer_results, token):
+    if analyzer_results:
+        norm = None
+        if analyzer_results[0].tag.POS in ['PRTF', 'PRTS', 'GRND']:
+            #https://pymorphy2.readthedocs.io/en/latest/user/guide.html#normalization
+            norm = analyzer_results[0].inflect({'sing', 'nomn'})
+
+        if norm is not None:
+            return norm.word
+        else:
+            return analyzer_results[0].normal_form
+    else:
+        return token
+
+def tok_sent(sent, make_lower = True, normalize = False,
+             skip_stop_words = False):
     tokens = tok.symbol_tokenizer(sent)
+
+    if normalize or skip_stop_words:
+        analyzer = _get_morph_analyzer()
+        norm_tokens = []
+        for token in tokens:
+            results = analyzer.parse(token)
+            normal_form = _normalize(results, token)
+            if skip_stop_words and results:
+                if results[0].tag.POS in STOP_POS:
+                    continue
+
+            norm_tokens.append(normal_form)
+        tokens = norm_tokens
+
 
     proc = lambda s : s
     if make_lower:

@@ -39,3 +39,22 @@ class SegTestCase(unittest.TestCase):
 
         sents = text_proc.seg_text_as_list(sent)
         self.assertEqual(1, len(sents))
+
+class MorphTestCase(unittest.TestCase):
+    def test_morph(self):
+        text = u"Пришедшие люди, ушли ни с чем!"
+        tokens = text_proc.tok_sent(text, normalize = True)
+        # print tokens
+        self.assertEqual(6, len(tokens))
+        self.assertEqual(u'пришедший', tokens[0])
+        self.assertEqual(u'человек', tokens[1])
+        self.assertEqual(u'уйти', tokens[2])
+
+
+    def test_skip_stop(self):
+        text = u"Пришедшие люди, ушли ни с чем!"
+        tokens = text_proc.tok_sent(text, skip_stop_words = True)
+        self.assertEqual(3, len(tokens))
+        self.assertEqual(u'пришедший', tokens[0])
+        self.assertEqual(u'человек', tokens[1])
+        self.assertEqual(u'уйти', tokens[2])

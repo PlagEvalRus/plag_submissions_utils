@@ -5,6 +5,7 @@
 from .common.metrics import ViolationLevel
 from .common.errors import ErrSeverity
 from .common.version import determine_version_by_id
+from .common.chunks import ChunkOpts
 
 from .v1 import runner as v1run
 from .v2 import runner as v2run
@@ -43,13 +44,14 @@ def run(archive_path, version):
         raise RuntimeError("Unknown version: %s!" % version)
 
 
-def create_chunks(susp_id, meta_file_path, version=None):
+def create_chunks(susp_id, meta_file_path, version=None,
+                  opts = ChunkOpts()):
     if version is None:
         version = determine_version_by_id(susp_id)
 
     if version == "1":
-        return v1_proc.create_chunks(meta_file_path)
+        return v1_proc.create_chunks(meta_file_path, opts)
     elif version == "2":
-        return v2_proc.create_chunks(meta_file_path)
+        return v2_proc.create_chunks(meta_file_path, opts)
     else:
         raise RuntimeError("Unknown version: %s" % version)

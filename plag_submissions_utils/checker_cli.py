@@ -11,6 +11,7 @@ from .common.submissions import run_over_submissions
 from .common.stat import StatCollector
 from .common.stat import SrcStatCollector
 from .common.stat import print_mod_types_stat
+from .common.ir_utils import calc_various_similarity
 
 def run_v1(opts):
     common_run(opts, "1")
@@ -76,6 +77,13 @@ def main():
     src_stat_parser = subparsers.add_parser('src_stat')
     src_stat_parser.add_argument("--archive_dir", "-d", required=True)
     src_stat_parser.set_defaults(func = collect_src_stat)
+
+    chunks_sim_parser = subparsers.add_parser('chunks_sim')
+    chunks_sim_parser.add_argument("--archive_dir", "-d", required=True)
+    chunks_sim_parser.add_argument("--normalize", "-n", default=False, action='store_true')
+    chunks_sim_parser.add_argument("--skip_stop_words", "-s", default=False,
+                                   action='store_true')
+    chunks_sim_parser.set_defaults(func = calc_various_similarity)
 
     args = parser.parse_args()
 

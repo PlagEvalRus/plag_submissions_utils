@@ -13,6 +13,7 @@ from plag_submissions_utils.common.processor import BasicProcesssorOpts
 from plag_submissions_utils.common.errors import ErrSeverity
 from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import Chunk
+from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
 
 class ProcessorOpts(BasicProcesssorOpts):
@@ -55,7 +56,7 @@ class Processor(BasicProcessor):
         return create_chunks(self._opts.inp_file)
 
 
-def create_chunks(inp_file):
+def create_chunks(inp_file, opts = ChunkOpts()):
     errors = []
     book = xlrd.open_workbook(inp_file)
     sheet = book.sheet_by_index(0)
@@ -87,7 +88,7 @@ def create_chunks(inp_file):
             chunk = _try_create_chunk(
                 row_vals,
                 sent_num,
-                main_content_offs)
+                main_content_offs, opts)
             logging.debug("parsed chunk: %s", chunk)
             chunks.append(chunk)
         except Exception as e:
@@ -122,7 +123,7 @@ def _try_to_extract_sent_num(rownum, is_col_num_cell_found,
     else:
         return dummy_sent_num
 
-def _try_create_chunk(row_vals, sent_num, vals_offs):
+def _try_create_chunk(row_vals, sent_num, vals_offs, opts):
     def check_str_cell(cell_val):
         if not isinstance(cell_val, (str, unicode)):
             raise RuntimeError("Sent # %d; Wrong value of the cell: %s"
@@ -133,4 +134,5 @@ def _try_create_chunk(row_vals, sent_num, vals_offs):
                  orig_text = check_str_cell(row_vals[vals_offs + 1]),
                  orig_doc = row_vals[vals_offs + 2],
                  mod_type_str = check_str_cell(row_vals[vals_offs + 3]),
-                 chunk_num = sent_num)
+                 chunk_num = sent_num,
+                 opts = opts)
