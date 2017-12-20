@@ -88,15 +88,17 @@ class ChunkOpts(object):
 
 
 class Chunk(object):
-    def __init__(self, orig_text, mod_text,
-                 mod_type_str, orig_doc, chunk_num,
+    def __init__(self, orig_text, translated_text, mod_text,
+                 mod_type_str, translator_type_str, orig_doc, chunk_num,
                  opts = ChunkOpts()):
         self._chunk_num           = chunk_num
         self._original_sents      = sents.SentsHolder(orig_text, opts)
+        self._translated_sents    = sents.SentsHolder(translated_text, opts)
         self._modified_sents      = sents.SentsHolder(mod_text, opts)
 
         logging.debug("input mode type string: %s", mod_type_str)
         self._mod_types           = _create_mod_types(mod_type_str)
+        self._translator_type     = translator_type_str.lower()
         self._orig_doc            = orig_doc
 
 
@@ -114,6 +116,9 @@ class Chunk(object):
 
     def get_all_mod_types(self):
         return self._mod_types
+
+    def get_translator_type(self):
+        return self._translator_type
 
     def has_mod_type(self, mod_type):
         return mod_type in self._mod_types
@@ -144,8 +149,14 @@ class Chunk(object):
     def get_orig_sent_holder(self):
         return self._original_sents
 
+    def get_translated_sent_holder(self):
+        return self._translated_sents
+
     def get_orig_sents(self):
         return self._original_sents.get_sents()
+
+    def get_translated_sents(self):
+        return self._translated_sents.get_sents()
 
     def get_mod_sents(self):
         return self._modified_sents.get_sents()
