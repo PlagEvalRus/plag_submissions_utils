@@ -19,7 +19,8 @@ from .errors import ErrSeverity
 from .errors import ChunkError
 from .errors import Error
 from .simple_detector import calc_originality
-
+from translator import YaGoTrans
+from api_key import api_key
 
 
 class IChecher(object):
@@ -36,6 +37,7 @@ class BaseChunkSimChecker(IChecher):
         self._diff_perc_dict    = opts.diff_perc
         self._fluctuation_delta = fluctuation_delta
         self._errors            = []
+        self._tran              = YaGoTrans(api_key)
 
     def get_errors(self):
         return self._errors
@@ -181,6 +183,18 @@ class SYNChecker(BaseChunkSimChecker):
         if chunk.get_mod_type() != ModType.SYN:
             return
         super(SYNChecker, self).__call__(chunk, src_docs)
+
+class TranslationChecker(BaseChunkSimChecker):
+    def __init__(self, opts, fluctuation_delta=3):
+        super(TranslationChecker, self).__init__(opts, fluctuation_delta)
+
+        def __call__(self, chunk, src_docs):
+            super(TranslationChecker, self).__call__(chunk, src_docs)
+            if chunk.get_translated_sents != self._trans(chunk.get_original_sents, translator=chunk.get_translator_type()):
+                self._errors.append(
+                    ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
+                               chunk.get_chunk_id(),
+                               ErrSeverity.HIGH))
 
 
 class ORIGModTypeChecker(IChecher):

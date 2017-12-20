@@ -74,10 +74,16 @@ def _check_headers(first_row):
     if first_row[2].lower().find(u"типы сокрытия") == -1:
         return "Failed to find a column with type of obfuscation!"
 
-    if first_row[3].lower().find(u"эссе") == -1:
+    if first_row[3].lower().find(u"переводчик") == -1:
+        return "Failed to find a column with translator!"
+
+    if first_row[4].lower().find(u"эссе") == -1:
         return "Failed to find a column with modified text!"
 
-    if first_row[4].lower().find(u"исходное предложение") == -1:
+    if first_row[5].lower().find(u"исходный фрагмент") == -1:
+        return "Failed to find a column with translated text!"
+
+    if first_row[6].lower().find(u"исходное предложение") == -1:
         return "Failed to find a column with original text!"
 
     return None
@@ -139,7 +145,7 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
     orig_text = []
     #collect original text
-    orig_text_col = 4
+    orig_text_col = 5
     while True:
         try:
             val = row_vals[orig_text_col]
@@ -151,12 +157,17 @@ def _try_create_chunk(row_vals, sent_num, opts):
         else:
             break
 
-    mod_text = row_vals[3]
+    mod_text = row_vals[4]
     if not mod_text:
+        return None
+
+    translated_text = row_vals[5]
+    if not translated_text:
         return None
 
     orig_doc = row_vals[1]
     mod_type_str = check_str_cell(row_vals[2])
+    translator_type_str = check_str_cell(row_vals[3])
 
     defined_cols = 0
     defined_cols += bool(orig_doc) + bool(mod_type_str) + bool(orig_text)
@@ -165,8 +176,10 @@ def _try_create_chunk(row_vals, sent_num, opts):
         raise RuntimeError("Неправильный формат!")
 
     return Chunk(mod_text = mod_text,
+                 translated_text = translated_text,
                  orig_text = orig_text,
                  orig_doc = orig_doc,
                  mod_type_str = mod_type_str,
+                 translator_type_str = translator_type_str,
                  chunk_num = sent_num,
                  opts = opts)
