@@ -16,6 +16,7 @@ from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common.chunks import TranslatorType
 
 class ProcessorOpts(BasicProcesssorOpts):
     def __init__(self, sources_dir, inp_file):
@@ -37,6 +38,11 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.SEP : (4, 20),
             ModType.SYN : (10, 40),
             ModType.SHF : (10, 40)
+        }
+        self.translation_type_ratios   = {
+            TranslatorType.YANDEX: (0, 20),
+            TranslatorType.GOOGLE: (0, 20),
+
         }
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {

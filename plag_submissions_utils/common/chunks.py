@@ -80,6 +80,46 @@ def _create_mod_type(mod_str):
     else:
         return ModType.UNK
 
+
+class TranslatorType(object):
+    UNK      = 0
+    GOOGLE   = 1
+    YANDEX   = 2
+    MANUAL   = 3
+    ORIGINAL = 4
+
+    @classmethod
+    def get_all_translation_types(cls):
+        return range(0,5)
+
+def translation_types_to_str(translation_types):
+    return ",".join(translation_type_to_str(m) for m in translation_types)
+
+def translation_type_to_str(translation_type):
+    translation_type_dict = {
+        0 : "UNK",
+        1 : "GOOGLE",
+        2 : "YANDEX",
+        3 : "MANUAL",
+        4 : "ORIGINAL"
+    }
+    return translation_type_dict.get(translation_type, "unk")
+
+def _create_translation_types(translations_str):
+    return [_create_translation_type(m) for m in translations_str.split(',')]
+
+def _create_translation_type(translation_str):
+    tls = translation_str.strip().lower()
+    if not tls:
+        return TranslatorType.ORIGINAL
+    elif tls == "yandex":
+        return TranslatorType.YANDEX
+    elif tls == "google":
+        return TranslatorType.GOOGLE
+    else:
+        return ModType.UNK
+
+
 class ChunkOpts(object):
     def __init__(self, normalize = False,
                  skip_stop_words = False):
@@ -98,7 +138,7 @@ class Chunk(object):
 
         logging.debug("input mode type string: %s", mod_type_str)
         self._mod_types           = _create_mod_types(mod_type_str)
-        self._translator_type     = translator_type_str.lower()
+        self._translator_types    = _create_translation_types(translator_type_str)
         self._orig_doc            = orig_doc
 
 
@@ -117,11 +157,35 @@ class Chunk(object):
     def get_all_mod_types(self):
         return self._mod_types
 
-    def get_translator_type(self):
-        return self._translator_type
-
     def has_mod_type(self, mod_type):
         return mod_type in self._mod_types
+
+    def get_translator_type(self):
+        if len(self._translator_types) == 1:
+            return self._translator_types[0]
+        elif len(self._translator_types) == 0:
+            return self._translator_types[0]
+        else:
+            return TranslatorType.UNK
+
+    def get_translator_type_str(self):
+        if len(self._translator_types) == 1:
+            if self._translator_types[0] == 1:
+                return 'google'
+            elif self._translator_types[0] == 2:
+                return 'yandex'
+            else:
+                return 'unknown'
+        elif len(self._translator_types) == 0:
+            return self._translator_types[0]
+        else:
+            return TranslatorType.UNK
+
+    def get_all_translator_types(self):
+        return self._translator_types
+
+    def has_translator_type(self, translator_type):
+        return translator_type in self._translator_types
 
     def get_orig_doc(self):
         return self._orig_doc
