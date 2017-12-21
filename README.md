@@ -198,6 +198,8 @@ vagrant ssh-config
 ## Установка в докере
 Чтобы собрать докер-образ и запустить контейнер нужно выполнить следующие команды
 из директории проекта.
+Пользователь должен находится в группе `docker`,
+чтобы команды выполнились успешно ([подробности](https://docs.docker.com/engine/installation/linux/linux-postinstall/#manage-docker-as-a-non-root-user) по настройке).
 ```bash
 ./build_docker_image.sh
 ./run_docker.sh
