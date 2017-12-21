@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
 import tempfile
 import shutil
 
@@ -36,16 +35,21 @@ def run(archive_path):
             chks.LexicalSimChecker(opts),
             chks.ORIGModTypeChecker(),
             chks.SentCorrectnessChecker(),
-            chks.SpellChecker()
+            chks.SpellChecker(),
+            chks.TranslationChecker(opts)
         ]
 
         metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
                    mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size),
-                   mtrks.SrcSentsCountMetric(opts.min_src_sents_cnt)]
+                   mtrks.SrcSentsCountMetric(opts.min_src_sents_cnt),
+                   mtrks.AutoTranslationMetric(opts.min_real_sent_cnt, opts.min_sent_size),
+                   mtrks.ManualTranslationMetric(opts.min_real_sent_cnt, opts.min_sent_size)
+                   ]
 
         for mod_type in ModType.get_all_mod_types_v2():
             metrics.append(mtrks.ModTypeRatioMetric(mod_type,
                                                     opts.mod_type_ratios[mod_type]))
+
         errors, stat = Processor(opts, checkers, metrics).check()
         return metrics, errors, stat
 

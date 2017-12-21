@@ -177,3 +177,43 @@ class ModTypeRatioMetric(IMetric):
                 "Скорее всего в названии некоторых типов сокрытий опечатка.)"
         else:
             return common
+
+class AutoTranslationMetric(IMetric):
+    def __init__(self, translation_type,
+                 fluctuation_delta = 3):
+        self._translation_type      = translation_type
+        self._fluctuation_delta = fluctuation_delta
+        self._translation_type_ratio = 0
+
+    def get_value(self):
+        return self._translation_type_ratio
+
+    def get_violation_level(self):
+        if self._translation_type_ratio:
+            return ViolationLevel.HIGH
+
+    def __call__(self, stat, chunks):
+        self._translation_type_ratio += 1
+
+    def __str__(self):
+        return "Количество переведённых предложений %d" % self._translation_type_ratio
+
+class ManualTranslationMetric(IMetric):
+    def __init__(self, translation_type,
+                 fluctuation_delta = 3):
+        self._translation_type      = translation_type
+        self._fluctuation_delta = fluctuation_delta
+        self._translation_type_ratio = 0
+
+    def get_value(self):
+        return self._translation_type_ratio
+
+    def get_violation_level(self):
+        if self._translation_type_ratio:
+            return ViolationLevel.HIGH
+
+    def __call__(self, stat, chunks):
+        self._translation_type_ratio += 1
+
+    def __str__(self):
+        return "Количество переведённых предложений %d" % self._translation_type_ratio

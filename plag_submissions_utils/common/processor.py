@@ -17,6 +17,7 @@ class BasicProcesssorOpts(object):
         self.min_sent_size     = 5
         self.min_real_sent_cnt = 150
         self.mod_type_ratios   = {}
+        self.translation_type_ratios   = {}
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {}
 

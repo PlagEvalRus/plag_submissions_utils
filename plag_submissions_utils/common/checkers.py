@@ -31,13 +31,13 @@ class IChecher(object):
         raise NotImplementedError("should implement this!")
 
 
+
 class BaseChunkSimChecker(IChecher):
     def __init__(self, opts, fluctuation_delta = 3):
         self._opts              = opts
         self._diff_perc_dict    = opts.diff_perc
         self._fluctuation_delta = fluctuation_delta
         self._errors            = []
-        self._tran              = YaGoTrans(api_key)
 
     def get_errors(self):
         return self._errors
@@ -175,6 +175,7 @@ class SHFChecker(BaseChunkSimChecker):
             return
         super(SHFChecker, self).__call__(chunk, src_docs)
 
+
 class SYNChecker(BaseChunkSimChecker):
     def __init__(self, opts, fluctuation_delta=3):
         super(SYNChecker, self).__init__(opts, fluctuation_delta)
@@ -184,17 +185,22 @@ class SYNChecker(BaseChunkSimChecker):
             return
         super(SYNChecker, self).__call__(chunk, src_docs)
 
-class TranslationChecker(BaseChunkSimChecker):
-    def __init__(self, opts, fluctuation_delta=3):
-        super(TranslationChecker, self).__init__(opts, fluctuation_delta)
 
-        def __call__(self, chunk, src_docs):
-            super(TranslationChecker, self).__call__(chunk, src_docs)
-            if chunk.get_translated_sents != self._trans(chunk.get_original_sents, translator=chunk.get_translator_type()):
-                self._errors.append(
-                    ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
-                               chunk.get_chunk_id(),
-                               ErrSeverity.HIGH))
+class TranslationChecker(IChecher):
+    def __init__(self, opts, fluctuation_delta=3):
+        super(TranslationChecker, self).__init__()
+        self._trans = YaGoTrans(api_key)
+        self._errors = []
+
+    def get_errors(self):
+        return self._errors
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_translated_sents()[0].encode('utf-8') != self._trans.translate(chunk.get_orig_sents()[1], translator=chunk.get_translator_type_str()):
+            self._errors.append(
+                ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
+                           chunk.get_chunk_id(),
+                           ErrSeverity.HIGH))
 
 
 class ORIGModTypeChecker(IChecher):
