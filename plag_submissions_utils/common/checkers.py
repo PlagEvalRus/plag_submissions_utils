@@ -196,11 +196,44 @@ class TranslationChecker(IChecher):
         return self._errors
 
     def __call__(self, chunk, src_docs):
-        if chunk.get_translated_sents()[0].encode('utf-8') != self._trans.translate(chunk.get_orig_sents()[1], translator=chunk.get_translator_type_str()):
-            self._errors.append(
-                ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
-                           chunk.get_chunk_id(),
-                           ErrSeverity.HIGH))
+        if chunk.get_translator_type() != 0:
+            try:
+                if chunk.get_translated_sents()[0].encode('utf-8') != self._trans.translate(chunk.get_orig_sents()[0], translator=chunk.get_translator_type_str()):
+                    self._errors.append(
+                        ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
+                                   chunk.get_chunk_id(),
+                                   ErrSeverity.HIGH))
+            except IndexError:
+                pass
+
+
+class ManualTranslationChecker(IChecher):
+    def __init__(self, opts, fluctuation_delta=3):
+        super(ManualTranslationChecker, self).__init__()
+        self._trans = YaGoTrans(api_key)
+        self._errors = []
+
+    def get_errors(self):
+        return self._errors
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_translator_type() == 0 and chunk.get_orig_sents():
+            if chunk.get_mod_sents()[0].encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
+                                                                                        translator='yandex'):
+                self._errors.append(
+                    ChunkError(
+                        "Текст, заявленный как переведенный вручную, переведён Яндекс Переводчиком!",
+                        chunk.get_chunk_id(),
+                        ErrSeverity.HIGH))
+            elif chunk.get_mod_sents()[0].encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
+                                                                                        translator='google'):
+                self._errors.append(
+                    ChunkError(
+                        "Текст, заявленный как переведенный вручную, переведён Google Translate!",
+                        chunk.get_chunk_id(),
+                        ErrSeverity.HIGH))
+            else:
+                pass
 
 
 class ORIGModTypeChecker(IChecher):
