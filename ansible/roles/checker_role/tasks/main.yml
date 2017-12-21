@@ -72,10 +72,10 @@
     - /compiled/bin
   become: yes
 
-- name: download tika 1.14
+- name: download tika 1.17
   get_url:
-    url: http://apache-mirror.rbc.ru/pub/apache/tika/tika-app-1.14.jar
-    dest: /compiled/share/java/tika-app-1.14.jar
+    url: http://apache-mirror.rbc.ru/pub/apache/tika/tika-app-1.17.jar
+    dest: /compiled/share/java/tika-app-1.17.jar
 
 - name: copy tika to bin
   copy: src=tika dest=/compiled/bin/tika mode=755 force=no
