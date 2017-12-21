@@ -2,3 +2,4 @@
 # defaults file for checker_role
 
 proj_dir: /vagrant
+tika_version: 1.17
