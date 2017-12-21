@@ -171,9 +171,10 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
     defined_cols = 0
     defined_cols += bool(orig_doc) + bool(mod_type_str) + bool(orig_text)
-
-    if defined_cols != 0 and defined_cols != 3:
-        raise RuntimeError("Неправильный формат!")
+    # TODO process this
+    # print(defined_cols)
+    # if defined_cols != 0 and defined_cols != 3:
+    #     raise RuntimeError("Неправильный формат!")
 
     return Chunk(mod_text = mod_text,
                  translated_text = translated_text,
