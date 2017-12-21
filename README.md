@@ -148,7 +148,7 @@ tools/check_submissions.py /path/to/submissions /path/to/ids
 
 ```bash
 sudo apt-get install libffi-dev python-dev libssl-dev sshpass python-pip
-sudo pip install -U pyasn1 ansible==2.2.1
+sudo pip install -U pyasn1 ansible==2.3.3
 ```
 
 Выкачать исходники из git.
