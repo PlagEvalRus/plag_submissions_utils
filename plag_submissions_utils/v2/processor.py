@@ -151,7 +151,7 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
     orig_text = []
     #collect original text
-    orig_text_col = 5
+    orig_text_col = 6
     while True:
         try:
             val = row_vals[orig_text_col]
@@ -169,11 +169,14 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
     translated_text = row_vals[5]
     if not translated_text:
-        return None
+       translated_text = '-'
 
     orig_doc = row_vals[1]
     mod_type_str = check_str_cell(row_vals[2])
+
     translator_type_str = check_str_cell(row_vals[3])
+    if not translator_type_str:
+        translator_type_str = '-'
 
     defined_cols = 0
     defined_cols += bool(orig_doc) + bool(mod_type_str) + bool(orig_text)
