@@ -195,7 +195,7 @@ class TranslationChecker(IChecher):
     def get_errors(self):
         return self._errors
 
-    def __call__(self, chunk, src_docs):
+    def __call__(self, chunk, src_docs) :
         if chunk.get_translator_type() != 0:
             try:
                 if chunk.get_translated_sents()[0].encode('utf-8') != self._trans.translate(chunk.get_orig_sents()[0], translator=chunk.get_translator_type_str()):
