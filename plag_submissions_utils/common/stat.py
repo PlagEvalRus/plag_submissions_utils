@@ -28,6 +28,7 @@ class SubmissionStat(object):
         self.mod_type_freqs    = mod_type_freqs if mod_type_freqs is not None else \
                                  defaultdict(lambda : 0)
         self.mod_type_co_occur = defaultdict(lambda : 0)
+        self.unmod_translated_sents = 0
 
         self.translation_type_freqs = translation_type_freqs if translation_type_freqs is not None else \
             defaultdict(lambda: 0)
@@ -99,6 +100,9 @@ class StatCollector(object):
 
             for translation_type in chunk.get_all_translator_types():
                 self._stat.translation_type_freqs[translation_type] += 1
+
+            if chunk.get_all_mod_types()[0] == 4 and len(chunk.get_orig_sents()) != 0:
+                self._stat.unmod_translated_sents += 1
 
             self._update_co_occurs(chunk.get_all_mod_types(), self._stat)
 

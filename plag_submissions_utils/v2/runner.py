@@ -44,8 +44,7 @@ def run(archive_path):
         metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
                    mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size),
                    mtrks.SrcSentsCountMetric(opts.min_src_sents_cnt),
-                   # mtrks.AutoTranslationMetric(opts.min_real_sent_cnt, opts.min_sent_size),
-                   # mtrks.ManualTranslationMetric(opts.min_real_sent_cnt, opts.min_sent_size)
+                   mtrks.ModTranslationMetric(opts.max_unmod_translation)
                    ]
 
         for mod_type in ModType.get_all_mod_types_v2():
