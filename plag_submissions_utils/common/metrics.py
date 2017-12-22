@@ -221,22 +221,25 @@ class AutoTranslationMetric(IMetric):
             return common
 
 
-class ManualTranslationMetric(IMetric):
-    def __init__(self, translation_type,
-                 fluctuation_delta = 3):
-        self._translation_type      = translation_type
+class ModTranslationMetric(IMetric):
+    def __init__(self, max_ratio, fluctuation_delta = 3):
+        self._max_ratio = max_ratio
         self._fluctuation_delta = fluctuation_delta
-        self._translation_type_ratio = 0
+        self._mod_translation_type_ratio = 0
 
     def get_value(self):
-        return self._translation_type_ratio
+        return self._mod_translation_type_ratio
 
     def get_violation_level(self):
-        if self._translation_type_ratio:
+        if self._mod_translation_type_ratio > self._max_ratio:
             return ViolationLevel.HIGH
+        else:
+            return ViolationLevel.OK
 
     def __call__(self, stat, chunks):
-        self._translation_type_ratio += 1
+        self._mod_translation_type_ratio = stat.unmod_translated_sents*100 / stat.chunks_cnt*100
+        self._mod_translation_type_ratio /= 100
 
     def __str__(self):
-        return "Количество переведённых предложений %d" % self._translation_type_ratio
+        common = "%.1f%% предложений являются немодифицированными переводами" % (self._mod_translation_type_ratio)
+        return common
