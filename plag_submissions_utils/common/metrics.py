@@ -4,7 +4,9 @@
 import logging
 
 from .chunks import ModType
+from .chunks import TranslatorType
 from .chunks import mod_type_to_str
+from .chunks import translation_type_to_str
 
 class ViolationLevel(object):
     OK = 0
@@ -179,24 +181,45 @@ class ModTypeRatioMetric(IMetric):
             return common
 
 class AutoTranslationMetric(IMetric):
-    def __init__(self, translation_type,
+    def __init__(self, translation_type, ratio_interval,
                  fluctuation_delta = 3):
-        self._translation_type      = translation_type
+        self._translation_type = translation_type
+        self._ratio_interval = ratio_interval
         self._fluctuation_delta = fluctuation_delta
         self._translation_type_ratio = 0
+
+    def strict_mod(self):
+        if self._ratio_interval[0] > self._translation_type_ratio:
+            return ViolationLevel.HIGH
+        elif self._ratio_interval[1] < self._translation_type_ratio:
+            return ViolationLevel.HIGH
+        else:
+            return ViolationLevel.OK
 
     def get_value(self):
         return self._translation_type_ratio
 
     def get_violation_level(self):
-        if self._translation_type_ratio:
-            return ViolationLevel.HIGH
+        if self._translation_type_ratio >= self._ratio_interval[0] and self._translation_type_ratio <= self._ratio_interval[1]:
+            return ViolationLevel.OK
+        else:
+            return ViolationLevel.MEDIUM
 
     def __call__(self, stat, chunks):
-        self._translation_type_ratio += 1
+        translation_type_cnt = stat.translation_type_freqs[self._translation_type]
+        self._translation_type_ratio = float(translation_type_cnt) / stat.chunks_cnt
+        self._translation_type_ratio *= 100
+        self._translation_type_ratio = round(self._translation_type_ratio, 1)
 
     def __str__(self):
-        return "Количество переведённых предложений %d" % self._translation_type_ratio
+        common = "%.1f%% предложений имеют тип перевода: %s" % (
+            self.get_value(), translation_type_to_str(self._translation_type))
+        if self._translation_type == TranslatorType.UNK:
+            return common + " (UNK означает неизвестный тип переводчика. " \
+                            "Скорее всего в названии некоторых типов перевода опечатка.)"
+        else:
+            return common
+
 
 class ManualTranslationMetric(IMetric):
     def __init__(self, translation_type,

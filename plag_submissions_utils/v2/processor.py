@@ -40,9 +40,11 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.SHF : (10, 40)
         }
         self.translation_type_ratios   = {
-            TranslatorType.YANDEX: (0, 20),
-            TranslatorType.GOOGLE: (0, 20),
-
+            TranslatorType.UNK :      (0, 20),
+            TranslatorType.GOOGLE :   (0, 100),
+            TranslatorType.YANDEX :   (0, 100),
+            TranslatorType.ORIGINAL : (10, 20),
+            TranslatorType.MANUAL :   (10, 20)
         }
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {

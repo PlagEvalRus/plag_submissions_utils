@@ -85,8 +85,8 @@ class TranslatorType(object):
     UNK      = 0
     GOOGLE   = 1
     YANDEX   = 2
-    MANUAL   = 3
-    ORIGINAL = 4
+    ORIGINAL = 3
+    MANUAL   = 4
 
     @classmethod
     def get_all_translation_types(cls):
@@ -100,22 +100,24 @@ def translation_type_to_str(translation_type):
         0 : "UNK",
         1 : "GOOGLE",
         2 : "YANDEX",
-        3 : "MANUAL",
-        4 : "ORIGINAL"
+        3 : "ORIGINAL",
+        4 : "MANUAL"
     }
     return translation_type_dict.get(translation_type, "unk")
 
-def _create_translation_types(translations_str):
-    return [_create_translation_type(m) for m in translations_str.split(',')]
+def _create_translation_types(translations_str, orig_str):
+    return [_create_translation_type(m, orig_str) for m in translations_str.split(',')]
 
-def _create_translation_type(translation_str):
+def _create_translation_type(translation_str, orig_str):
     tls = translation_str.strip().lower()
-    if not tls:
-        return TranslatorType.ORIGINAL
-    elif tls == "yandex":
+    if tls == "yandex":
         return TranslatorType.YANDEX
     elif tls == "google":
         return TranslatorType.GOOGLE
+    elif tls == "-" and len(orig_str) == 0:
+        return TranslatorType.ORIGINAL
+    elif tls == "-":
+        return TranslatorType.MANUAL
     else:
         return ModType.UNK
 
@@ -138,7 +140,7 @@ class Chunk(object):
 
         logging.debug("input mode type string: %s", mod_type_str)
         self._mod_types           = _create_mod_types(mod_type_str)
-        self._translator_types    = _create_translation_types(translator_type_str)
+        self._translator_types    = _create_translation_types(translator_type_str, orig_text)
         self._orig_doc            = orig_doc
 
 
@@ -163,21 +165,14 @@ class Chunk(object):
     def get_translator_type(self):
         if len(self._translator_types) == 1:
             return self._translator_types[0]
-        elif len(self._translator_types) == 0:
-            return self._translator_types[0]
         else:
             return TranslatorType.UNK
 
     def get_translator_type_str(self):
-        if len(self._translator_types) == 1:
-            if self._translator_types[0] == 1:
-                return 'google'
-            elif self._translator_types[0] == 2:
-                return 'yandex'
-            else:
-                return 'unknown'
-        elif len(self._translator_types) == 0:
-            return self._translator_types[0]
+        if self._translator_types[0] == 1:
+            return 'google'
+        elif self._translator_types[0] == 2:
+            return 'yandex'
         else:
             return TranslatorType.UNK
 
