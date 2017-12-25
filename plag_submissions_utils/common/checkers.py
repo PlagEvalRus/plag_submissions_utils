@@ -15,6 +15,7 @@ from . import text_proc
 from . import source_doc
 from . import chunks
 from .chunks import ModType
+from .chunks import TranslatorType
 from .errors import ErrSeverity
 from .errors import ChunkError
 from .errors import Error
@@ -195,10 +196,10 @@ class TranslationChecker(IChecher):
     def get_errors(self):
         return self._errors
 
-    def __call__(self, chunk, src_docs) :
-        if chunk.get_translator_type() != 0:
+    def __call__(self, chunk, src_docs):
+        if chunk.get_translator_type() == TranslatorType.GOOGLE or chunk.get_translator_type() == TranslatorType.YANDEX:
             try:
-                if chunk.get_translated_sents()[0].encode('utf-8') != self._trans.translate(chunk.get_orig_sents()[0], translator=chunk.get_translator_type_str()):
+                if chunk.get_translated_sents()[0].encode('utf-8') is self._trans.translate(' '.join(chunk.get_orig_sents()), translator=chunk.get_translator_type_str()):
                     self._errors.append(
                         ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
                                    chunk.get_chunk_id(),
@@ -217,7 +218,7 @@ class ManualTranslationChecker(IChecher):
         return self._errors
 
     def __call__(self, chunk, src_docs):
-        if chunk.get_translator_type() == 0 and chunk.get_orig_sents():
+        if chunk.get_translator_type() == TranslatorType.MANUAL and chunk.get_orig_sents():
             if chunk.get_mod_sents()[0].encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
                                                                                         translator='yandex'):
                 self._errors.append(
@@ -266,7 +267,7 @@ class ORIGModTypeChecker(IChecher):
 
 
     def __call__(self, chunk, src_docs):
-        if chunk.get_mod_type() != ModType.ORIG:
+        if chunk.get_mod_type() != ModType.ORIG or chunk.get_translator_type() != TranslatorType.ORIGINAL:
             return
         if chunk.get_orig_text():
             self._errors.append(ChunkError(
@@ -438,7 +439,8 @@ class SentCorrectnessChecker(IChecher):
         if self._mods and "term_in_the_end" not in self._mods:
             return
         text = chunk.get_mod_sents()[-1]
-
+        print(text[-1])
+        print(text)
         if text[-1] not in segmenter.SENTENCE_TERMINALS:
             self._errors.append(ChunkError(
                 "Предложение должно заканчиваться точкой (или !?)!",
