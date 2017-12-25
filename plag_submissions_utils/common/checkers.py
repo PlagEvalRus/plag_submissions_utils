@@ -439,8 +439,6 @@ class SentCorrectnessChecker(IChecher):
         if self._mods and "term_in_the_end" not in self._mods:
             return
         text = chunk.get_mod_sents()[-1]
-        print(text[-1])
-        print(text)
         if text[-1] not in segmenter.SENTENCE_TERMINALS:
             self._errors.append(ChunkError(
                 "Предложение должно заканчиваться точкой (или !?)!",
