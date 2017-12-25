@@ -9,3 +9,7 @@ hunspell==0.4.1
 langdetect==1.0.7
 pymorphy2
 pymorphy2-dicts-ru
+requests
+googletrans
+urllib
+json
