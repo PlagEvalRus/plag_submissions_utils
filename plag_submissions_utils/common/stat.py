@@ -50,7 +50,7 @@ class SubmissionStat(object):
         return """Total chunks cnt: %d
 Sent lengths: %s
 Mod type frequencies: %s
-Translation type frequencies: %s 
+Translation type frequencies: %s
 Docs frequencies: %s""" %(self.chunks_cnt,
                           "\n".join(len_parts),
                           self._defdict_to_str(self.mod_type_freqs),
