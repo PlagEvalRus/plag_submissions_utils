@@ -16,6 +16,7 @@ from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common.chunks import TranslatorType
 
 class ProcessorOpts(BasicProcesssorOpts):
     def __init__(self, sources_dir, inp_file):
@@ -25,6 +26,7 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.min_sent_size     = 5
         self.min_real_sent_cnt = 50
         self.min_src_sents_cnt = 100
+        self.max_unmod_translation = 20
         self.mod_type_ratios   = {
             ModType.UNK : (0, 0),
             ModType.CPY : (0, 0),
@@ -37,6 +39,13 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.SEP : (4, 20),
             ModType.SYN : (10, 40),
             ModType.SHF : (10, 40)
+        }
+        self.translation_type_ratios   = {
+            TranslatorType.UNK :      (0, 20),
+            TranslatorType.GOOGLE :   (0, 100),
+            TranslatorType.YANDEX :   (0, 100),
+            TranslatorType.ORIGINAL : (10, 20),
+            TranslatorType.MANUAL :   (10, 20)
         }
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {
@@ -74,10 +83,16 @@ def _check_headers(first_row):
     if first_row[2].lower().find(u"типы сокрытия") == -1:
         return "Failed to find a column with type of obfuscation!"
 
-    if first_row[3].lower().find(u"эссе") == -1:
+    if first_row[3].lower().find(u"переводчик") == -1:
+        return "Failed to find a column with translator!"
+
+    if first_row[4].lower().find(u"эссе") == -1:
         return "Failed to find a column with modified text!"
 
-    if first_row[4].lower().find(u"исходное предложение") == -1:
+    if first_row[5].lower().find(u"исходный фрагмент") == -1:
+        return "Failed to find a column with translated text!"
+
+    if first_row[6].lower().find(u"исходное предложение") == -1:
         return "Failed to find a column with original text!"
 
     return None
@@ -139,7 +154,7 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
     orig_text = []
     #collect original text
-    orig_text_col = 4
+    orig_text_col = 6
     while True:
         try:
             val = row_vals[orig_text_col]
@@ -151,22 +166,33 @@ def _try_create_chunk(row_vals, sent_num, opts):
         else:
             break
 
-    mod_text = row_vals[3]
+    mod_text = row_vals[4]
     if not mod_text:
         return None
+
+    translated_text = row_vals[5]
+    if not translated_text:
+       translated_text = '-'
 
     orig_doc = row_vals[1]
     mod_type_str = check_str_cell(row_vals[2])
 
+    translator_type_str = check_str_cell(row_vals[3])
+    if not translator_type_str:
+        translator_type_str = '-'
+
     defined_cols = 0
     defined_cols += bool(orig_doc) + bool(mod_type_str) + bool(orig_text)
-
-    if defined_cols != 0 and defined_cols != 3:
-        raise RuntimeError("Неправильный формат!")
+    # TODO process this
+    # print(defined_cols)
+    # if defined_cols != 0 and defined_cols != 3:
+    #     raise RuntimeError("Неправильный формат!")
 
     return Chunk(mod_text = mod_text,
+                 translated_text = translated_text,
                  orig_text = orig_text,
                  orig_doc = orig_doc,
                  mod_type_str = mod_type_str,
+                 translator_type_str = translator_type_str,
                  chunk_num = sent_num,
                  opts = opts)
