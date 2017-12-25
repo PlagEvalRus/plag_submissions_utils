@@ -98,8 +98,11 @@ class StatCollector(object):
             for mod_type in chunk.get_all_mod_types():
                 self._stat.mod_type_freqs[mod_type] += 1
 
-            for translation_type in chunk.get_all_translator_types():
-                self._stat.translation_type_freqs[translation_type] += 1
+            try:
+                for translation_type in chunk.get_all_translator_types():
+                    self._stat.translation_type_freqs[translation_type] += 1
+            except AttributeError:
+                pass
 
             if chunk.get_all_mod_types()[0] == 4 and len(chunk.get_orig_sents()) != 0:
                 self._stat.unmod_translated_sents += 1

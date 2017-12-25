@@ -267,8 +267,12 @@ class ORIGModTypeChecker(IChecher):
 
 
     def __call__(self, chunk, src_docs):
-        if chunk.get_mod_type() != ModType.ORIG or chunk.get_translator_type() != TranslatorType.ORIGINAL:
-            return
+        try:
+            if chunk.get_mod_type() != ModType.ORIG or chunk.get_translator_type() != TranslatorType.ORIGINAL:
+                return
+        except AttributeError:
+            if chunk.get_mod_type() != ModType.ORIG:
+                return
         if chunk.get_orig_text():
             self._errors.append(ChunkError(
                 "Поле 'оригинальное предложение' должно быть пустым, если это предложением написано вами",

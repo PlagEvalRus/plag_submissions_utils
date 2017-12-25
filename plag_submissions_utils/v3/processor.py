@@ -189,10 +189,11 @@ def _try_create_chunk(row_vals, sent_num, opts):
     #     raise RuntimeError("Неправильный формат!")
 
     return Chunk(mod_text = mod_text,
-                 translated_text = translated_text,
                  orig_text = orig_text,
                  orig_doc = orig_doc,
                  mod_type_str = mod_type_str,
-                 translator_type_str = translator_type_str,
                  chunk_num = sent_num,
-                 opts = opts)
+                 opts = opts,
+                 translated_text=translated_text,
+                 translator_type_str=translator_type_str
+                 )
