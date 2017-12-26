@@ -30,6 +30,10 @@ class ModType(object):
     def get_all_mod_types_v2(cls):
         return range(0,8) + range(9,12)
 
+    @classmethod
+    def get_all_mod_types_v3(cls):
+        return 0, 2, 4, 5, 6, 7, 9, 10
+
 def mod_types_to_str(mod_types):
     return ",".join(mod_type_to_str(m) for m in mod_types)
 
@@ -197,6 +201,9 @@ class Chunk(object):
         return self._modified_sents.get_avg_words_cnt()
 
     def measure_dist(self):
+        if self.has_translator_type():
+            return distance.nlevenshtein(self.get_translated_tokens(),
+                                         self.get_mod_tokens())
         return distance.nlevenshtein(self.get_orig_tokens(),
                                      self.get_mod_tokens())
 

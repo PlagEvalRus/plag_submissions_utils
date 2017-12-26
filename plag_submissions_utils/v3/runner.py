@@ -41,13 +41,14 @@ def run(archive_path):
             chks.ManualTranslationChecker(opts)
         ]
 
-        metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
+        metrics = [
+                   mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
                    mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size),
                    mtrks.SrcSentsCountMetric(opts.min_src_sents_cnt),
                    mtrks.ModTranslationMetric(opts.max_unmod_translation)
                    ]
 
-        for mod_type in ModType.get_all_mod_types_v2():
+        for mod_type in ModType.get_all_mod_types_v3():
             metrics.append(mtrks.ModTypeRatioMetric(mod_type,
                                                     opts.mod_type_ratios[mod_type]))
 
