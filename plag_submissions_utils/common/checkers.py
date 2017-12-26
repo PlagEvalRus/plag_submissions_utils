@@ -21,7 +21,6 @@ from .errors import ChunkError
 from .errors import Error
 from .simple_detector import calc_originality
 from translator import YaGoTrans
-from api_key import api_key
 
 
 class IChecher(object):
@@ -190,7 +189,7 @@ class SYNChecker(BaseChunkSimChecker):
 class TranslationChecker(IChecher):
     def __init__(self, opts, fluctuation_delta=3):
         super(TranslationChecker, self).__init__()
-        self._trans = YaGoTrans(api_key)
+        self._trans = YaGoTrans()
         self._errors = []
 
     def get_errors(self):
@@ -211,7 +210,7 @@ class TranslationChecker(IChecher):
 class ManualTranslationChecker(IChecher):
     def __init__(self, opts, fluctuation_delta=3):
         super(ManualTranslationChecker, self).__init__()
-        self._trans = YaGoTrans(api_key)
+        self._trans = YaGoTrans()
         self._errors = []
 
     def get_errors(self):

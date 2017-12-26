@@ -1,1 +1,0 @@
-api_key = 'trnsl.1.1.20171220T093118Z.6de6eb902dca717b.a78183a397fc9ab7624e6fa01062eff2fa8d2f9c'

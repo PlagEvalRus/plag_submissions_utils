@@ -3,12 +3,42 @@ import requests
 import json
 import urllib
 from googletrans import Translator
+from os import path, environ
+
+CONFIG = 'config.txt'
+ENV_VAR = 'SUBMISSION_UTILS_TRANSLATOR_CONFIG'
+SEARCH_RANGE = 3
 
 
 class YaGoTrans:
-    def __init__(self, api_key):
-        self.api_key = api_key
+    def __init__(self):
+        self.api_key = self._open_api_key()
         self.google_trans = Translator()
+
+    def _check_enviroment_variable(self):
+        return environ.get(ENV_VAR)
+
+    def _open_config(self, ups):
+        file = []
+        [file.append(up) for up in ['..']*ups]
+        file.append(CONFIG)
+        return self._read_file(path.join(*file))
+
+    def _read_file(self, filepath):
+        with open(filepath, 'r') as f:
+            return f.read()
+
+    def _open_api_key(self):
+        env_var = self._check_enviroment_variable()
+        if env_var:
+            return self._read_file(env_var)
+        for up in range(SEARCH_RANGE):
+            try:
+                api_key = self._open_config(up).split('\n')[0]
+                return api_key
+            except IOError:
+                continue
+        raise ValueError('No config file was found!')
 
     def error(self, message, status_code):
         sys.stderr.write(message + '\n')
