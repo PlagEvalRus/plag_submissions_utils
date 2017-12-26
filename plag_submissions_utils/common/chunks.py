@@ -219,11 +219,20 @@ class Chunk(object):
     def get_translated_sents(self):
         return self._translated_sents.get_sents()
 
+    def has_translated_sents(self):
+        try:
+            return self._translated_sents
+        except AttributeError:
+            return False
+
     def get_mod_sents(self):
         return self._modified_sents.get_sents()
 
     def get_orig_tokens(self):
         return self._original_sents.get_all_tokens()
+
+    def get_translated_tokens(self):
+        return self._translated_sents.get_all_tokens()
 
     def get_orig_tokens_list(self):
         return self._original_sents.get_tokens_list()

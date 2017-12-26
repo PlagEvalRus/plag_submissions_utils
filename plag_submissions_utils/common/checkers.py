@@ -101,7 +101,13 @@ class AddChecker(BaseChunkSimChecker):
         if chunk.get_mod_type() != ModType.ADD:
             return
         super(AddChecker, self).__call__(chunk, src_docs)
-        if len(chunk.get_orig_tokens()) >= \
+
+        if chunk.has_translated_sents():
+            compared_tokens = chunk.get_translated_tokens()
+        else:
+            compared_tokens = chunk.get_orig_tokens()
+
+        if len(compared_tokens) >= \
            len(chunk.get_mod_tokens()):
             self._errors.append(
                 ChunkError("Тип сокрытия ADD: количество слов в модифицированном предложении\
@@ -117,7 +123,13 @@ class DelChecker(BaseChunkSimChecker):
         if chunk.get_mod_type() != ModType.DEL:
             return
         super(DelChecker, self).__call__(chunk, src_docs)
-        if len(chunk.get_orig_tokens()) <= \
+
+        if chunk.has_translated_sents():
+            compared_tokens = chunk.get_translated_tokens()
+        else:
+            compared_tokens = chunk.get_orig_tokens()
+
+        if len(compared_tokens) <= \
            len(chunk.get_mod_tokens()):
             self._errors.append(
                 ChunkError("Тип сокрытия DEL: количество слов в модифицированном предложении\
