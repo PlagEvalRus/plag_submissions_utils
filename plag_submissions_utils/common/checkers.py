@@ -198,7 +198,7 @@ class TranslationChecker(IChecher):
     def __call__(self, chunk, src_docs):
         if chunk.get_translator_type() == TranslatorType.GOOGLE or chunk.get_translator_type() == TranslatorType.YANDEX:
             try:
-                if chunk.get_translated_sents()[0].encode('utf-8') is self._trans.translate(' '.join(chunk.get_orig_sents()), translator=chunk.get_translator_type_str()):
+                if ' '.join(chunk.get_translated_sents()).encode('utf-8') is self._trans.translate(' '.join(chunk.get_orig_sents()), translator=chunk.get_translator_type_str()):
                     self._errors.append(
                         ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
                                    chunk.get_chunk_id(),
@@ -218,14 +218,14 @@ class ManualTranslationChecker(IChecher):
 
     def __call__(self, chunk, src_docs):
         if chunk.get_translator_type() == TranslatorType.MANUAL and chunk.get_orig_sents():
-            if chunk.get_mod_sents()[0].encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
+            if ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
                                                                                         translator='yandex'):
                 self._errors.append(
                     ChunkError(
                         "Текст, заявленный как переведенный вручную, переведён Яндекс Переводчиком!",
                         chunk.get_chunk_id(),
                         ErrSeverity.HIGH))
-            elif chunk.get_mod_sents()[0].encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
+            elif ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
                                                                                         translator='google'):
                 self._errors.append(
                     ChunkError(
