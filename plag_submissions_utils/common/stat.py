@@ -7,6 +7,7 @@ from collections import Counter
 
 
 from .chunks import ModType
+from .chunks import TranslatorType
 from .chunks import mod_types_to_str
 
 class SubmissionStat(object):
@@ -17,6 +18,7 @@ class SubmissionStat(object):
                  orig_sent_lengths = None,
                  mod_sent_lengths = None,
                  mod_type_freqs = None,
+                 translation_type_freqs=None,
                  docs_freqs = None,
                  src_sents_cnt = 0):
         super(SubmissionStat, self).__init__()
@@ -26,6 +28,10 @@ class SubmissionStat(object):
         self.mod_type_freqs    = mod_type_freqs if mod_type_freqs is not None else \
                                  defaultdict(lambda : 0)
         self.mod_type_co_occur = defaultdict(lambda : 0)
+        self.unmod_translated_sents = 0
+
+        self.translation_type_freqs = translation_type_freqs if translation_type_freqs is not None else \
+            defaultdict(lambda: 0)
 
         self.docs_freqs        = docs_freqs if docs_freqs is not None else defaultdict(lambda : 0)
         self.src_sents_cnt     = src_sents_cnt
@@ -44,9 +50,11 @@ class SubmissionStat(object):
         return """Total chunks cnt: %d
 Sent lengths: %s
 Mod type frequencies: %s
+Translation type frequencies: %s
 Docs frequencies: %s""" %(self.chunks_cnt,
                           "\n".join(len_parts),
                           self._defdict_to_str(self.mod_type_freqs),
+                          self._defdict_to_str(self.translation_type_freqs),
                           self._defdict_to_str(self.docs_freqs, key_trans = lambda k: k.encode("utf8")))
 
 
@@ -69,6 +77,11 @@ class StatCollector(object):
         items.sort(key = lambda t : t[1], reverse=True)
         return items, self._stat.mod_type_freqs
 
+    def translation_types_stat(self):
+        items = self._stat.translation_type_co_occur.items()
+        items.sort(key = lambda t : t[1], reverse=True)
+        return items, self._stat.translation_type_freqs
+
     def __call__(self, chunks):
         self._stat.chunks_cnt += len(chunks)
         for chunk in chunks:
@@ -84,6 +97,16 @@ class StatCollector(object):
 
             for mod_type in chunk.get_all_mod_types():
                 self._stat.mod_type_freqs[mod_type] += 1
+
+            try:
+                for translation_type in chunk.get_all_translator_types():
+                    self._stat.translation_type_freqs[translation_type] += 1
+            except AttributeError:
+                pass
+
+            if chunk.get_all_mod_types()[0] == 4 and len(chunk.get_orig_sents()) != 0:
+                self._stat.unmod_translated_sents += 1
+
             self._update_co_occurs(chunk.get_all_mod_types(), self._stat)
 
         return self._stat

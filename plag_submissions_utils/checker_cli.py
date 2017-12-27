@@ -19,6 +19,9 @@ def run_v1(opts):
 def run_v2(opts):
     common_run(opts, "2")
 
+def run_v3(opts):
+    common_run(opts, "3")
+
 def common_run(opts, version):
     metrics, errors, stat = common_runner.run(opts.archive.decode("utf8"), version)
 
@@ -69,6 +72,11 @@ def main():
 
     v2_parser.add_argument("--archive", "-a", required=True)
     v2_parser.set_defaults(func = run_v2)
+
+    v3_parser = subparsers.add_parser('v3', help='help of set')
+
+    v3_parser.add_argument("--archive", "-a", required=True)
+    v3_parser.set_defaults(func = run_v3)
 
     stat_parser = subparsers.add_parser('stat')
     stat_parser.add_argument("--archive_dir", "-d", required=True)
