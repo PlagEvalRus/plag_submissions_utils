@@ -243,3 +243,25 @@ class ModTranslationMetric(IMetric):
     def __str__(self):
         common = "%.1f%% предложений являются немодифицированными переводами" % (self._mod_translation_type_ratio)
         return common
+
+class MeanSentLenMetric(IMetric):
+    def __init__(self, min_mean_sent_len, fluctuation_delta = 3):
+        self._min_mean_sent_len = min_mean_sent_len
+        self._fluctuation_delta = fluctuation_delta
+        self._mean_sent_len = 0
+
+    def get_value(self):
+        return self._mean_sent_len
+
+    def get_violation_level(self):
+        if self._mean_sent_len < self._min_mean_sent_len:
+            return ViolationLevel.HIGH
+        else:
+            return ViolationLevel.OK
+
+    def __call__(self, stat, chunks):
+        self._mean_sent_len = sum(t[1] for t in stat.mod_sent_lengths) / float(len(stat.mod_sent_lengths))
+
+    def __str__(self):
+        common = "Средняя длина предложения составляет %f слов" % (self._mean_sent_len)
+        return common

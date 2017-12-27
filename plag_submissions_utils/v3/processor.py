@@ -27,6 +27,7 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.min_real_sent_cnt = 50
         self.min_src_sents_cnt = 100
         self.max_unmod_translation = 20
+        self.min_mean_sent_len = 9.38
         self.mod_type_ratios   = {
             ModType.UNK : (0, 0),
             ModType.CPY : (0, 0),
