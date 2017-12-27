@@ -200,10 +200,10 @@ class AutoTranslationMetric(IMetric):
         return self._translation_type_ratio
 
     def get_violation_level(self):
-        if self._translation_type_ratio >= self._ratio_interval[0] and self._translation_type_ratio <= self._ratio_interval[1]:
+        if self._ratio_interval[0] <= self._translation_type_ratio <= self._ratio_interval[1]:
             return ViolationLevel.OK
         else:
-            return ViolationLevel.MEDIUM
+            return ViolationLevel.HIGH
 
     def __call__(self, stat, chunks):
         translation_type_cnt = stat.translation_type_freqs[self._translation_type]
