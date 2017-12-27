@@ -201,10 +201,11 @@ class Chunk(object):
         return self._modified_sents.get_avg_words_cnt()
 
     def measure_dist(self):
-        if self.has_translator_type():
+        try:
             return distance.nlevenshtein(self.get_translated_tokens(),
-                                         self.get_mod_tokens())
-        return distance.nlevenshtein(self.get_orig_tokens(),
+                                            self.get_mod_tokens())
+        except AttributeError:
+            return distance.nlevenshtein(self.get_orig_tokens(),
                                      self.get_mod_tokens())
 
     def lexical_dist(self):
