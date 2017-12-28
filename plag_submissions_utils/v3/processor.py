@@ -51,15 +51,15 @@ class ProcessorOpts(BasicProcesssorOpts):
         #допустимый процент изменений для каждого типа сокрытия
         self.diff_perc         = {
             ModType.CPY : (0, 0),
-            ModType.LPR : (20, 100),
+            ModType.LPR : (10, 100),
             ModType.HPR : (0, 0),
             ModType.ORIG : (100, 100),
-            ModType.DEL : (15, 95),
-            ModType.ADD : (15, 95),
+            ModType.DEL : (5, 95),
+            ModType.ADD : (5, 95),
             ModType.CCT : (0, 100),
             ModType.SEP : (0, 100),
             ModType.SYN : (0, 0),
-            ModType.SHF : (20, 100)
+            ModType.SHF : (10, 100)
         }
 
         self.min_lexical_dist = 25 #%
