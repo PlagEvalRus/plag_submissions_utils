@@ -237,7 +237,7 @@ class ManualTranslationChecker(IChecher):
                         "Текст, заявленный как переведенный вручную, переведён Яндекс Переводчиком!",
                         chunk.get_chunk_id(),
                         ErrSeverity.HIGH))
-            elif ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
+            elif ' '.join(chunk.get_mod_sents()).encode('utf-8') is self._trans.translate(chunk.get_orig_sents()[0],
                                                                                         translator='google'):
                 self._errors.append(
                     ChunkError(
