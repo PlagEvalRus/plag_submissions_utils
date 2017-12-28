@@ -230,7 +230,7 @@ class ManualTranslationChecker(IChecher):
 
     def __call__(self, chunk, src_docs):
         if chunk.get_translator_type() == TranslatorType.MANUAL and chunk.get_orig_sents():
-            if ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
+            if ' '.join(chunk.get_mod_sents()).encode('utf-8') is self._trans.translate(chunk.get_orig_sents()[0],
                                                                                         translator='yandex'):
                 self._errors.append(
                     ChunkError(
