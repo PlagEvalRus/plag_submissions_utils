@@ -80,6 +80,13 @@
 - name: copy tika to bin
   copy: src=tika dest=/compiled/bin/tika mode=755 force=no
 
+- name: ensure that share/all2text directory exists
+  file: path=/compiled/share/all2text state=directory
+
+- name: copy tika.config to share/all2text
+  copy: src=tika_config.xml dest=/compiled/share/all2text mode=755 force=no
+
+
 - name: set up apache2
   include: ./apache.yml
   become: yes
