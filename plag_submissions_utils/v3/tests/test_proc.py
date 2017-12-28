@@ -19,7 +19,7 @@ class ProcessorTestCase(unittest.TestCase):
 
 
         print stat
-        self.assertEqual(3, len(errors), "errors:\n%s" % '\n'.join(str(e) for e in errors))
+        self.assertEqual(4, len(errors), "errors:\n%s" % '\n'.join(str(e) for e in errors))
         self.assertEqual(8, stat.chunks_cnt)
 
         self.assertEqual(0, stat.mod_type_freqs[ModType.UNK])
@@ -34,5 +34,5 @@ class ProcessorTestCase(unittest.TestCase):
         self.assertEqual(3, stat.docs_freqs["elvis_wiki"])
         self.assertEqual(1, stat.docs_freqs["ElvisIMDb"])
 
-        self.assertEqual(4, _metrics_violations_cnt(
+        self.assertEqual(2, _metrics_violations_cnt(
             metrics, ViolationLevel.HIGH))
