@@ -269,7 +269,7 @@ class ORIGModTypeChecker(IChecher):
                     found_sents += 1
             if found_sents == len(sents):
                 self._errors.append(ChunkError(
-                    "Оригинальное предложение было найдено в документе '%s'" % \
+                    "Исходное предложение было найдено в документе '%s'" % \
                     src.encode("utf8"),
                     chunk.get_chunk_id(),
                     ErrSeverity.HIGH))
@@ -326,7 +326,7 @@ class OrigSentChecker(IChecher):
 
         if not_found_cnt == len(sents):
             self._errors.append(ChunkError(
-                "Оригинальное предложение не было найдено в документе-источнике",
+                "Исходное предложение не было найдено в документе-источнике",
                 chunk.get_chunk_id(),
                 ErrSeverity.HIGH))
 

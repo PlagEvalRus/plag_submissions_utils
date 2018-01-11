@@ -88,8 +88,10 @@ class StatCollector(object):
             if chunk.get_mod_type() != ModType.ORIG:
                 self._stat.orig_sent_lengths.append((chunk.get_chunk_id(),
                                                      chunk.get_avg_original_words_cnt()))
-                self._stat.docs_freqs[chunk.get_orig_doc_filename()] += 1
                 self._stat.src_sents_cnt += len(chunk.get_orig_sents())
+
+            if chunk.get_orig_doc_filename():
+                self._stat.docs_freqs[chunk.get_orig_doc_filename()] += 1
 
 
             self._stat.mod_sent_lengths.append((chunk.get_chunk_id(),

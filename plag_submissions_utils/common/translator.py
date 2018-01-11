@@ -50,7 +50,7 @@ class YaGoTrans:
             return self.google_trans.translate(text, dest=dest_lang).text.encode(encoding)
             # except:
             #    raise ValueError('No Internet connection!')
-        textFromInput = text
+        textFromInput = text.encode('utf8')
 
         urlDetectLanguage = 'https://translate.yandex.net/api/v1.5/tr.json/detect?key={0}&text={1}'
         urlTranslate = 'https://translate.yandex.net/api/v1.5/tr.json/translate?key={0}&lang={1}&text={2}'
