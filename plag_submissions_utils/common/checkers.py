@@ -230,14 +230,14 @@ class ManualTranslationChecker(IChecher):
 
     def __call__(self, chunk, src_docs):
         if chunk.get_translator_type() == TranslatorType.MANUAL and chunk.get_orig_sents():
-            if ' '.join(chunk.get_mod_sents()).encode('utf-8') is self._trans.translate(chunk.get_orig_sents()[0],
+            if ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
                                                                                         translator='yandex'):
                 self._errors.append(
                     ChunkError(
                         "Текст, заявленный как переведенный вручную, переведён Яндекс Переводчиком!",
                         chunk.get_chunk_id(),
                         ErrSeverity.HIGH))
-            elif ' '.join(chunk.get_mod_sents()).encode('utf-8') is self._trans.translate(chunk.get_orig_sents()[0],
+            elif ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
                                                                                         translator='google'):
                 self._errors.append(
                     ChunkError(
@@ -269,7 +269,7 @@ class ORIGModTypeChecker(IChecher):
                     found_sents += 1
             if found_sents == len(sents):
                 self._errors.append(ChunkError(
-                    "Оригинальное предложение было найдено в документе '%s'" % \
+                    "Исходное предложение было найдено в документе '%s'" % \
                     src.encode("utf8"),
                     chunk.get_chunk_id(),
                     ErrSeverity.HIGH))
@@ -326,7 +326,7 @@ class OrigSentChecker(IChecher):
 
         if not_found_cnt == len(sents):
             self._errors.append(ChunkError(
-                "Оригинальное предложение не было найдено в документе-источнике",
+                "Исходное предложение не было найдено в документе-источнике",
                 chunk.get_chunk_id(),
                 ErrSeverity.HIGH))
 
