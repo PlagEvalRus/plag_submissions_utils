@@ -33,7 +33,7 @@ def run(archive_path):
             # chks.SspChecker(opts),
             chks.SHFChecker(opts),
             # chks.SYNChecker(opts),
-            # chks.LexicalSimChecker(opts),
+            chks.LexicalSimChecker(opts),
             chks.ORIGModTypeChecker(),
             chks.SentCorrectnessChecker(),
             chks.SpellChecker(),
