@@ -198,6 +198,24 @@ class SYNChecker(BaseChunkSimChecker):
         super(SYNChecker, self).__call__(chunk, src_docs)
 
 
+class CyrillicAlphabetChecker(IChecher):
+    def __init__(self, opts, fluctuation_delta=3):
+        super(CyrillicAlphabetChecker, self).__init__()
+        self._re = regex.compile(r"[ А-я][A-z][А-я ]")
+        self._errors = []
+
+    def get_errors(self):
+        return self._errors
+
+    def __call__(self, chunk, src_docs):
+        if self._re.search(' '.join(chunk.get_mod_sents())):
+            self._errors.append(
+                ChunkError(
+                    "Модифицированное предложение содержит замены отдельных букв!",
+                    chunk.get_chunk_id(),
+                    ErrSeverity.HIGH))
+
+
 class TranslationChecker(IChecher):
     def __init__(self, opts, fluctuation_delta=3):
         super(TranslationChecker, self).__init__()
