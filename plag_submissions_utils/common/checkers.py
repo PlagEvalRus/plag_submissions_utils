@@ -201,7 +201,7 @@ class SYNChecker(BaseChunkSimChecker):
 class CyrillicAlphabetChecker(IChecher):
     def __init__(self, opts, fluctuation_delta=3):
         super(CyrillicAlphabetChecker, self).__init__()
-        self._re = regex.compile(r"[ А-я][A-z][А-я ]")
+        self._re = regex.compile("\b([А-я]*([A-z])[А-я]+|[А-я]+([A-z])[А-я]*)\b")
         self._errors = []
 
     def get_errors(self):
