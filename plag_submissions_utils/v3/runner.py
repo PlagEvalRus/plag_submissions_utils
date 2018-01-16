@@ -25,7 +25,7 @@ def run(archive_path):
             chks.OriginalityChecker(opts),
             chks.OrigSentChecker(opts),
             chks.SourceDocsChecker(opts),
-            # chks.PRChecker(opts),
+            chks.PRChecker(opts),
             chks.AddChecker(opts),
             chks.DelChecker(opts),
             # chks.CPYChecker(opts),
@@ -33,12 +33,13 @@ def run(archive_path):
             # chks.SspChecker(opts),
             chks.SHFChecker(opts),
             # chks.SYNChecker(opts),
-            # chks.LexicalSimChecker(opts),
+            chks.LexicalSimChecker(opts),
             chks.ORIGModTypeChecker(),
             chks.SentCorrectnessChecker(),
             chks.SpellChecker(),
             chks.TranslationChecker(opts),
-            chks.ManualTranslationChecker(opts)
+            chks.ManualTranslationChecker(opts),
+            chks.CyrillicAlphabetChecker(opts)
         ]
 
         metrics = [
