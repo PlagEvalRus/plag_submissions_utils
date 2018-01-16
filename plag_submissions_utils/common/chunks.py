@@ -168,6 +168,7 @@ class Chunk(object):
     def has_mod_type(self, mod_type):
         return mod_type in self._mod_types
 
+    #TODO move to subclass
     def get_translator_type(self):
         if len(self._translator_types) == 1:
             return self._translator_types[0]
@@ -202,6 +203,7 @@ class Chunk(object):
 
     def measure_dist(self):
         try:
+            #TODO move to subclass
             return distance.nlevenshtein(self.get_translated_tokens(),
                                             self.get_mod_tokens())
         except AttributeError:
@@ -209,8 +211,13 @@ class Chunk(object):
                                      self.get_mod_tokens())
 
     def lexical_dist(self):
-        return distance.jaccard(self.get_orig_tokens(),
-                                self.get_mod_tokens())
+        try:
+            #TODO move to subclass
+            return distance.nlevenshtein(self.get_translated_tokens(),
+                                         self.get_mod_tokens())
+        except AttributeError:
+            return distance.jaccard(self.get_orig_tokens(),
+                                    self.get_mod_tokens())
 
     def get_mod_sent_holder(self):
         return self._modified_sents
