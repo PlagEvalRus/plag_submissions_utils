@@ -62,7 +62,7 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.SHF : (10, 100)
         }
 
-        self.min_lexical_dist = 25 #%
+        self.min_lexical_dist = 15 #%
         self.min_originality = 0.77
 
 class Processor(BasicProcessor):
