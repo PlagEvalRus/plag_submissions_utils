@@ -8,6 +8,7 @@ import itertools
 
 from segtok import segmenter
 import regex
+import re
 import hunspell
 import langdetect
 
@@ -201,17 +202,29 @@ class SYNChecker(BaseChunkSimChecker):
 class CyrillicAlphabetChecker(IChecher):
     def __init__(self, opts, fluctuation_delta=3):
         super(CyrillicAlphabetChecker, self).__init__()
-        self._re = regex.compile("\b([А-я]*([A-z])[А-я]+|[А-я]+([A-z])[А-я]*)\b")
+        # self._re = re.compile(ur"[ А-я]([A-z])[А-я ]")
+        self._re = re.compile(ur"([А-я]*([A-z])[А-я]+|[А-я]+([A-z])[А-я]*)")
         self._errors = []
 
     def get_errors(self):
         return self._errors
 
     def __call__(self, chunk, src_docs):
-        if self._re.search(' '.join(chunk.get_mod_sents())):
+        if self._re.search(chunk.get_mod_sents()[0]):
+            reports = []
+            for finding in self._re.findall(chunk.get_mod_sents()[0]):
+                try:
+                    word = finding[0]
+                    if len(finding[1]) == 0:
+                        letter = finding[2]
+                    else:
+                        letter = finding[1]
+                    reports.append('В слове "{}" заменена буква "{}".'.format(word, letter))
+                except IndexError:
+                    pass
             self._errors.append(
                 ChunkError(
-                    "Модифицированное предложение содержит замены отдельных букв!",
+                    "Модифицированное предложение содержит замены отдельных букв! {}".format(' '.join(reports)),
                     chunk.get_chunk_id(),
                     ErrSeverity.HIGH))
 
