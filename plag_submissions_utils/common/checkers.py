@@ -219,7 +219,7 @@ class CyrillicAlphabetChecker(IChecher):
                         letter = finding[2]
                     else:
                         letter = finding[1]
-                    reports.append('В слове "{}" заменена буква "{}".'.format(word, letter))
+                    reports.append('В слове "{}" заменена буква "{}".'.format(word.encode('utf-8'), letter))
                 except IndexError:
                     pass
             self._errors.append(
