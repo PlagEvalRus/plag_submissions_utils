@@ -3,6 +3,7 @@
 
 import logging
 import unittest
+import regex
 
 import plag_submissions_utils.common.checkers  as chks
 from plag_submissions_utils.common.chunks import Chunk
@@ -158,5 +159,19 @@ class SpellCheckerTestCase(unittest.TestCase):
         self.checker._typo_max_tf = 3
         chunk = Chunk("", u"Это не ашибка, это не ашибка, это не ашибка.", "", "", 1)
         logging.debug(chunk)
+        self.checker(chunk, None)
+        self.assertEqual(0, len(self.checker.get_errors()))
+
+class CyrillicAlphabetChecker(unittest.TestCase):
+    def setUp(self):
+        self.checker = chks.CyrillicAlphabetChecker(Opts())
+
+    def test_regex_matching_1(self):
+        chunk = Chunk([], u"Здeсь есть одна замена.", "ADD", "filename", "1")
+        self.checker(chunk, None)
+        self.assertEqual(1, len(self.checker.get_errors()))
+
+    def test_regex_matching_2(self):
+        chunk = Chunk([], u"Здесь замен нет.", "ADD", "filename", "1")
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
