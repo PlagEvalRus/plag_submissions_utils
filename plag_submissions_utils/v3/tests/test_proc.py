@@ -5,7 +5,7 @@ import unittest
 
 import plag_submissions_utils.v3.runner as runner
 from plag_submissions_utils.common.chunks import ModType
-from plag_submissions_utils.common.chunks import TranslatorType
+from plag_submissions_utils.common.translated_chunks import TranslatorType
 from plag_submissions_utils.common_runner import _metrics_violations_cnt
 from plag_submissions_utils.common.metrics import ViolationLevel
 
@@ -19,7 +19,7 @@ class ProcessorTestCase(unittest.TestCase):
 
 
         print stat
-        self.assertEqual(3, len(errors), "errors:\n%s" % '\n'.join(str(e) for e in errors))
+        self.assertEqual(2, len(errors), "errors:\n%s" % '\n'.join(str(e) for e in errors))
         self.assertEqual(8, stat.chunks_cnt)
 
         self.assertEqual(0, stat.mod_type_freqs[ModType.UNK])

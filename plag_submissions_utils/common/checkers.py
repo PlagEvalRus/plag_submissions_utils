@@ -16,12 +16,10 @@ from . import text_proc
 from . import source_doc
 from . import chunks
 from .chunks import ModType
-from .chunks import TranslatorType
 from .errors import ErrSeverity
 from .errors import ChunkError
 from .errors import Error
 from .simple_detector import calc_originality
-from translator import YaGoTrans
 
 
 class IChecher(object):
@@ -103,12 +101,7 @@ class AddChecker(BaseChunkSimChecker):
             return
         super(AddChecker, self).__call__(chunk, src_docs)
 
-        if chunk.has_translated_sents():
-            compared_tokens = chunk.get_translated_tokens()
-        else:
-            compared_tokens = chunk.get_orig_tokens()
-
-        if len(compared_tokens) >= \
+        if len(chunk.get_orig_tokens()) >= \
            len(chunk.get_mod_tokens()):
             self._errors.append(
                 ChunkError("Тип сокрытия ADD: количество слов в модифицированном предложении\
@@ -125,12 +118,7 @@ class DelChecker(BaseChunkSimChecker):
             return
         super(DelChecker, self).__call__(chunk, src_docs)
 
-        if chunk.has_translated_sents():
-            compared_tokens = chunk.get_translated_tokens()
-        else:
-            compared_tokens = chunk.get_orig_tokens()
-
-        if len(compared_tokens) <= \
+        if len(chunk.get_orig_tokens()) <= \
            len(chunk.get_mod_tokens()):
             self._errors.append(
                 ChunkError("Тип сокрытия DEL: количество слов в модифицированном предложении\
@@ -229,56 +217,6 @@ class CyrillicAlphabetChecker(IChecher):
                     ErrSeverity.HIGH))
 
 
-class TranslationChecker(IChecher):
-    def __init__(self, opts, fluctuation_delta=3):
-        super(TranslationChecker, self).__init__()
-        self._trans = YaGoTrans()
-        self._errors = []
-
-    def get_errors(self):
-        return self._errors
-
-    def __call__(self, chunk, src_docs):
-        if chunk.get_translator_type() == TranslatorType.GOOGLE or chunk.get_translator_type() == TranslatorType.YANDEX:
-            try:
-                if ' '.join(chunk.get_translated_sents()).encode('utf-8') is self._trans.translate(' '.join(chunk.get_orig_sents()), translator=chunk.get_translator_type_str()):
-                    self._errors.append(
-                        ChunkError("Переведенный текст не соответствует переводу, получаемому с помощью заявленного переводчика!",
-                                   chunk.get_chunk_id(),
-                                   ErrSeverity.HIGH))
-            except IndexError:
-                pass
-
-
-class ManualTranslationChecker(IChecher):
-    def __init__(self, opts, fluctuation_delta=3):
-        super(ManualTranslationChecker, self).__init__()
-        self._trans = YaGoTrans()
-        self._errors = []
-
-    def get_errors(self):
-        return self._errors
-
-    def __call__(self, chunk, src_docs):
-        if chunk.get_translator_type() == TranslatorType.MANUAL and chunk.get_orig_sents():
-            if ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
-                                                                                        translator='yandex'):
-                self._errors.append(
-                    ChunkError(
-                        "Текст, заявленный как переведенный вручную, переведён Яндекс Переводчиком!",
-                        chunk.get_chunk_id(),
-                        ErrSeverity.HIGH))
-            elif ' '.join(chunk.get_mod_sents()).encode('utf-8') == self._trans.translate(chunk.get_orig_sents()[0],
-                                                                                        translator='google'):
-                self._errors.append(
-                    ChunkError(
-                        "Текст, заявленный как переведенный вручную, переведён Google Translate!",
-                        chunk.get_chunk_id(),
-                        ErrSeverity.HIGH))
-            else:
-                pass
-
-
 class ORIGModTypeChecker(IChecher):
     def __init__(self):
         super(ORIGModTypeChecker, self).__init__()
@@ -300,21 +238,20 @@ class ORIGModTypeChecker(IChecher):
                     found_sents += 1
             if found_sents == len(sents):
                 self._errors.append(ChunkError(
-                    "Исходное предложение было найдено в документе '%s'" % \
+                    "Оригинальное предложение было найдено в документе '%s'" % \
                     src.encode("utf8"),
                     chunk.get_chunk_id(),
                     ErrSeverity.HIGH))
                 break
 
 
+    def _should_run(self, chunk):
+        return chunk.get_mod_type() == ModType.ORIG
+
 
     def __call__(self, chunk, src_docs):
-        try:
-            if chunk.get_mod_type() != ModType.ORIG or chunk.get_translator_type() != TranslatorType.ORIGINAL:
-                return
-        except AttributeError:
-            if chunk.get_mod_type() != ModType.ORIG:
-                return
+        if not self._should_run(chunk):
+            return
         if chunk.get_orig_text():
             self._errors.append(ChunkError(
                 "Поле 'оригинальное предложение' должно быть пустым, если это предложением написано вами",
@@ -537,7 +474,7 @@ class SpellChecker(IChecher):
 
 
     def _drop_most_common(self):
-        """ "typos" that are encountered more than 8 times are not typos...
+        """ "typos" that are encountered more than typo_max_tf times are not typos...
         """
         for typo in self._counter.keys():
             if self._counter[typo] >= self._typo_max_tf:

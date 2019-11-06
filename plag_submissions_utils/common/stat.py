@@ -7,7 +7,6 @@ from collections import Counter
 
 
 from .chunks import ModType
-from .chunks import TranslatorType
 from .chunks import mod_types_to_str
 
 class SubmissionStat(object):
@@ -76,11 +75,6 @@ class StatCollector(object):
         items = self._stat.mod_type_co_occur.items()
         items.sort(key = lambda t : t[1], reverse=True)
         return items, self._stat.mod_type_freqs
-
-    def translation_types_stat(self):
-        items = self._stat.translation_type_co_occur.items()
-        items.sort(key = lambda t : t[1], reverse=True)
-        return items, self._stat.translation_type_freqs
 
     def __call__(self, chunks):
         self._stat.chunks_cnt += len(chunks)

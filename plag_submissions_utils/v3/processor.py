@@ -13,10 +13,10 @@ from plag_submissions_utils.common.processor import BasicProcessor
 from plag_submissions_utils.common.processor import BasicProcesssorOpts
 from plag_submissions_utils.common.errors import ErrSeverity
 from plag_submissions_utils.common.errors import Error
-from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
-from plag_submissions_utils.common.chunks import TranslatorType
+from plag_submissions_utils.common.translated_chunks import TranslatorType
+from plag_submissions_utils.common.translated_chunks import TranslatedChunk
 
 class ProcessorOpts(BasicProcesssorOpts):
     def __init__(self, sources_dir, inp_file):
@@ -189,12 +189,12 @@ def _try_create_chunk(row_vals, sent_num, opts):
     # if defined_cols != 0 and defined_cols != 3:
     #     raise RuntimeError("Неправильный формат!")
 
-    return Chunk(mod_text = mod_text,
-                 orig_text = orig_text,
-                 orig_doc = orig_doc,
-                 mod_type_str = mod_type_str,
-                 chunk_num = sent_num,
-                 opts = opts,
-                 translated_text=translated_text,
-                 translator_type_str=translator_type_str
-                 )
+    return TranslatedChunk(
+        mod_text = mod_text,
+        orig_text = orig_text,
+        orig_doc = orig_doc,
+        mod_type_str = mod_type_str,
+        chunk_num = sent_num,
+        translated_text=translated_text,
+        translator_type_str=translator_type_str,
+        opts = opts)
