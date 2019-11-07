@@ -3,7 +3,7 @@
 
 import logging
 import unittest
-import regex
+# import regex
 
 import plag_submissions_utils.common.checkers  as chks
 from plag_submissions_utils.common.chunks import Chunk

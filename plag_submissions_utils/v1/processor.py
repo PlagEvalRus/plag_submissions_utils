@@ -38,12 +38,12 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.diff_perc         = {
             ModType.CPY : (0, 0),
             ModType.LPR : (23, 75),
-            ModType.HPR : (45, 100),
+            ModType.HPR : (45, 99),
             ModType.ORIG : (100, 100),
             ModType.DEL : (15, 70),
             ModType.ADD : (15, 70),
-            ModType.CCT : (0, 100),
-            ModType.SSP : (0, 100)
+            ModType.CCT : (0, 99),
+            ModType.SSP : (0, 99)
         }
 
 class Processor(BasicProcessor):
