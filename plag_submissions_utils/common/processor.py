@@ -3,7 +3,7 @@
 
 import logging
 
-from .stat import collect_stat
+from .stats import collect_stat
 from .errors import ErrSeverity
 from .errors import Error
 from . import source_doc

@@ -6,8 +6,8 @@ import itertools
 
 from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ModType
-from plag_submissions_utils.common.stat import StatCollector
-from plag_submissions_utils.common.stat import SrcStatCollector
+from plag_submissions_utils.common.stats import StatCollector
+from plag_submissions_utils.common.stats import SrcStatCollector
 
 class StatTestCase(unittest.TestCase):
 

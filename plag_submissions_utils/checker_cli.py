@@ -8,9 +8,9 @@ import logging
 
 from . import common_runner
 from .common.submissions import run_over_submissions
-from .common.stat import StatCollector
-from .common.stat import SrcStatCollector
-from .common.stat import print_mod_types_stat
+from .common.stats import StatCollector
+from .common.stats import SrcStatCollector
+from .common.stats import print_mod_types_stat
 from .common.ir_utils import calc_various_similarity
 
 def run_v1(opts):
