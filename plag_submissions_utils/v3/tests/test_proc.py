@@ -6,8 +6,6 @@ import unittest
 import plag_submissions_utils.v3.runner as runner
 from plag_submissions_utils.common.chunks import ModType
 from plag_submissions_utils.common.translated_chunks import TranslatorType
-from plag_submissions_utils.common_runner import _metrics_violations_cnt
-from plag_submissions_utils.common.metrics import ViolationLevel
 
 class ProcessorTestCase(unittest.TestCase):
 
