@@ -7,6 +7,7 @@ import re
 
 
 import xlrd
+import openpyxl
 
 from plag_submissions_utils.common.processor import BasicProcessor
 from plag_submissions_utils.common.processor import BasicProcesssorOpts
@@ -15,6 +16,7 @@ from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common.chunks import mod_type_to_str
 
 class ProcessorOpts(BasicProcesssorOpts):
     def __init__(self, sources_dir, inp_file):
@@ -136,3 +138,27 @@ def _try_create_chunk(row_vals, sent_num, vals_offs, opts):
                  mod_type_str = check_str_cell(row_vals[vals_offs + 3]),
                  chunk_num = sent_num,
                  opts = opts)
+
+
+def chunk_to_row(chunk):
+    mod_type_str = mod_type_to_str(chunk.get_mod_type())
+
+    if mod_type_str == 'ORIG':
+        mod_type_str = ''
+
+    return (
+        chunk.get_chunk_id(),
+        chunk.get_mod_text(),
+        chunk.get_orig_text(),
+        chunk.get_orig_doc_filename(),
+        mod_type_str)
+
+
+def create_xlsx_from_chunks(chunks, out_filename):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(("num", "modified text", "original text", "src", "mod type"))
+    for chunk in chunks:
+        ws.append(chunk_to_row(chunk))
+
+    wb.save(filename = out_filename)

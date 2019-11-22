@@ -37,22 +37,23 @@ class ModType(object):
 def mod_types_to_str(mod_types):
     return ",".join(mod_type_to_str(m) for m in mod_types)
 
+MOD_TYPE_DICT = {
+    0 : "UNK",
+    1 : "CPY",
+    2 : "LPR",
+    3 : "HPR",
+    4 : "ORIG",
+    5 : "DEL",
+    6 : "ADD",
+    7 : "CCT",
+    8 : "SSP",
+    9 : "SHF",
+    10 : "SEP",
+    11 : "SYN"
+}
+
 def mod_type_to_str(mod_type):
-    mod_type_dict = {
-        0 : "UNK",
-        1 : "CPY",
-        2 : "LPR",
-        3 : "HPR",
-        4 : "ORIG",
-        5 : "DEL",
-        6 : "ADD",
-        7 : "CCT",
-        8 : "SSP",
-        9 : "SHF",
-        10 : "SEP",
-        11 : "SYN"
-    }
-    return mod_type_dict.get(mod_type, "unk")
+    return MOD_TYPE_DICT.get(mod_type, "unk")
 
 def _create_mod_types(mods_str):
     return [_create_mod_type(m) for m in mods_str.split(',')]

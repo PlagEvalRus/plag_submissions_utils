@@ -16,6 +16,10 @@ from .common.ir_utils import calc_various_similarity
 def run_v1(opts):
     common_run(opts, "1")
 
+def fix_v1(opts):
+    common_runner.fix(opts.archive.decode("utf8"), opts.output_file, "1")
+
+
 def run_v2(opts):
     common_run(opts, "2")
 
@@ -63,17 +67,23 @@ def main():
 
     subparsers = parser.add_subparsers(help='different versions')
 
-    v1_parser = subparsers.add_parser('v1', help='help of set')
+    v1_parser = subparsers.add_parser('v1')
 
     v1_parser.add_argument("--archive", "-a", required=True)
     v1_parser.set_defaults(func = run_v1)
 
-    v2_parser = subparsers.add_parser('v2', help='help of set')
+    fix_v1_parser = subparsers.add_parser('fix_v1')
+
+    fix_v1_parser.add_argument("--archive", "-a", required=True)
+    fix_v1_parser.add_argument("--output_file", "-o", required=True)
+    fix_v1_parser.set_defaults(func = fix_v1)
+
+    v2_parser = subparsers.add_parser('v2')
 
     v2_parser.add_argument("--archive", "-a", required=True)
     v2_parser.set_defaults(func = run_v2)
 
-    v3_parser = subparsers.add_parser('v3', help='help of set')
+    v3_parser = subparsers.add_parser('v3')
 
     v3_parser.add_argument("--archive", "-a", required=True)
     v3_parser.set_defaults(func = run_v3)
