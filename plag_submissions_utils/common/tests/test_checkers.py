@@ -124,9 +124,16 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
 
     def test_fix_title_case(self):
         checker = chks.SentCorrectnessChecker(['title_case'])
+
         chunk = Chunk("", u"маленькая буква.", "", "", 1)
         checker.fix(chunk)
         self.assertEqual(u"Маленькая буква.", chunk.get_mod_text())
+
+        chunk = Chunk("", u". В основном токсин из организма выводится через почки.", "", "", 1)
+        checker.fix(chunk)
+        self.assertEqual(1, len(chunk.get_mod_sents()))
+        self.assertEqual(u"В основном токсин из организма выводится через почки.",
+                         chunk.get_mod_text())
 
 
 class SpellCheckerTestCase(unittest.TestCase):

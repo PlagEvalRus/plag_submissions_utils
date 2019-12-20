@@ -475,7 +475,14 @@ class SentCorrectnessChecker(IFixableChecker):
         sents_wo_title_case = self._find_sents_wo_title_case(chunk)
 
         for snum in sents_wo_title_case:
-            sents[snum] = sents[snum][0].upper() + sents[snum][1:]
+            if len(sents[snum]) < 2:
+                continue
+            if sents[snum][0] in ['.', ',', '!', '?']:
+                temp_sent = sents[snum][1:].strip()
+            else:
+                temp_sent = sents[snum]
+
+            sents[snum] = temp_sent[0].upper() + temp_sent[1:]
 
     def fix_all(self, all_chunks):
         for chunk in all_chunks:

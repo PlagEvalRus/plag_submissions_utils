@@ -29,6 +29,9 @@ class SentsHolder(object):
         else:
             self._sents      = text_proc.seg_text_as_list(text)
 
+        self._sents = [s for s in self._sents if len(s) > 1]
+
+
         self._sent_tokens = [text_proc.tok_sent(s, normalize = opts.normalize,
                                                 skip_stop_words = opts.skip_stop_words)
                              for s in self._sents]
