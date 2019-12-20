@@ -67,6 +67,7 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
         checker = chks.SentCorrectnessChecker(['term_in_the_end'])
         chunk = Chunk("", "Correct sent with trailing spaces!!!!!  ", "", "", 1)
         checker(chunk, None)
+        self.assertEqual(1, len(chunk.get_mod_sents()))
         self.assertEqual(0, len(checker.get_errors()))
 
         chunk = Chunk("", "Boring sent.", "", "", 1)
@@ -105,6 +106,28 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
         chunk = Chunk("", u"маленькая буква.", "", "", 1)
         checker(chunk, None)
         self.assertEqual(1, len(checker.get_errors()))
+
+    def test_fix_term_in_the_end(self):
+        checker = chks.SentCorrectnessChecker(['term_in_the_end'])
+
+        chunk = Chunk("", "Without term   ", "", "", 1)
+        checker.fix(chunk)
+        self.assertEqual("Without term.", chunk.get_mod_text())
+
+        chunk = Chunk("", ["Without term  ", "wo term"], "", "", 1)
+        checker.fix(chunk)
+        self.assertEqual("Without term.\nwo term.", chunk.get_mod_text())
+
+        chunk = Chunk("", ["Boring sent.", "t"], "", "", 1)
+        checker.fix(chunk)
+        self.assertEqual("Boring sent.\nt.", chunk.get_mod_text())
+
+    def test_fix_title_case(self):
+        checker = chks.SentCorrectnessChecker(['title_case'])
+        chunk = Chunk("", u"маленькая буква.", "", "", 1)
+        checker.fix(chunk)
+        self.assertEqual(u"Маленькая буква.", chunk.get_mod_text())
+
 
 class SpellCheckerTestCase(unittest.TestCase):
 

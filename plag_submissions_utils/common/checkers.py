@@ -29,6 +29,9 @@ class IChecher(object):
     def __call__(self, chunk, src_docs):
         raise NotImplementedError("should implement this!")
 
+class IFixableChecker(IChecher):
+    def fix(self, chunk):
+        raise NotImplementedError("should implement this!")
 
 
 class BaseChunkSimChecker(IChecher):
@@ -409,7 +412,7 @@ class OriginalityChecker(IChecher):
         self._orig_text.append(chunk.get_orig_text())
 
 
-class SentCorrectnessChecker(IChecher):
+class SentCorrectnessChecker(IFixableChecker):
     def __init__(self, mods = None):
         super(SentCorrectnessChecker, self).__init__()
         self._errors = []
@@ -418,35 +421,61 @@ class SentCorrectnessChecker(IChecher):
     def get_errors(self):
         return self._errors
 
-    def _check_term_in_the_end(self, chunk):
+    def _find_sents_wo_term_in_the_end(self, chunk):
+        sents_with_errors = []
+
         if self._mods and "term_in_the_end" not in self._mods:
-            return
-        text = chunk.get_mod_sents()[-1]
-        if text[-1] not in segmenter.SENTENCE_TERMINALS:
+            return sents_with_errors
+
+        for num, s in enumerate(chunk.get_mod_sents()):
+            if s[-1] not in segmenter.SENTENCE_TERMINALS:
+                sents_with_errors.append(num)
+
+        return sents_with_errors
+
+    def _find_sents_wo_title_case(self, chunk):
+        sents_with_errors = []
+
+        if self._mods and "title_case" not in self._mods:
+            return sents_with_errors
+
+        for num, s in enumerate(chunk.get_mod_sents()):
+            first_token = s.split(None, 1)[0]
+
+            #allow up to 2 punctuation characters before upper letter or digit.
+            m = regex.search(ur"^\p{P}{0,2}(\p{Lu}|\d)", first_token)
+            if m is None:
+                sents_with_errors.append(num)
+
+        return sents_with_errors
+
+
+    def __call__(self, chunk, _):
+        if self._find_sents_wo_term_in_the_end(chunk):
             self._errors.append(ChunkError(
                 "Предложение должно заканчиваться точкой (или !?)!",
                 chunk.get_chunk_id(),
                 ErrSeverity.NORM))
 
-    def _check_title_case(self, chunk):
-        if self._mods and "title_case" not in self._mods:
-            return
-
-        first_token = chunk.get_mod_sents()[0].split(None, 1)[0]
-
-        #allow up to 2 punctuation characters before upper letter or digit.
-        m = regex.search(ur"^\p{P}{0,2}(\p{Lu}|\d)", first_token)
-        if m is None:
+        if self._find_sents_wo_title_case(chunk):
             self._errors.append(ChunkError(
                 "Предложение должно начинаться с заглавной буквы!",
                 chunk.get_chunk_id(),
                 ErrSeverity.NORM))
 
-    def __call__(self, chunk, _):
-        self._check_term_in_the_end(chunk)
-        self._check_title_case(chunk)
 
+    def fix(self, chunk):
+        sents = chunk.get_mod_sents()
 
+        sents_wo_term = self._find_sents_wo_term_in_the_end(chunk)
+
+        for snum in sents_wo_term:
+            sents[snum] = sents[snum] + '.'
+
+        sents_wo_title_case = self._find_sents_wo_title_case(chunk)
+
+        for snum in sents_wo_title_case:
+            sents[snum] = sents[snum][0].upper() + sents[snum][1:]
 
 
 class SpellChecker(IChecher):
