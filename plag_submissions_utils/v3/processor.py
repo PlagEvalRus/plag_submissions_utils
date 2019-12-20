@@ -17,10 +17,14 @@ from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
 from plag_submissions_utils.common.translated_chunks import TranslatorType
 from plag_submissions_utils.common.translated_chunks import TranslatedChunk
+import plag_submissions_utils.common.checkers as chks
+import plag_submissions_utils.common.translation_checkers as trans_chks
+import plag_submissions_utils.common.metrics as mtrks
+import plag_submissions_utils.common.translation_metrics as trans_mtrks
 
 class ProcessorOpts(BasicProcesssorOpts):
-    def __init__(self, sources_dir, inp_file):
-        super(ProcessorOpts, self).__init__(sources_dir, inp_file)
+    def __init__(self):
+        super(ProcessorOpts, self).__init__()
         self.min_src_docs      = 5
         self.min_sent_per_src  = 5
         self.min_sent_size     = 5
@@ -65,14 +69,49 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.min_lexical_dist = 15 #%
         self.min_originality = 0.77
 
-class Processor(BasicProcessor):
-    def __init__(self, opts, checkers,
-                 metrics):
-        super(Processor, self).__init__(opts, checkers,
-                                        metrics)
+def create_checkers(opts, sources_dir):
+    return [
+        chks.OriginalityChecker(opts),
+        chks.OrigSentChecker(opts),
+        chks.SourceDocsChecker(opts, sources_dir),
+        chks.PRChecker(opts),
+        # chks.AddChecker(opts),
+        # chks.DelChecker(opts),
+        # chks.CPYChecker(opts),
+            chks.CctChecker(opts),
+        # chks.SspChecker(opts),
+            chks.SHFChecker(opts),
+        # chks.SYNChecker(opts),
+            chks.LexicalSimChecker(opts),
+        trans_chks.ORIGModTypeChecker(),
+        chks.SentCorrectnessChecker(),
+        chks.SpellChecker(),
+        trans_chks.TranslationChecker(opts),
+        trans_chks.ManualTranslationChecker(opts),
+        chks.CyrillicAlphabetChecker(opts)
+    ]
 
-    def _create_chunks(self):
-        return create_chunks(self._opts.inp_file)
+def create_metrics(opts, sources_dir):
+    metrics = [
+        mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
+        mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size),
+        trans_mtrks.ModTranslationMetric(opts.max_unmod_translation),
+        mtrks.MeanSentLenMetric(opts.min_mean_sent_len)
+    ]
+
+    for mod_type in ModType.get_all_mod_types_v3():
+        metrics.append(mtrks.ModTypeRatioMetric(mod_type,
+                                                opts.mod_type_ratios[mod_type]))
+
+    for translation_type in TranslatorType.get_all_translation_types():
+        metrics.append(
+            trans_mtrks.AutoTranslationMetric(translation_type,
+                                              opts.translation_type_ratios[translation_type]))
+    return metrics
+
+class Processor(BasicProcessor):
+    def _create_chunks(self, inp_file):
+        return create_chunks(inp_file)
 
 def _check_headers(first_row):
     if first_row[0].lower().find(u"номер") == -1:

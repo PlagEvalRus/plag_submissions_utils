@@ -313,16 +313,16 @@ class OrigSentChecker(IChecher):
 
 
 class SourceDocsChecker(IChecher):
-    def __init__(self, opts):
+    def __init__(self, opts, sources_dir):
         super(SourceDocsChecker, self).__init__()
         self._opts = opts
         self._used_source_docs_set = set()
         self._errors = []
 
-        self._found_sources_docs = self._init_sources_dict()
+        self._found_sources_docs = self._init_sources_dict(sources_dir)
 
-    def _init_sources_dict(self):
-        sources_dict = source_doc.find_src_paths(self._opts.sources_dir)
+    def _init_sources_dict(self, sources_dir):
+        sources_dict = source_doc.find_src_paths(sources_dir)
         logging.debug("found sources: %s", ", ".join(k.encode("utf8") for k in sources_dict))
         return sources_dict
 

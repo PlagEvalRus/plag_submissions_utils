@@ -3,7 +3,7 @@
 
 import unittest
 
-import plag_submissions_utils.v2.runner as runner
+import plag_submissions_utils.common_runner as runner
 from plag_submissions_utils.common.chunks import ModType
 from plag_submissions_utils.common_runner import _metrics_violations_cnt
 from plag_submissions_utils.common.metrics import ViolationLevel
@@ -11,7 +11,7 @@ from plag_submissions_utils.common.metrics import ViolationLevel
 class ProcessorTestCase(unittest.TestCase):
 
     def _process_file(self, archive_path):
-        return runner.run(archive_path)
+        return runner.run(archive_path, "2")
 
     def test_file(self):
         metrics, errors, stat = self._process_file("data/test_data_v2/test.zip")

@@ -12,13 +12,6 @@ from .common.version import determine_version_by_id
 from .common.chunks import ChunkOpts
 from .common.extract_utils import extract_submission
 
-from .v1 import runner as v1run
-from .v2 import runner as v2run
-from .v3 import runner as v3run
-from .v1 import processor as v1_proc
-from .v2 import processor as v2_proc
-from .v3 import processor as v3_proc
-
 def _metrics_violations_cnt(metrics, level):
     return len([1 for m in metrics if m.get_violation_level() == level] )
 
@@ -43,13 +36,22 @@ def fatal_errors_cnt(metrics, errors, stat):
 
 
 def run(archive_path, version):
-    if version   == "1":
-        return v1run.run(archive_path)
-    if version == "2":
-        return v2run.run(archive_path)
-    if version == "3":
-        return v3run.run(archive_path)
-    raise RuntimeError("Unknown version: %s!" % version)
+    temp_dir = tempfile.mkdtemp()
+    try:
+        mod = _import(version)
+
+        sources_dir, inp_file = extract_submission(archive_path, temp_dir)
+        opts = mod.ProcessorOpts()
+        checkers = mod.create_checkers(opts, sources_dir)
+        metrics = mod.create_metrics(opts, sources_dir)
+
+        proc = mod.Processor(opts, checkers, metrics)
+        errors, stat = proc.check(sources_dir, inp_file)
+
+        return metrics, errors, stat
+
+    finally:
+        shutil.rmtree(temp_dir)
 
 
 def _import(version):

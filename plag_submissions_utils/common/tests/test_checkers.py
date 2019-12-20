@@ -54,9 +54,9 @@ class ORIGModTypeCheckerTestCase(unittest.TestCase):
         self.checkers = [chks.ORIGModTypeChecker()]
 
     def test_submission(self):
-        opts = ProcessorOpts("data/test_data/test_orig_mod_type/sources",
-                             "data/test_data/test_orig_mod_type/sources_list.xlsx")
-        errors, _ = Processor(opts, self.checkers, []).check()
+        proc = Processor(ProcessorOpts(), self.checkers, [])
+        errors, _ = proc.check("data/test_data/test_orig_mod_type/sources",
+                               "data/test_data/test_orig_mod_type/sources_list.xlsx")
 
         self.assertEqual(2, len(errors))
 

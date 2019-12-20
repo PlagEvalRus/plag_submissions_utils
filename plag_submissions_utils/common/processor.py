@@ -9,9 +9,7 @@ from .errors import Error
 from . import source_doc
 
 class BasicProcesssorOpts(object):
-    def __init__(self, sources_dir, inp_file):
-        self.sources_dir       = sources_dir
-        self.inp_file          = inp_file
+    def __init__(self):
         self.min_src_docs      = 5
         self.min_sent_per_src  = 4
         self.min_sent_size     = 5
@@ -40,17 +38,17 @@ class BasicProcessor(object):
             except Exception as e:
                 logging.exception("during proc %d: ", chunk.get_chunk_id())
 
-    def _load_sources_docs(self):
-        return source_doc.load_sources_docs(self._opts.sources_dir)
+    def _load_sources_docs(self, sources_dir):
+        return source_doc.load_sources_docs(sources_dir)
 
 
 
-    def _create_chunks(self):
+    def _create_chunks(self, inp_file):
         raise NotImplementedError("Should implement _create_chunks")
 
-    def check(self):
+    def check(self, sources_dir, inp_file):
 
-        chunks, errors = self._create_chunks()
+        chunks, errors = self._create_chunks(inp_file)
         stat = collect_stat(chunks)
         logging.debug("collected stat: %s", stat)
         if stat.chunks_cnt == 0:
@@ -62,7 +60,7 @@ class BasicProcessor(object):
         for metric in self._metrics:
             metric(stat, chunks)
 
-        src_docs = self._load_sources_docs()
+        src_docs = self._load_sources_docs(sources_dir)
         for chunk in chunks:
             self._process_chunk(chunk, src_docs)
 

@@ -17,10 +17,14 @@ from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
 from plag_submissions_utils.common.chunks import mod_type_to_str
+import plag_submissions_utils.common.checkers as chks
+import plag_submissions_utils.common.metrics as mtrks
+
+
 
 class ProcessorOpts(BasicProcesssorOpts):
-    def __init__(self, sources_dir, inp_file):
-        super(ProcessorOpts, self).__init__(sources_dir, inp_file)
+    def __init__(self):
+        super(ProcessorOpts, self).__init__()
         self.min_src_docs      = 5
         self.min_sent_per_src  = 4
         self.min_sent_size     = 5
@@ -48,14 +52,37 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.SSP : (0, 99)
         }
 
-class Processor(BasicProcessor):
-    def __init__(self, opts, checkers,
-                 metrics):
-        super(Processor, self).__init__(opts, checkers,
-                                        metrics)
 
-    def _create_chunks(self):
-        return create_chunks(self._opts.inp_file)
+def create_checkers(opts, sources_dir):
+    return [
+        chks.OrigSentChecker(opts),
+        chks.SourceDocsChecker(opts, sources_dir),
+        chks.PRChecker(opts, fluctuation_delta = 5),
+        chks.AddChecker(opts, fluctuation_delta = 5),
+        chks.DelChecker(opts, fluctuation_delta = 5),
+        chks.CPYChecker(opts, fluctuation_delta = 5),
+        chks.CctChecker(opts, fluctuation_delta = 5),
+        chks.SspChecker(opts, fluctuation_delta = 5),
+        chks.ORIGModTypeChecker(),
+        chks.SentCorrectnessChecker(),
+        chks.SpellChecker(),
+        chks.CyrillicAlphabetChecker(opts)
+    ]
+
+def create_metrics(opts, sources_dir):
+    metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
+               mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size)]
+
+    for mod_type in ModType.get_all_mod_types_v1():
+        metrics.append(mtrks.ModTypeRatioMetric(mod_type,
+                                                opts.mod_type_ratios[mod_type],
+                                                fluctuation_delta=5))
+    return metrics
+
+
+class Processor(BasicProcessor):
+    def _create_chunks(self, inp_file):
+        return create_chunks(inp_file)
 
 
 def create_chunks(inp_file, opts = ChunkOpts()):

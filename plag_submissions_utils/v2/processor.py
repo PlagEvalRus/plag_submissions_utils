@@ -16,10 +16,12 @@ from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
+import plag_submissions_utils.common.checkers as chks
+import plag_submissions_utils.common.metrics as mtrks
 
 class ProcessorOpts(BasicProcesssorOpts):
-    def __init__(self, sources_dir, inp_file):
-        super(ProcessorOpts, self).__init__(sources_dir, inp_file)
+    def __init__(self):
+        super(ProcessorOpts, self).__init__()
         self.min_src_docs      = 5
         self.min_sent_per_src  = 5
         self.min_sent_size     = 5
@@ -55,14 +57,41 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.min_lexical_dist = 25 #%
         self.min_originality = 0.77
 
-class Processor(BasicProcessor):
-    def __init__(self, opts, checkers,
-                 metrics):
-        super(Processor, self).__init__(opts, checkers,
-                                        metrics)
+def create_checkers(opts, sources_dir):
+    return [
+        chks.OriginalityChecker(opts),
+        chks.OrigSentChecker(opts),
+        chks.SourceDocsChecker(opts, sources_dir),
+        chks.PRChecker(opts),
+        chks.AddChecker(opts),
+        chks.DelChecker(opts),
+        chks.CPYChecker(opts),
+        chks.CctChecker(opts),
+        chks.SspChecker(opts),
+        chks.SHFChecker(opts),
+        chks.SYNChecker(opts),
+        chks.LexicalSimChecker(opts),
+        chks.ORIGModTypeChecker(),
+        chks.SentCorrectnessChecker(),
+        chks.SpellChecker(),
+        chks.CyrillicAlphabetChecker(opts)
+    ]
 
-    def _create_chunks(self):
-        return create_chunks(self._opts.inp_file)
+
+def create_metrics(opts, sources_dir):
+    metrics = [mtrks.SrcDocsCountMetric(opts.min_src_docs, opts.min_sent_per_src),
+               mtrks.DocSizeMetric(opts.min_real_sent_cnt, opts.min_sent_size),
+               mtrks.SrcSentsCountMetric(opts.min_src_sents_cnt)]
+
+    for mod_type in ModType.get_all_mod_types_v2():
+        metrics.append(mtrks.ModTypeRatioMetric(mod_type,
+                                                opts.mod_type_ratios[mod_type]))
+
+    return metrics
+
+class Processor(BasicProcessor):
+    def _create_chunks(self, inp_file):
+        return create_chunks(inp_file)
 
 def _check_headers(first_row):
     if first_row[0].lower().find(u"номер") == -1:
