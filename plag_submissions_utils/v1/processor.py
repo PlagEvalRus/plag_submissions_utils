@@ -3,8 +3,6 @@
 
 
 import logging
-import re
-
 
 import xlrd
 import openpyxl
@@ -94,6 +92,7 @@ def create_chunks(inp_file, opts = ChunkOpts()):
                             ErrSeverity.HIGH))
         return [], errors
 
+    #TODO find other columns; Do not use number column at all
     if sheet.row_values(0)[0].lower().find(u"номер") == -1:
         #no one follows the guide
         #there may be no header or it may be # or № or 'Меня зовут Вася'
@@ -111,9 +110,7 @@ def create_chunks(inp_file, opts = ChunkOpts()):
     for rownum in range(1, sheet.nrows):
         row_vals = sheet.row_values(rownum)
         try:
-            sent_num = _try_to_extract_sent_num(rownum,
-                                                main_content_offs == 1,
-                                                row_vals[0])
+            sent_num = rownum + 1
             chunk = _try_create_chunk(
                 row_vals,
                 sent_num,
@@ -128,29 +125,6 @@ def create_chunks(inp_file, opts = ChunkOpts()):
 
 
     return chunks, errors
-
-def _try_to_extract_sent_num(rownum, is_col_num_cell_found,
-                             col_num_cell_content):
-    #+1 for header row
-    dummy_sent_num = rownum + 1
-    if is_col_num_cell_found:
-        #there is a column with numbers
-        #no one follows the guide
-        #There maybe be 1. 2.; 1!, 2!...
-        if isinstance(col_num_cell_content, (str, unicode)):
-            if not col_num_cell_content:
-                #cell is empty, may be they forgot to continue numeration...
-                return dummy_sent_num
-            m = re.search(r"(\d+)", col_num_cell_content)
-            if m is None:
-                raise RuntimeError("Failed to extract sent number from 0 column")
-            return int(m.group(1))
-
-        elif isinstance(col_num_cell_content, (int, float)):
-            return int(col_num_cell_content)
-
-    else:
-        return dummy_sent_num
 
 def _try_create_chunk(row_vals, sent_num, vals_offs, opts):
     def check_str_cell(cell_val):
@@ -174,7 +148,6 @@ def chunk_to_row(chunk):
         mod_type_str = ''
 
     return (
-        chunk.get_chunk_id(),
         chunk.get_mod_text(),
         chunk.get_orig_text(),
         chunk.get_orig_doc_filename(),
@@ -184,7 +157,7 @@ def chunk_to_row(chunk):
 def create_xlsx_from_chunks(chunks, out_filename):
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.append(("num", "modified text", "original text", "src", "mod type"))
+    ws.append(("modified text", "original text", "src", "mod type"))
     for chunk in chunks:
         ws.append(chunk_to_row(chunk))
 
