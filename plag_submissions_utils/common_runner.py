@@ -61,10 +61,6 @@ def _create_chunks(version, meta_filepath, opts = ChunkOpts()):
     mod = _import(version)
     return getattr(mod, 'create_chunks')(meta_filepath, opts)
 
-def _create_xlsx_from_chunks(version, chunks, out_dir):
-    mod = _import(version)
-    return getattr(mod, 'create_xlsx_from_chunks')(chunks, out_dir + '/sources_list.xlsx')
-
 
 
 def create_chunks(susp_id, meta_filepath, version=None,
@@ -78,15 +74,21 @@ def create_chunks(susp_id, meta_filepath, version=None,
 def fix(archive_path, out_filename, version):
     temp_dir, new_dir = tempfile.mkdtemp(), tempfile.mkdtemp()
     try:
+        mod = _import(version)
+
         sources_dir, meta_filepath = extract_submission(archive_path, temp_dir)
 
-        chunks, errors = _create_chunks(version, meta_filepath)
+        chunks, errors = mod.create_chunks(meta_filepath)
         for err in errors:
             logging.error(err)
 
-        #TODO Fix chunks
+        checkers = mod.create_checkers(mod.ProcessorOpts(), sources_dir)
+        checkers = [c for c in checkers if hasattr(c, "fix_all")]
 
-        _create_xlsx_from_chunks(version, chunks, new_dir)
+        for checker in checkers:
+            checker.fix_all(chunks)
+
+        mod.create_xlsx_from_chunks(chunks, new_dir + '/sources_list.xlsx')
         shutil.move(sources_dir, new_dir)
         shutil.make_archive(out_filename, 'zip', new_dir)
     finally:

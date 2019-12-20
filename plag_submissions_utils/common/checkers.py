@@ -24,14 +24,14 @@ from .simple_detector import calc_originality
 
 class IChecher(object):
     def get_errors(self):
-        raise NotImplementedError("should implement this!")
+        raise NotImplementedError("Should implement this!")
 
     def __call__(self, chunk, src_docs):
-        raise NotImplementedError("should implement this!")
+        raise NotImplementedError("Should implement this!")
 
 class IFixableChecker(IChecher):
-    def fix(self, chunk):
-        raise NotImplementedError("should implement this!")
+    def fix_all(self, all_chunks):
+        raise NotImplementedError("Should implement this!")
 
 
 class BaseChunkSimChecker(IChecher):
@@ -477,6 +477,9 @@ class SentCorrectnessChecker(IFixableChecker):
         for snum in sents_wo_title_case:
             sents[snum] = sents[snum][0].upper() + sents[snum][1:]
 
+    def fix_all(self, all_chunks):
+        for chunk in all_chunks:
+            self.fix(chunk)
 
 class SpellChecker(IChecher):
     DICT_PREFIX = '/usr/share/hunspell'
