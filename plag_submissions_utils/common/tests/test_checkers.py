@@ -118,9 +118,9 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
         checker.fix(chunk)
         self.assertEqual("Without term.\nwo term.", chunk.get_mod_text())
 
-        chunk = Chunk("", ["Boring sent.", "t"], "", "", 1)
+        chunk = Chunk("", ["Boring sent.", "text"], "", "", 1)
         checker.fix(chunk)
-        self.assertEqual("Boring sent.\nt.", chunk.get_mod_text())
+        self.assertEqual("Boring sent.\ntext.", chunk.get_mod_text())
 
     def test_fix_title_case(self):
         checker = chks.SentCorrectnessChecker(['title_case'])
@@ -196,12 +196,35 @@ class CyrillicAlphabetChecker(unittest.TestCase):
     def setUp(self):
         self.checker = chks.CyrillicAlphabetChecker(Opts())
 
-    def test_regex_matching_1(self):
-        chunk = Chunk([], u"Здeсь есть одна замена.", "ADD", "filename", "1")
-        self.checker(chunk, None)
-        self.assertEqual(1, len(self.checker.get_errors()))
-
-    def test_regex_matching_2(self):
-        chunk = Chunk([], u"Здесь замен нет.", "ADD", "filename", "1")
+    def test_basic(self):
+        chunk = Chunk([], u"Здесь замен нет.", "ADD", "filename", 1)
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
+
+        chunk = Chunk([], u"Здeсь есть одна замена.", "ADD", "filename", 1)
+        self.checker(chunk, None)
+        self.assertEqual(1, len(self.checker.get_errors()))
+        # print self.checker.get_errors()[0]
+
+
+    def test_fix(self):
+        chunk = Chunk("", [u"искуᏟꓚCСTвенный.", u"искуᏟꓚCСTвенный cнeг."], "", "", 1)
+        self.checker.fix(chunk)
+        self.assertEqual(u"искуССССТвенный.\nискуССССТвенный снег.", chunk.get_mod_text())
+
+        # Tор -> first letter is latin
+        chunk = Chunk("", u"Tор, HTTP-траффик", "", "", 1)
+        self.checker.fix(chunk)
+        self.assertEqual(u"Тор, HTTP-траффик", chunk.get_mod_text())
+
+        chunk = Chunk("", u"Пpoтoкoл Http; шкoлa - école.", "", "", 1)
+        self.checker.fix(chunk)
+        self.assertEqual(u"Протокол Http; школа - école.", chunk.get_mod_text())
+
+        chunk = Chunk("", u"Замен нет.", "", "", 1)
+        self.checker.fix(chunk)
+        self.assertEqual(u"Замен нет.", chunk.get_mod_text())
+
+        chunk = Chunk("", [u"Замен нет.", u"Зaмeны есть.", u"Замен нет."], "", "", 1)
+        self.checker.fix(chunk)
+        self.assertEqual(u"Замен нет.\nЗамены есть.\nЗамен нет.", chunk.get_mod_text())

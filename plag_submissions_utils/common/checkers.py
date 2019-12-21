@@ -15,6 +15,7 @@ import langdetect
 from . import text_proc
 from . import source_doc
 from . import chunks
+from . import homoglyphs
 from .chunks import ModType
 from .errors import ErrSeverity
 from .errors import ChunkError
@@ -191,33 +192,95 @@ class SYNChecker(BaseChunkSimChecker):
 
 
 class CyrillicAlphabetChecker(IChecher):
-    def __init__(self, opts, fluctuation_delta=3):
+    def __init__(self, opts):
         super(CyrillicAlphabetChecker, self).__init__()
-        # self._re = re.compile(ur"[ А-я]([A-z])[А-я ]")
-        self._re = re.compile(ur"([А-я]*([A-z])[А-я]+|[А-я]+([A-z])[А-я]*)")
         self._errors = []
 
     def get_errors(self):
         return self._errors
 
+    def _find_homoglyphs(self, chunk):
+        """Example:
+        _find_homoglyphs(u"искуᏟꓚCСTвенный")
+
+        returns:
+        [{'alias': u'CHEROKEE',
+        'character': u'\u13df',
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0421'}},
+        {'alias': u'LISU',
+        'character': u'\ua4da',
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0421'}},
+        {'alias': u'LATIN',
+        'character': u'C',
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0421'}},
+        {'alias': u'LATIN',
+        'character': u'T',
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0422'}}]
+        """
+
+        found = []
+        for sent_num, s in enumerate(chunk.get_mod_sents()):
+            for m in re.finditer(ur"[\w']+", s, re.UNICODE):
+                token = m.group()
+                #do not check words in latin or other alphabet
+                if not re.search(u'[а-яА-Я]', token, re.UNICODE):
+                    continue
+                confusable_chars = homoglyphs.find_homoglyphs(token, ['CYRILLIC'])
+                if confusable_chars:
+                    for char_info in confusable_chars:
+                        char_info['word'] = token
+                        char_info['sent_num'] = sent_num
+                        char_info['pos'] = m.start() + char_info['pos']
+                        found.append(char_info)
+
+        return found
+
+
     def __call__(self, chunk, src_docs):
-        if self._re.search(chunk.get_mod_sents()[0]):
-            reports = []
-            for finding in self._re.findall(chunk.get_mod_sents()[0]):
-                try:
-                    word = finding[0]
-                    if len(finding[1]) == 0:
-                        letter = finding[2]
-                    else:
-                        letter = finding[1]
-                    reports.append('В слове "{}" заменена буква "{}".'.format(word.encode('utf-8'), letter))
-                except IndexError:
-                    pass
+        reports = []
+        found = self._find_homoglyphs(chunk)
+
+        for char_info in found:
+            reports.append('В слове "{}" заменена буква "{}" на "{}" ({}).'.format(
+                char_info['word'].encode('utf-8'),
+                char_info['homoglyphs']['c'].encode('utf8'),
+                char_info['character'].encode('utf8'),
+                char_info['alias'].encode('utf8')))
+
+        if reports:
             self._errors.append(
                 ChunkError(
-                    "Модифицированное предложение содержит замены отдельных букв! {}".format(' '.join(reports)),
+                    "Модифицированное предложение содержит замены отдельных букв! {}"
+                    .format(';'.join(reports)),
                     chunk.get_chunk_id(),
                     ErrSeverity.HIGH))
+
+
+    def fix(self, chunk):
+        found = self._find_homoglyphs(chunk)
+        if not found:
+            return
+
+        new_sents = []
+        char_info_num = 0
+        for sent_num, sent in enumerate(chunk.get_mod_sents()):
+            char_info = found[char_info_num]
+            new_sent = []
+            for sent_pos, char in enumerate(sent):
+                if char_info['sent_num'] == sent_num and char_info['pos'] == sent_pos:
+                    new_sent.append(char_info['homoglyphs']['c'])
+                    if char_info_num + 1 < len(found):
+                        char_info_num += 1
+                        char_info = found[char_info_num]
+                else:
+                    new_sent.append(char)
+            new_sents.append(u''.join(new_sent))
+
+        chunk.get_mod_sents()[:] = new_sents
+
+    def fix_all(self, all_chunks):
+        for chunk in all_chunks:
+            self.fix(chunk)
 
 
 class ORIGModTypeChecker(IChecher):
