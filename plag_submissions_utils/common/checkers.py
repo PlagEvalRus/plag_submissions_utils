@@ -551,7 +551,7 @@ class SentCorrectnessChecker(IFixableChecker):
         for chunk in all_chunks:
             self.fix(chunk)
 
-class SpellChecker(IChecher):
+class SpellChecker(IFixableChecker):
     DICT_PREFIX = '/usr/share/hunspell'
 
     def __init__(self, high_rate = 0.1, norm_rate = 0.01,
@@ -584,17 +584,16 @@ class SpellChecker(IChecher):
                 del self._counter[typo]
 
     def _get_stat(self):
-        self._drop_most_common()
-        sents_set =  set(itertools.chain(*self._typo_sents_dict.itervalues()))
+        sents_set =  set(i['chunk_id']
+                         for i in itertools.chain(*self._typo_sents_dict.itervalues()))
         wrong_spelled_tokens = len(self._counter)
         return sents_set, wrong_spelled_tokens
 
     def _make_err_msg(self):
         typo_with_sents = self._typo_sents_dict.items()
         typo_with_sents.sort(key= lambda p : p[1][0])
-        typo_with_sents_str = [u"%s: № %s" % (t,
-                                              u", ".join(str(s) for s in sents))
-                               for t, sents in typo_with_sents]
+        typo_with_sents_str = [u"%s: № %s" % (t, u", ".join(str(i['chunk_id']) for i in infos))
+                               for t, infos in typo_with_sents]
         err_msg = "Слишком много опечаток в заимствованном тексте! " \
                   "Проверьте следующие предложения:\n"
 
@@ -605,6 +604,7 @@ class SpellChecker(IChecher):
         if self._tokens_cnt == 0:
             return self._errors
 
+        self._drop_most_common()
         sents_set, wrong_spelled_tokens = self._get_stat()
 
         logging.debug("SpellChecker: typos cnt: %s, all tokens: %s",
@@ -631,9 +631,9 @@ class SpellChecker(IChecher):
             logging.debug("Failed to detect lang; Fallback to last detected: %s",
                           self._last_lang)
             return self._last_lang
-        else:
-            self._last_lang = lang
-            return lang
+
+        self._last_lang = lang
+        return lang
 
     def _get_dict(self, chunk):
         lang = self._detect_lang(chunk)
@@ -654,7 +654,10 @@ class SpellChecker(IChecher):
 
 
 
-    def __call__(self, chunk, _):
+    def _find_typos(self, chunk):
+        if chunk.get_mod_type() == ModType.CPY:
+            return
+
         self._all_sents += 1
         spell_dict = self._get_dict(chunk)
         if spell_dict is None:
@@ -672,7 +675,43 @@ class SpellChecker(IChecher):
                 continue
 
             self._tokens_cnt += 1
-            if not spell_dict.spell(token):
+            enc_token = token.encode(spell_dict.get_dic_encoding(), 'replace')
+            if not spell_dict.spell(enc_token):
+                suggestions = spell_dict.suggest(enc_token)
+                if not suggestions:
+                    continue
+
+                suggestions = [s.decode(spell_dict.get_dic_encoding()) for s in suggestions]
                 token_key = token.lower()
                 self._counter[token_key] +=1
-                self._typo_sents_dict[token_key].append(chunk.get_chunk_id())
+                self._typo_sents_dict[token_key].append({'chunk_id': chunk.get_chunk_id(),
+                                                         'typo': token,
+                                                         'suggest': suggestions})
+
+    def __call__(self, chunk, _):
+        self._find_typos(chunk)
+
+
+    def fix_all(self, all_chunks):
+        for chunk in all_chunks:
+            self._find_typos(chunk)
+
+        self._drop_most_common()
+
+        typos_per_chunk_dict = defaultdict(lambda:[])
+        for typo_occs in self._typo_sents_dict.itervalues():
+            for i in typo_occs:
+                typos_per_chunk_dict[i['chunk_id']].append(i)
+
+        for chunk in all_chunks:
+            if chunk.get_chunk_id() not in typos_per_chunk_dict:
+                continue
+
+            new_sents = []
+            for sent in chunk.get_mod_sents():
+                for typo_info in typos_per_chunk_dict[chunk.get_chunk_id()]:
+                    sent = sent.replace(typo_info['typo'], typo_info['suggest'][0])
+                    logging.info("Replaced %s with %s", typo_info['typo'], typo_info['suggest'][0])
+                new_sents.append(sent)
+
+            chunk.get_mod_sents()[:] = new_sents

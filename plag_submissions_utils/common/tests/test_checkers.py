@@ -192,6 +192,25 @@ class SpellCheckerTestCase(unittest.TestCase):
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
+    def test_fix(self):
+        text = u"Ещётакже искуССТвенно содзано биологиеское оржуие (бубоны)."
+        chunk = Chunk("", text, "", "", 1)
+        text2 = u"Нет ошибок"
+        chunk2 = Chunk("", text2, "", "", 2)
+        #NO fixes for CPY
+        text3 = u"Выливные и распыливающие авиационные приборы"
+        chunk3 = Chunk("", text3, "CPY", "", 1)
+
+        self.checker.fix_all([chunk, chunk2, chunk3])
+        self.assertEqual(
+            u"Ещётакже искусственно создано биологическое оружие (бубоны).",
+            chunk.get_mod_text())
+
+        self.assertEqual(u"Нет ошибок", chunk2.get_mod_text())
+
+        self.assertEqual(u"Выливные и распыливающие авиационные приборы", chunk3.get_mod_text())
+
+
 class CyrillicAlphabetChecker(unittest.TestCase):
     def setUp(self):
         self.checker = chks.CyrillicAlphabetChecker(Opts())
