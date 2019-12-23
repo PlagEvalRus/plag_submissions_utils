@@ -191,7 +191,7 @@ class SYNChecker(BaseChunkSimChecker):
         super(SYNChecker, self).__call__(chunk, src_docs)
 
 
-class CyrillicAlphabetChecker(IChecher):
+class CyrillicAlphabetChecker(IFixableChecker):
     def __init__(self, opts):
         super(CyrillicAlphabetChecker, self).__init__()
         self._errors = []
@@ -268,6 +268,8 @@ class CyrillicAlphabetChecker(IChecher):
             new_sent = []
             for sent_pos, char in enumerate(sent):
                 if char_info['sent_num'] == sent_num and char_info['pos'] == sent_pos:
+                    logging.info("Replace '%s' (%s) with '%s'", char, char_info['alias'],
+                                  char_info['homoglyphs']['c'])
                     new_sent.append(char_info['homoglyphs']['c'])
                     if char_info_num + 1 < len(found):
                         char_info_num += 1
@@ -547,9 +549,17 @@ class SentCorrectnessChecker(IFixableChecker):
 
             sents[snum] = temp_sent[0].upper() + temp_sent[1:]
 
+        return len(sents_wo_term), len(sents_wo_title_case)
+
     def fix_all(self, all_chunks):
+        sents_wo_term_cnt = 0
+        sents_wo_title_case_cnt = 0
         for chunk in all_chunks:
-            self.fix(chunk)
+            t, c = self.fix(chunk)
+            sents_wo_term_cnt += t
+            sents_wo_title_case_cnt += c
+        logging.info("Fixed %d sents with no term in the end", sents_wo_term_cnt)
+        logging.info("Fixed %d sents with title case", sents_wo_title_case_cnt)
 
 class SpellChecker(IFixableChecker):
     DICT_PREFIX = '/usr/share/hunspell'

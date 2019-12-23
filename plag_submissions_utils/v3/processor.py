@@ -85,10 +85,10 @@ def create_checkers(opts, sources_dir):
             chks.LexicalSimChecker(opts),
         trans_chks.ORIGModTypeChecker(),
         chks.SentCorrectnessChecker(),
-        chks.SpellChecker(),
         trans_chks.TranslationChecker(opts),
         trans_chks.ManualTranslationChecker(opts),
-        chks.CyrillicAlphabetChecker(opts)
+        chks.CyrillicAlphabetChecker(opts),
+        chks.SpellChecker()
     ]
 
 def create_metrics(opts, sources_dir):

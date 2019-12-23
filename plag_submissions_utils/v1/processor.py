@@ -63,8 +63,8 @@ def create_checkers(opts, sources_dir):
         chks.SspChecker(opts, fluctuation_delta = 5),
         chks.ORIGModTypeChecker(),
         chks.SentCorrectnessChecker(),
-        chks.SpellChecker(),
-        chks.CyrillicAlphabetChecker(opts)
+        chks.CyrillicAlphabetChecker(opts),
+        chks.SpellChecker()
     ]
 
 def create_metrics(opts, sources_dir):

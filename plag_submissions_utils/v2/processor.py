@@ -73,8 +73,8 @@ def create_checkers(opts, sources_dir):
         chks.LexicalSimChecker(opts),
         chks.ORIGModTypeChecker(),
         chks.SentCorrectnessChecker(),
-        chks.SpellChecker(),
-        chks.CyrillicAlphabetChecker(opts)
+        chks.CyrillicAlphabetChecker(opts),
+        chks.SpellChecker()
     ]
 
 
