@@ -117,11 +117,11 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
 
         chunk = Chunk("", ["Without term  ", "wo term"], "", "", 1)
         checker.fix(chunk)
-        self.assertEqual("Without term.\nwo term.", chunk.get_mod_text())
+        self.assertEqual("Without term. wo term.", chunk.get_mod_text())
 
         chunk = Chunk("", ["Boring sent.", "text"], "", "", 1)
         checker.fix(chunk)
-        self.assertEqual("Boring sent.\ntext.", chunk.get_mod_text())
+        self.assertEqual("Boring sent. text.", chunk.get_mod_text())
 
     def test_fix_title_case(self):
         checker = chks.SentCorrectnessChecker(['title_case'])
@@ -238,7 +238,7 @@ class CyrillicAlphabetChecker(unittest.TestCase):
     def test_fix(self):
         chunk = Chunk("", [u"искуᏟꓚCСTвенный.", u"искуᏟꓚCСTвенный cнeг."], "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"искуССССТвенный.\nискуССССТвенный снег.", chunk.get_mod_text())
+        self.assertEqual(u"искуССССТвенный. искуССССТвенный снег.", chunk.get_mod_text())
 
         # Tор -> first letter is latin
         chunk = Chunk("", u"Tор, HTTP-траффик", "", "", 1)
@@ -255,7 +255,7 @@ class CyrillicAlphabetChecker(unittest.TestCase):
 
         chunk = Chunk("", [u"Замен нет.", u"Зaмeны есть.", u"Замен нет."], "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"Замен нет.\nЗамены есть.\nЗамен нет.", chunk.get_mod_text())
+        self.assertEqual(u"Замен нет. Замены есть. Замен нет.", chunk.get_mod_text())
 
 
     def test_NOT_fix_numbers(self):

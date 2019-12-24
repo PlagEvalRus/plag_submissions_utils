@@ -50,7 +50,7 @@ class SentsHolder(object):
         return self._sents
 
     def get_text(self):
-        return '\n'.join(self._sents)
+        return ' '.join(self._sents)
 
     def get_all_tokens(self):
         all_tokens = []
