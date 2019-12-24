@@ -17,7 +17,9 @@ def run_v1(opts):
     common_run(opts, "1")
 
 def fix_v1(opts):
-    common_runner.fix(opts.archive.decode("utf8"), opts.output_file, "1")
+    common_runner.fix(
+        opts.archive.decode("utf8"), opts.output_file, "1",
+        spell_checker_whitelist = [s.decode('utf8') for s in opts.spell_checker_whitelist])
 
 
 def run_v2(opts):
@@ -59,6 +61,10 @@ def collect_src_stat(opts):
     stat_collector.print_stat(sys.stdout)
 
 
+def common_fix_args(parser):
+    parser.add_argument("--archive", "-a", required=True)
+    parser.add_argument("--output_file", "-o", required=True)
+    parser.add_argument("--spell_checker_whitelist", "-w", nargs='+', default=[])
 
 def main():
 
@@ -73,9 +79,7 @@ def main():
     v1_parser.set_defaults(func = run_v1)
 
     fix_v1_parser = subparsers.add_parser('fix_v1')
-
-    fix_v1_parser.add_argument("--archive", "-a", required=True)
-    fix_v1_parser.add_argument("--output_file", "-o", required=True)
+    common_fix_args(fix_v1_parser)
     fix_v1_parser.set_defaults(func = fix_v1)
 
     v2_parser = subparsers.add_parser('v2')

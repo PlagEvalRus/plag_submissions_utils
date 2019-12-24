@@ -71,7 +71,8 @@ def create_chunks(susp_id, meta_filepath, version=None,
     return _create_chunks(version, meta_filepath, opts)
 
 
-def fix(archive_path, out_filename, version):
+def fix(archive_path, out_filename, version,
+        spell_checker_whitelist = None):
     temp_dir, new_dir = tempfile.mkdtemp(), tempfile.mkdtemp()
     try:
         mod = _import(version)
@@ -82,7 +83,8 @@ def fix(archive_path, out_filename, version):
         for err in errors:
             logging.error(err)
 
-        checkers = mod.create_checkers(mod.ProcessorOpts(), sources_dir)
+        checkers = mod.create_checkers(mod.ProcessorOpts(), sources_dir,
+                                       spell_checker_whitelist = spell_checker_whitelist)
         checkers = [c for c in checkers if hasattr(c, "fix_all")]
 
         for checker in checkers:

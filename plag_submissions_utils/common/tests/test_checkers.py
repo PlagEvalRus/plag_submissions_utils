@@ -210,6 +210,14 @@ class SpellCheckerTestCase(unittest.TestCase):
 
         self.assertEqual(u"Выливные и распыливающие авиационные приборы", chunk3.get_mod_text())
 
+    def test_whitelist(self):
+        text = u"ошибкл, не ашибка."
+        chunk = Chunk("", text, "", "", 1)
+        checker = chks.SpellChecker(whitelist = [u"ашибка"])
+        checker.fix_all([chunk])
+        self.assertEqual(u"ошибка, не ашибка.", chunk.get_mod_text())
+
+
 
 class CyrillicAlphabetChecker(unittest.TestCase):
     def setUp(self):

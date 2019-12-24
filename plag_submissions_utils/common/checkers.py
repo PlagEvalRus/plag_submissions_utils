@@ -570,11 +570,12 @@ class SpellChecker(IFixableChecker):
     DICT_PREFIX = '/usr/share/hunspell'
 
     def __init__(self, high_rate = 0.1, norm_rate = 0.01,
-                 lang_hint = 'ru'):
+                 lang_hint = 'ru', whitelist = None):
         super(SpellChecker, self).__init__()
         self._last_lang                = lang_hint
         self._errors                   = []
         self._dicts                    = {}
+        self._white_list = frozenset(whitelist) if whitelist else frozenset()
 
 
         self._tokens_cnt               = 0
@@ -689,7 +690,12 @@ class SpellChecker(IFixableChecker):
             if len(token) <= 2:
                 continue
 
+
             self._tokens_cnt += 1
+
+            if token.lower() in self._white_list:
+                continue
+
             enc_token = token.encode(spell_dict.get_dic_encoding(), 'replace')
             if not spell_dict.spell(enc_token):
                 suggestions = spell_dict.suggest(enc_token)

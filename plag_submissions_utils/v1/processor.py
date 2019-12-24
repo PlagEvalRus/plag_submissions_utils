@@ -51,7 +51,8 @@ class ProcessorOpts(BasicProcesssorOpts):
         }
 
 
-def create_checkers(opts, sources_dir):
+def create_checkers(opts, sources_dir,
+                    spell_checker_whitelist = None):
     return [
         chks.OrigSentChecker(opts),
         chks.SourceDocsChecker(opts, sources_dir),
@@ -64,7 +65,7 @@ def create_checkers(opts, sources_dir):
         chks.ORIGModTypeChecker(),
         chks.SentCorrectnessChecker(),
         chks.CyrillicAlphabetChecker(opts),
-        chks.SpellChecker()
+        chks.SpellChecker(whitelist = spell_checker_whitelist)
     ]
 
 def create_metrics(opts, sources_dir):
