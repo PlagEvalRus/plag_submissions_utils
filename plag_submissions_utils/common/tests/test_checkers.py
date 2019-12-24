@@ -247,3 +247,9 @@ class CyrillicAlphabetChecker(unittest.TestCase):
         chunk = Chunk("", [u"Замен нет.", u"Зaмeны есть.", u"Замен нет."], "", "", 1)
         self.checker.fix(chunk)
         self.assertEqual(u"Замен нет.\nЗамены есть.\nЗамен нет.", chunk.get_mod_text())
+
+
+    def test_NOT_fix_numbers(self):
+        chunk = Chunk("", u"1982г.", "", "", 1)
+        self.checker.fix(chunk)
+        self.assertEqual(u"1982г.", chunk.get_mod_text())

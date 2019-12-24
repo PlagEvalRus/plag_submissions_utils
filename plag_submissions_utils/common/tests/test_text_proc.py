@@ -8,30 +8,6 @@ import segtok.tokenizer as tok
 
 import plag_submissions_utils.common.text_proc as text_proc
 
-class SegtokTestCase(object):
-    def test(self):
-        #TODO
-        test_sent = u"простое предложение."
-        without_mark_sent = u"простое предложение без знака"
-        three_sents = u"простое предложение. «второе« 1990 предложение, (и т.д.). 2. почем"
-
-
-        sents = seg.split_single(test_sent)
-        print "|".join(s.encode("utf8") for s in sents)
-        sents = seg.split_single(without_mark_sent)
-        print "|".join(s.encode("utf8") for s in sents)
-        sents = [s for s in seg.split_single(three_sents)]
-        print u"|".join(sents)
-
-        tokens = tok.space_tokenizer(sents[1])
-        print "<>".join(s for s in tokens)
-
-        tokens = tok.symbol_tokenizer(sents[1])
-        print "<>".join(s for s in tokens if not text_proc.ispunct(s))
-
-        # tokens = tok.symbol_tokenizer(sents[1])
-        # print "<>".join(s for s in tokens)
-
 
 class SegTestCase(unittest.TestCase):
     def test_sent_with_trailing_spc(self):
@@ -39,6 +15,31 @@ class SegTestCase(unittest.TestCase):
 
         sents = text_proc.seg_text_as_list(sent)
         self.assertEqual(1, len(sents))
+
+    def test_basic(self):
+        text = u"простое предложение. «второе« 1990 предложение, (и т.д.). 3-е предл."
+        sents = text_proc.seg_text_as_list(text)
+        self.assertEqual(3, len(sents))
+        self.assertEqual(u"простое предложение.", sents[0])
+        self.assertEqual(u"«второе« 1990 предложение, (и т.д.).", sents[1])
+
+
+    def test_year(self):
+        text = u"В 1982 г. перестало."
+        sents = text_proc.seg_text_as_list(text)
+        self.assertEqual(1, len(sents))
+
+        text = u"В 1982г. перестало."
+        sents = text_proc.seg_text_as_list(text)
+        self.assertEqual(1, len(sents))
+        self.assertEqual(u"В 1982 г. перестало.", sents[0])
+
+    def test_joint(self):
+        text = u"заповеди Пифагора.Нравственные устои."
+        sents = text_proc.seg_text_as_list(text)
+        self.assertEqual(2, len(sents))
+        self.assertEqual(u"заповеди Пифагора.", sents[0])
+
 
 class MorphTestCase(unittest.TestCase):
     def test_morph(self):

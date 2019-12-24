@@ -32,6 +32,10 @@ def seg_text(text):
     #clean all shitty \r\n and so on...
     text = seg.to_unix_linebreaks(text)
 
+    # This cases are supported by segtok-2 (syntok)
+    #TODO migrate to python3 and syntok
+    text = regex.sub(ur"\b(\d+)г.?\s", ur"\1 г. ", text)
+
     #some documents contain "заповеди Пифагора.Нравственные"
     # or "психотерапии . Они"
     #regex supports unicode uppercase letters - \p{Lu}

@@ -228,6 +228,11 @@ class CyrillicAlphabetChecker(IFixableChecker):
                 confusable_chars = homoglyphs.find_homoglyphs(token, ['CYRILLIC'])
                 if confusable_chars:
                     for char_info in confusable_chars:
+
+                        if ord(char_info['character']) >=48 and \
+                           ord(char_info['character']) <= 57:
+                            #skip numbers
+                            continue
                         char_info['word'] = token
                         char_info['sent_num'] = sent_num
                         char_info['pos'] = m.start() + char_info['pos']

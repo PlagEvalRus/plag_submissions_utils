@@ -133,8 +133,13 @@ def _try_create_chunk(row_vals, sent_num, vals_offs, opts):
                                % (sent_num, str(cell_val)))
         return cell_val
 
-    return Chunk(mod_text = row_vals[vals_offs + 0],
-                 orig_text = check_str_cell(row_vals[vals_offs + 1]),
+    mod_text = row_vals[vals_offs + 0]
+    orig_text = check_str_cell(row_vals[vals_offs + 1])
+    if not mod_text and not orig_text:
+        raise RuntimeError("Row (%s) is empty!" % sent_num)
+
+    return Chunk(mod_text = mod_text,
+                 orig_text = orig_text,
                  orig_doc = row_vals[vals_offs + 2],
                  mod_type_str = check_str_cell(row_vals[vals_offs + 3]),
                  chunk_num = sent_num,
