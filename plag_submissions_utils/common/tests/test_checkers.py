@@ -3,7 +3,8 @@
 
 import logging
 import unittest
-# import regex
+
+import pyfakefs.fake_filesystem_unittest
 
 import plag_submissions_utils.common.checkers  as chks
 from plag_submissions_utils.common.chunks import Chunk
@@ -261,3 +262,85 @@ class CyrillicAlphabetChecker(unittest.TestCase):
         chunk = Chunk("", u"1982г.", "", "", 1)
         self.checker.fix(chunk)
         self.assertEqual(u"1982г.", chunk.get_mod_text())
+
+
+class SourceDocsCheckerTestCase(pyfakefs.fake_filesystem_unittest.TestCase):
+    def setUp(self):
+        self.setUpPyfakefs()
+
+    def test_basic(self):
+        src_dir = '/test/sources/'
+        self.fs.create_dir(src_dir)
+        self.fs.create_file(src_dir + "1.html")
+        self.fs.create_file(src_dir + "wiki.html")
+        self.fs.create_file(src_dir + "lenovo")
+        self.fs.create_file(src_dir + "я_рюзский.pdf")
+
+        checker = chks.SourceDocsChecker(None, src_dir)
+        chunk = Chunk("", "", "", "1", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "1.html", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "wiki.html", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "wiki", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "lenovo", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "lenovo.html", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "я_рюзский.pdf", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "я_рюзский", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "я_рюзский.txt", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "2.html", 1)
+        checker(chunk, None)
+        self.assertEqual(1, len(checker.get_errors()))
+
+    def test_with_whitespace(self):
+        src_dir = '/test/sources/'
+        self.fs.create_dir(src_dir)
+        self.fs.create_file(src_dir + "title kek.html")
+        self.fs.create_file(src_dir + "знакомый ваш.html")
+
+        checker = chks.SourceDocsChecker(None, src_dir)
+
+        chunk = Chunk("", "", "", "title kek", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "title kek.html", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", u"знакомый ваш", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "знакомый ваш", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", "знакомый ваш.html", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))

@@ -1,3 +1,4 @@
 pytest
 mock
+pyfakefs
 ptvsd==4.2.3
