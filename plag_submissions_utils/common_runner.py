@@ -92,7 +92,7 @@ def fix(archive_path, out_filename, version,
 
         mod.create_xlsx_from_chunks(chunks, new_dir + '/sources_list.xlsx')
         shutil.move(sources_dir, new_dir)
-        shutil.make_archive(out_filename, 'zip', new_dir)
+        shutil.make_archive(out_filename, 'gztar', new_dir)
     finally:
         shutil.rmtree(temp_dir)
         shutil.rmtree(new_dir)

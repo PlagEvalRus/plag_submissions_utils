@@ -64,7 +64,7 @@ def collect_src_stat(opts):
 def common_fix_args(parser):
     parser.add_argument("--archive", "-a", required=True)
     parser.add_argument("--output_file", "-o", required=True)
-    parser.add_argument("--spell_checker_whitelist", "-w", nargs='+', default=[])
+    parser.add_argument("--spell_checker_whitelist", "-w", nargs='*', default=[])
 
 def main():
 
