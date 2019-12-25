@@ -580,7 +580,9 @@ class SpellChecker(IFixableChecker):
         self._last_lang                = lang_hint
         self._errors                   = []
         self._dicts                    = {}
-        self._white_list = frozenset(whitelist) if whitelist else frozenset()
+        self._white_list = set()
+        self._suggest_list = {}
+        self._make_white_list_and_suggest_list(whitelist)
 
 
         self._tokens_cnt               = 0
@@ -594,6 +596,16 @@ class SpellChecker(IFixableChecker):
 
         self._counter                  = Counter()
 
+
+    def _make_white_list_and_suggest_list(self, input_whitelist):
+        if input_whitelist is None:
+            return
+        for w in input_whitelist:
+            if u':' in w:
+                k, s = w.split(u':')
+                self._suggest_list[k] = s
+            else:
+                self._white_list.add(w)
 
 
     def _drop_most_common(self):
@@ -714,12 +726,17 @@ class SpellChecker(IFixableChecker):
 
             self._tokens_cnt += 1
 
-            if token.lower() in self._white_list:
+
+            if token in self._white_list:
                 continue
 
             enc_token = token.encode(spell_dict.get_dic_encoding(), 'replace')
             if not spell_dict.spell(enc_token):
-                suggestions = spell_dict.suggest(enc_token)
+                if token in self._suggest_list:
+                    suggestions = [self._suggest_list[token]]
+                else:
+                    suggestions = spell_dict.suggest(enc_token)
+                    suggestions = [s.decode(spell_dict.get_dic_encoding()) for s in suggestions]
                 if not suggestions:
                     continue
 
@@ -727,7 +744,6 @@ class SpellChecker(IFixableChecker):
                 self._counter[token_key] +=1
 
                 if not only_collect_stat:
-                    suggestions = [s.decode(spell_dict.get_dic_encoding()) for s in suggestions]
                     self._typo_sents_dict[token_key].append({'chunk_id': chunk.get_chunk_id(),
                                                              'typo': token,
                                                              'suggest': suggestions})
