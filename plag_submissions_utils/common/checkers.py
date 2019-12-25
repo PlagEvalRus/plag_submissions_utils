@@ -48,6 +48,12 @@ class BaseChunkSimChecker(IChecher):
         if chunk.get_mod_type() == ModType.ORIG:
             return
 
+        if not chunk.get_mod_text():
+            self._errors.append(
+                ChunkError("Пустое модифицированное предложение.", chunk.get_chunk_id(),
+                           ErrSeverity.HIGH))
+            return
+
 
         diff_perc = chunk.measure_dist()
         diff_perc *= 100
@@ -673,6 +679,10 @@ class SpellChecker(IFixableChecker):
                        if unicodedata.category(c) != 'Mn')
 
     def _find_typos(self, chunk):
+
+        if not chunk.get_mod_text():
+            logging.warning("Empty modified sent!")
+            return
 
         only_collect_stat = False
         if chunk.get_mod_type() == ModType.CPY:
