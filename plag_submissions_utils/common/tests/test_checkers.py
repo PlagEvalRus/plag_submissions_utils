@@ -187,10 +187,13 @@ class SpellCheckerTestCase(unittest.TestCase):
         self.assertEqual(1, len(self.checker.get_errors()))
 
     def test_tf(self):
-        self.checker._typo_max_tf = 3
-        chunk = Chunk("", u"Это не ашибка, это не ашибка, это не ашибка.", "", "", 1)
+        self.checker._typo_max_tf = 5
+        chunk = Chunk("", u"Это не ашибка, это не ашибка, это не ашибка", "", "", 1)
+        chunk_cpy = Chunk("", u"Это не ашибка, это не ашибка, это не ашибка", "CPY", "", 2)
+
         logging.debug(chunk)
         self.checker(chunk, None)
+        self.checker(chunk_cpy, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
     def test_fix(self):
@@ -217,6 +220,19 @@ class SpellCheckerTestCase(unittest.TestCase):
         checker = chks.SpellChecker(whitelist = [u"ашибка"])
         checker.fix_all([chunk])
         self.assertEqual(u"ошибка, не ашибка.", chunk.get_mod_text())
+
+
+    def test_abbr(self):
+        text = u"(совр. Гаити)"
+        chunk = Chunk("", text, "", "", 1)
+        self.checker.fix_all([chunk])
+        self.assertEqual(u"(совр. Гаити)", chunk.get_mod_text())
+
+    def test_wiki(self):
+        text = u"Уи́льям Си́дни - тонкий"
+        chunk = Chunk("", text, "", "", 1)
+        self.checker.fix_all([chunk])
+        self.assertEqual(u"Уи́льям Си́дни - тонкий", chunk.get_mod_text())
 
 
 

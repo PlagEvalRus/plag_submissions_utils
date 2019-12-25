@@ -5,14 +5,13 @@ import logging
 from collections import Counter
 from collections import defaultdict
 import itertools
+import unicodedata
 
 from segtok import segmenter
 import regex
-import re
 import hunspell
 import langdetect
 
-from . import text_proc
 from . import source_doc
 from . import chunks
 from . import homoglyphs
@@ -220,10 +219,10 @@ class CyrillicAlphabetChecker(IFixableChecker):
 
         found = []
         for sent_num, s in enumerate(chunk.get_mod_sents()):
-            for m in re.finditer(ur"[\w']+", s, re.UNICODE):
+            for m in regex.finditer(ur"[\w']+", s, regex.UNICODE):
                 token = m.group()
                 #do not check words in latin or other alphabet
-                if not re.search(u'[а-яА-Я]', token, re.UNICODE):
+                if not regex.search(u'[а-яА-Я]', token, regex.UNICODE):
                     continue
                 confusable_chars = homoglyphs.find_homoglyphs(token, ['CYRILLIC'])
                 if confusable_chars:
@@ -669,18 +668,27 @@ class SpellChecker(IFixableChecker):
         return self._dicts[lang]
 
 
+    def _strip_accents(self, s):
+        return ''.join(c for c in s
+                       if unicodedata.category(c) != 'Mn')
 
     def _find_typos(self, chunk):
+
+        only_collect_stat = False
         if chunk.get_mod_type() == ModType.CPY:
-            return
+            only_collect_stat = True
 
         self._all_sents += 1
+
         spell_dict = self._get_dict(chunk)
         if spell_dict is None:
             return
 
-        tokens = [t for s in chunk.get_mod_sents()
-                  for t in text_proc.tok_sent(s, make_lower = False)]
+        tokens = [self._strip_accents(t)
+                  for s in chunk.get_mod_sents()
+                  for t in regex.findall(ur"[\w.]+", s, regex.UNICODE)]
+
+        logging.debug(u" ".join(tokens))
 
         for token in tokens:
             #yeah we're gonna skip the first word in the sentence.
@@ -690,6 +698,9 @@ class SpellChecker(IFixableChecker):
             if len(token) <= 2:
                 continue
 
+            #skip abbreviations ... and last word in a sentence
+            if token[-1] == u'.':
+                continue
 
             self._tokens_cnt += 1
 
@@ -702,12 +713,14 @@ class SpellChecker(IFixableChecker):
                 if not suggestions:
                     continue
 
-                suggestions = [s.decode(spell_dict.get_dic_encoding()) for s in suggestions]
                 token_key = token.lower()
                 self._counter[token_key] +=1
-                self._typo_sents_dict[token_key].append({'chunk_id': chunk.get_chunk_id(),
-                                                         'typo': token,
-                                                         'suggest': suggestions})
+
+                if not only_collect_stat:
+                    suggestions = [s.decode(spell_dict.get_dic_encoding()) for s in suggestions]
+                    self._typo_sents_dict[token_key].append({'chunk_id': chunk.get_chunk_id(),
+                                                             'typo': token,
+                                                             'suggest': suggestions})
 
     def __call__(self, chunk, _):
         self._find_typos(chunk)
