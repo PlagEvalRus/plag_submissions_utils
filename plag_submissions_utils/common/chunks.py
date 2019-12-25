@@ -98,11 +98,14 @@ class Chunk(object):
                  mod_type_str, orig_doc, chunk_num,
                  opts = ChunkOpts()):
         self._chunk_num           = chunk_num
-        self._original_sents      = sents.SentsHolder(orig_text, opts)
-        self._modified_sents      = sents.SentsHolder(mod_text, opts)
 
         logging.debug("input mode type string: %s", mod_type_str)
         self._mod_types           = _create_mod_types(mod_type_str)
+
+        self._original_sents      = sents.SentsHolder(orig_text, opts,
+                                                      segment = self.has_mod_type(ModType.CCT))
+        self._modified_sents      = sents.SentsHolder(mod_text, opts)
+
         self._orig_doc            = orig_doc
 
 

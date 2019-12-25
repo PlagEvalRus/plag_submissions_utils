@@ -20,14 +20,17 @@ class SentsHolder(object):
     """Documentation for SentsHolder
 
     """
-    def __init__(self, text, opts):
+    def __init__(self, text, opts, segment = False):
         super(SentsHolder, self).__init__()
         if isinstance(text, (list, )):
             #It is possible in essays of version 2.
             #Original text is already segmented by writer!
             self._sents = [s.strip() for s in text]
         else:
-            self._sents      = text_proc.seg_text_as_list(text)
+            if segment:
+                self._sents = text_proc.seg_text_as_list(text)
+            else:
+                self._sents = [text.strip()]
 
         self._sents = [s for s in self._sents if len(s) > 1]
 
