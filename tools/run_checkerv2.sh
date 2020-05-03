@@ -11,4 +11,4 @@ fi
 
 subm_dir="$1"
 shopt -s extglob
-./bin/submission_checker v2 -a $base_path/$subm_dir/*@(.rar|.zip)
+./bin/submission_checker v2 -a $base_path/$subm_dir/*@(.rar|.zip|.tar.gz)

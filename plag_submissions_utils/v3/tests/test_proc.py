@@ -17,7 +17,7 @@ class ProcessorTestCase(unittest.TestCase):
 
 
         print stat
-        self.assertEqual(2, len(errors), "errors:\n%s" % '\n'.join(str(e) for e in errors))
+        self.assertEqual(3, len(errors), "errors:\n%s" % '\n'.join(str(e) for e in errors))
         self.assertEqual(8, stat.chunks_cnt)
 
         self.assertEqual(0, stat.mod_type_freqs[ModType.UNK])

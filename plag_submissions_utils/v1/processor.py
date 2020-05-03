@@ -127,6 +127,12 @@ def create_chunks(inp_file, opts = ChunkOpts()):
 
     return chunks, errors
 
+def _get_filename(cell_value):
+    #filename can be interpreted as float if the fullname is e.g. 1.html and ext is skipped.
+    if isinstance(cell_value, float):
+        return str(int(cell_value))
+    return cell_value
+
 def _try_create_chunk(row_vals, sent_num, vals_offs, opts):
     def check_str_cell(cell_val):
         if not isinstance(cell_val, (str, unicode)):
@@ -141,7 +147,7 @@ def _try_create_chunk(row_vals, sent_num, vals_offs, opts):
 
     return Chunk(mod_text = mod_text,
                  orig_text = orig_text,
-                 orig_doc = row_vals[vals_offs + 2],
+                 orig_doc = _get_filename(row_vals[vals_offs + 2]),
                  mod_type_str = check_str_cell(row_vals[vals_offs + 3]),
                  chunk_num = sent_num,
                  opts = opts)

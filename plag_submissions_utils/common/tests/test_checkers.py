@@ -317,15 +317,15 @@ class SourceDocsCheckerTestCase(pyfakefs.fake_filesystem_unittest.TestCase):
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", "", "", "я_рюзский.pdf", 1)
+        chunk = Chunk("", "", "", u"я_рюзский.pdf", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", "", "", "я_рюзский", 1)
+        chunk = Chunk("", "", "", u"я_рюзский", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", "", "", "я_рюзский.txt", 1)
+        chunk = Chunk("", "", "", u"я_рюзский.txt", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
@@ -353,10 +353,36 @@ class SourceDocsCheckerTestCase(pyfakefs.fake_filesystem_unittest.TestCase):
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", "", "", "знакомый ваш", 1)
+        chunk = Chunk("", "", "", u"знакомый ваш", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", "", "", "знакомый ваш.html", 1)
+        chunk = Chunk("", "", "", u"знакомый ваш.html", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+    def test_with_dot_and_space_in_the_end(self):
+        src_dir = '/test/sources/'
+        self.fs.create_dir(src_dir)
+        self.fs.create_file(src_dir + "знакомый.ваш.html")
+
+        checker = chks.SourceDocsChecker(None, src_dir)
+
+        chunk = Chunk("", "", "", u"знакомый.ваш.html ", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+        chunk = Chunk("", "", "", u"знакомый.ваш ", 1)
+        checker(chunk, None)
+        self.assertEqual(0, len(checker.get_errors()))
+
+    def test_with_wrong_ext(self):
+        src_dir = '/test/sources/'
+        self.fs.create_dir(src_dir)
+        self.fs.create_file(src_dir + "test.hmtl")
+
+        checker = chks.SourceDocsChecker(None, src_dir)
+
+        chunk = Chunk("", "", "", "test.hmtl", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))

@@ -50,5 +50,5 @@ for sid in ids:
     except Exception as e:
         print "failed to process %s: %s" % (sid, e)
 
-results.sort(key= lambda r : r[0])
+# results.sort(key= lambda r : r[0])
 print "\n".join(["%s,%s,%s,%s"%res for res in results])

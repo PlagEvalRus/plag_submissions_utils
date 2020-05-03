@@ -11,6 +11,8 @@ import logging
 
 from . import text_proc
 
+WHITELIST_EXTENSIONS = frozenset(['pdf', 'htm', 'html', 'txt', 'doc', 'docx', 'rtf', 'odt'])
+
 def get_src_filename(path):
     if isinstance(path, unicode):
         uni_path = path
@@ -19,7 +21,16 @@ def get_src_filename(path):
         uni_path = path.decode("utf-8")
     else:
         uni_path = unicode(str(path), encoding="utf8")
-    return fs.splitext(fs.basename(uni_path))[0]
+    basename = fs.basename(uni_path).strip()
+    name, ext = fs.splitext(basename)
+    if not ext:
+        return name
+    if ext[1:].lower() in WHITELIST_EXTENSIONS:
+        #this is good extension
+        return name
+    #otherwise its part of basename
+    # logging.warning("Unknown extension: %s", ext)
+    return basename
 
 
 def find_src_paths(sources_dir):
