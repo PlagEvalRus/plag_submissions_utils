@@ -15,7 +15,7 @@ class TranslatorType(object):
 
     @classmethod
     def get_all_translation_types(cls):
-        return range(0,5)
+        return list(range(0,5))
 
 def translation_types_to_str(translation_types):
     return ",".join(translation_type_to_str(m) for m in translation_types)

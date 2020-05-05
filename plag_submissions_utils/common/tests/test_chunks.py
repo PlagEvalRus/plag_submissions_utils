@@ -15,8 +15,8 @@ class PartialRecordTestCase(unittest.TestCase):
 
 class ChunksEncodingTestCase(unittest.TestCase):
     def test_regex_matching(self):
-        ch = Chunk([], u"Онx. yно. оzо", "ADD", "filename", "1")
-        r = regex.compile(ur'([А-я]*([A-z])[А-я]+|[А-я]+([A-z])[А-я]*)')
+        ch = Chunk([], "Онx. yно. оzо", "ADD", "filename", "1")
+        r = regex.compile(r'([А-я]*([A-z])[А-я]+|[А-я]+([A-z])[А-я]*)')
         matches = r.findall(ch.get_mod_sents()[0])
         self.assertEqual(3, len(matches))
         self.assertEqual('x', matches[0][2])

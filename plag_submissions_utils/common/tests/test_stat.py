@@ -56,12 +56,12 @@ class StatTestCase(unittest.TestCase):
         for chunks in all_chunks:
             collector(itertools.chain(*chunks))
 
-        docs_cnt_stat, sents_in_src_stat = collector.get_stat()
+        src_cnt_stat, sents_in_src_stat = collector.get_stat()
 
 
-        self.assertEqual(2, len(docs_cnt_stat))
-        self.assertEqual(1, docs_cnt_stat[3])
-        self.assertEqual(1, docs_cnt_stat[4])
+        self.assertEqual(2, len(src_cnt_stat))
+        self.assertEqual(1, src_cnt_stat[3])
+        self.assertEqual(1, src_cnt_stat[4])
 
         self.assertEqual(5, len(sents_in_src_stat))
         self.assertEqual(2, sents_in_src_stat[0])

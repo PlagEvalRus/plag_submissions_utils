@@ -1,7 +1,7 @@
 import sys
 import requests
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from googletrans import Translator
 from os import path, environ
 
@@ -56,7 +56,7 @@ class YaGoTrans:
         urlTranslate = 'https://translate.yandex.net/api/v1.5/tr.json/translate?key={0}&lang={1}&text={2}'
 
         # try:
-        requestDetectLanguage = requests.post(urlDetectLanguage.format(self.api_key, urllib.quote(textFromInput)))
+        requestDetectLanguage = requests.post(urlDetectLanguage.format(self.api_key, urllib.parse.quote(textFromInput)))
         # except:
         #    raise ValueError('No Internet connection!')
 
@@ -69,7 +69,7 @@ class YaGoTrans:
             else:
                 langPair = detectedLanguage + '-' + dest_lang
 
-            requestTranslate = requests.post(urlTranslate.format(self.api_key, langPair, urllib.quote(textFromInput)))
+            requestTranslate = requests.post(urlTranslate.format(self.api_key, langPair, urllib.parse.quote(textFromInput)))
 
             if requestTranslate.status_code == 200:
                 translatedText = ''.join(json.loads(requestTranslate.text)['text'])

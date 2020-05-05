@@ -20,14 +20,14 @@ from . import common_runner
 
 
 def print_resp(text):
-    print "Content-Type: text/html; charset=utf-8"
-    print
-    print text.encode("utf-8")
+    print("Content-Type: text/html; charset=utf-8")
+    print()
+    print(text.encode("utf-8"))
 
 def print_err(text):
-    print "Status: 500 Internal error"
-    print
-    print text
+    print("Status: 500 Internal error")
+    print()
+    print(text)
 
 def main():
 

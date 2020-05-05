@@ -115,29 +115,29 @@ class Processor(BasicProcessor):
         return create_chunks(inp_file)
 
 def _is_number_first_col(headers):
-    return headers[0].lower().find(u"номер") != -1
+    return headers[0].lower().find("номер") != -1
 
 def _check_headers(first_row):
     offs = 0
     if _is_number_first_col(first_row):
         offs = 1
 
-    if first_row[0 + offs].lower().find(u"файла документа") == -1:
+    if first_row[0 + offs].lower().find("файла документа") == -1:
         return "Failed to find a column with source filename!"
 
-    if first_row[1 + offs].lower().find(u"типы сокрытия") == -1:
+    if first_row[1 + offs].lower().find("типы сокрытия") == -1:
         return "Failed to find a column with type of obfuscation!"
 
-    if first_row[2 + offs].lower().find(u"переводчик") == -1:
+    if first_row[2 + offs].lower().find("переводчик") == -1:
         return "Failed to find a column with translator!"
 
-    if first_row[3 + offs].lower().find(u"эссе") == -1:
+    if first_row[3 + offs].lower().find("эссе") == -1:
         return "Failed to find a column with modified text!"
 
-    if first_row[4 + offs].lower().find(u"исходный фрагмент") == -1:
+    if first_row[4 + offs].lower().find("исходный фрагмент") == -1:
         return "Failed to find a column with translated text!"
 
-    if first_row[5 + offs].lower().find(u"исходное предложение") == -1:
+    if first_row[5 + offs].lower().find("исходное предложение") == -1:
         return "Failed to find a column with original text!"
 
     return None
@@ -194,7 +194,7 @@ def _get_filename(cell_value):
 
 def _try_create_chunk(row_vals, sent_num, opts):
     def check_str_cell(cell_val):
-        if not isinstance(cell_val, (str, unicode)):
+        if not isinstance(cell_val, str):
             raise RuntimeError("Sent # %d; Wrong value of the cell: %s"
                                % (sent_num, str(cell_val)))
         return cell_val
@@ -266,8 +266,8 @@ def chunk_to_row(chunk):
 def create_xlsx_from_chunks(chunks, out_filename):
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.append((u"название файла документа", u"типы сокрытия", u"переводчик",
-               u"эссе", u"исходный фрагмент", u"исходное предложение"))
+    ws.append(("название файла документа", "типы сокрытия", "переводчик",
+               "эссе", "исходный фрагмент", "исходное предложение"))
     for chunk in chunks:
         ws.append(chunk_to_row(chunk))
 

@@ -34,12 +34,12 @@ def seg_text(text):
 
     # This cases are supported by segtok-2 (syntok)
     #TODO migrate to python3 and syntok
-    text = regex.sub(ur"\b(\d+)г.?\s", ur"\1 г. ", text)
+    text = regex.sub(r"\b(\d+)г.?\s", r"\1 г. ", text)
 
     #some documents contain "заповеди Пифагора.Нравственные"
     # or "психотерапии . Они"
     #regex supports unicode uppercase letters - \p{Lu}
-    text = regex.sub(ur"(\p{Ll})\s?\.\s?(\p{Lu})", ur"\1. \2", text)
+    text = regex.sub(r"(\p{Ll})\s?\.\s?(\p{Lu})", r"\1. \2", text)
     return seg.split_multi(text)
 
 def _normalize(analyzer_results, token):
@@ -94,15 +94,15 @@ def convert_doc(doc_path):
 
 def preprocess_text(text):
     #convert various unicode hyphens
-    text = text.replace(u"\u2010", u"\u002d")
-    text = text.replace(u"\u00ad", u"\u002d")
+    text = text.replace("\u2010", "\u002d")
+    text = text.replace("\u00ad", "\u002d")
 
     #remove unnecessary \n inside sentences
     text_spans = seg.rewrite_line_separators(
         seg.to_unix_linebreaks(text),
         seg.MAY_CROSS_ONE_LINE)
-    text = u"".join(text_spans)
+    text = "".join(text_spans)
 
     #remove double spaces '  ' or ' \t' and non-breaking spaces
-    text = u" ".join(p for p in regex.split(ur'\p{Blank}', text) if p)
+    text = " ".join(p for p in regex.split(r'\p{Blank}', text) if p)
     return text

@@ -94,7 +94,7 @@ def create_chunks(inp_file, opts = ChunkOpts()):
         return [], errors
 
     #TODO find other columns; Do not use number column at all
-    if sheet.row_values(0)[0].lower().find(u"номер") == -1:
+    if sheet.row_values(0)[0].lower().find("номер") == -1:
         #no one follows the guide
         #there may be no header or it may be # or № or 'Меня зовут Вася'
         try:
@@ -135,7 +135,7 @@ def _get_filename(cell_value):
 
 def _try_create_chunk(row_vals, sent_num, vals_offs, opts):
     def check_str_cell(cell_val):
-        if not isinstance(cell_val, (str, unicode)):
+        if not isinstance(cell_val, str):
             raise RuntimeError("Sent # %d; Wrong value of the cell: %s"
                                % (sent_num, str(cell_val)))
         return cell_val

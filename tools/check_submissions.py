@@ -15,7 +15,7 @@ from plag_submissions_utils.common.version import determine_version_by_id
 
 results=[("id", "fatal", "serious", "medium")]
 if len(sys.argv) == 1:
-    print "<data_dir> [ids_list]"
+    print("<data_dir> [ids_list]")
 
 data_dir=sys.argv[1]
 if len(sys.argv) == 3:
@@ -37,7 +37,7 @@ for sid in ids:
     if not expanded_path:
         continue
 
-    arch_path = expanded_path[0].decode("utf8")
+    arch_path = expanded_path[0]
     try:
         version = determine_version_by_id(sid)
         metrics, errors, stat = cr.run(arch_path, version)
@@ -48,7 +48,7 @@ for sid in ids:
              cr.medium_errors_cnt(metrics, errors, stat,
                                   count_metrics=False)))
     except Exception as e:
-        print "failed to process %s: %s" % (sid, e)
+        print("failed to process %s: %s" % (sid, e))
 
 # results.sort(key= lambda r : r[0])
-print "\n".join(["%s,%s,%s,%s"%res for res in results])
+print("\n".join(["%s,%s,%s,%s"%res for res in results]))

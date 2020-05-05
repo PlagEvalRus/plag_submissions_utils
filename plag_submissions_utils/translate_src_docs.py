@@ -54,7 +54,7 @@ class TextForTrans(object):
         return "ChunkId %s; src offs beg %d, end %d, err %d;text:\n %s" % (
             self.chunk.get_id() if self.chunk else None,
             self.offs_beg, self.offs_end, self.err_symbols,
-            self.text.encode('utf8')
+            self.text
         )
 
 class YandexTranslator(object):
@@ -180,7 +180,7 @@ class Translator(object):
                            save_translated_text = True)
 
         chunks_dict = {c.get_id(): self._create_trans_chunk(c, orig=True) for c in original_chunks}
-        for source_id, text_for_trans_list in sources_map.items():
+        for source_id, text_for_trans_list in list(sources_map.items()):
             for tinfo in text_for_trans_list:
                 if tinfo.chunk is None:
                     continue
@@ -215,7 +215,7 @@ class Translator(object):
 
     def _translate_sources(self, susp_id, sources_map):
         if self._opts.dry_run:
-            for _, text_for_trans_list in sources_map.items():
+            for _, text_for_trans_list in list(sources_map.items()):
                 for num, t in enumerate(text_for_trans_list):
                     self._stat.translated_chars += len(t.text)
                     pref = 'W/o chunk '
@@ -224,7 +224,7 @@ class Translator(object):
                     t.translated_text = pref + "trans_%d. " % num
             return
 
-        for source_id, text_for_trans_list in sources_map.items():
+        for source_id, text_for_trans_list in list(sources_map.items()):
             logging.info("Translating: susp %s, src %s", susp_id, source_id)
             self._yatrans.translate(text_for_trans_list)
             for text_info in text_for_trans_list:
@@ -240,7 +240,7 @@ class Translator(object):
         out_dir = os.path.join(base_out_dir, susp_id, 'sources')
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
-        for source_id, text_for_trans_list in sources_map.items():
+        for source_id, text_for_trans_list in list(sources_map.items()):
             with open(os.path.join(out_dir, '%s.txt' % source_id), 'w') as outf:
                 text_for_trans_list.sort(key = lambda t : t.offs_beg)
                 for t in text_for_trans_list:
@@ -248,13 +248,13 @@ class Translator(object):
                         text = t.translated_text
                     else:
                         text = t.text
-                    outf.write("%s\n" % text.encode('utf8'))
+                    outf.write("%s\n" % text)
 
 
     def _add_original_texts(self, sources, sources_map):
         """add text from sources for translation that was not used in an essay
         """
-        for source_id, text_for_trans_list in sources_map.items():
+        for source_id, text_for_trans_list in list(sources_map.items()):
             if source_id not in sources:
                 continue
             if not text_for_trans_list:

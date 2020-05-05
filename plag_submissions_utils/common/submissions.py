@@ -35,7 +35,7 @@ def run_over_submissions(subm_dir, arc_proc, limit_by_version = None,
                 logging.warning("too many files (>1) in %s", arc_dir)
                 continue
 
-            arc_path = arc_path[0].decode("utf8")
+            arc_path = arc_path[0]
             temp_dir = tempfile.mkdtemp()
             sources_dir, meta_filepath = extract_submission(arc_path, temp_dir)
 

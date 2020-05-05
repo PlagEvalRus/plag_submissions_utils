@@ -24,11 +24,11 @@ class ModType(object):
 
     @classmethod
     def get_all_mod_types_v1(cls):
-        return range(0,9)
+        return list(range(0,9))
 
     @classmethod
     def get_all_mod_types_v2(cls):
-        return range(0,8) + range(9,12)
+        return list(range(0,8)) + list(range(9,12))
 
     @classmethod
     def get_all_mod_types_v3(cls):
@@ -185,6 +185,6 @@ class Chunk(object):
         chunk_str = "%d (%s): %s, %s" %(
             self._chunk_num,
             mod_types_to_str(self._mod_types),
-            u" ".join(self.get_mod_sents()).encode("utf8"),
-            u"|".join(self.get_mod_tokens()).encode("utf8"))
+            " ".join(self.get_mod_sents()),
+            "|".join(self.get_mod_tokens()))
         return chunk_str

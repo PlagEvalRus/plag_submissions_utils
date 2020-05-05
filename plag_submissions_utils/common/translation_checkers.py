@@ -6,7 +6,7 @@ from . import checkers as chks
 from .checkers import ChunkError
 from .checkers import ErrSeverity
 
-from translator import YaGoTrans
+from .translator import YaGoTrans
 
 class ORIGModTypeChecker(chks.ORIGModTypeChecker):
     def _should_run(self, chunk):

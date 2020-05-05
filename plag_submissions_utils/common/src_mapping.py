@@ -51,7 +51,7 @@ class Src(object):
 
     def to_csv_record(self):
         return '{},"{}",{},{},{}'.format(int(self._susp_id),
-                                         self._src_filename.encode("utf8"),
+                                         self._src_filename,
                                          self._res_id, self._md5sum, self._ext_id)
 class SrcMap(object):
     """Documentation for SrcMap
@@ -78,14 +78,14 @@ class SrcMap(object):
 
     def to_csv(self, out):
         out.write("susp_id,filename,textapp_id,md5,ext_id\n")
-        out.write("\n".join(s.to_csv_record() for s in self._srcs.viewvalues()))
+        out.write("\n".join(s.to_csv_record() for s in self._srcs.values()))
 
     def from_csv(self, file_path):
         with open(file_path, 'r') as f:
             reader = csv.reader(f, delimiter=',', quotechar='"')
             for row in reader:
                 src = Src(str(row[0]).zfill(3),
-                          row[1].decode("utf-8"),
+                          row[1],
                           md5sum = row[3], ext_id = row[4])
                 self._srcs[src.get_res_id()] = src
 

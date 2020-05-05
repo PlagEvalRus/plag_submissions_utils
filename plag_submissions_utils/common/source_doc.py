@@ -14,14 +14,7 @@ from . import text_proc
 WHITELIST_EXTENSIONS = frozenset(['pdf', 'htm', 'html', 'txt', 'doc', 'docx', 'rtf', 'odt'])
 
 def get_src_filename(path):
-    if isinstance(path, unicode):
-        uni_path = path
-    elif isinstance(path, str):
-        #TODO guess encoding
-        uni_path = path.decode("utf-8")
-    else:
-        uni_path = unicode(str(path), encoding="utf8")
-    basename = fs.basename(uni_path).strip()
+    basename = fs.basename(path).strip()
     name, ext = fs.splitext(basename)
     if not ext:
         return name

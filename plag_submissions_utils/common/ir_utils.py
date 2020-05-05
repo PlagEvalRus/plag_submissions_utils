@@ -20,14 +20,14 @@ from .chunks import mod_type_to_str
 from .chunks import _create_mod_type
 
 def gen_ngrams(tokens, n = 3):
-    return zip(*[tokens[i:] for i in range(n)])
+    return list(zip(*[tokens[i:] for i in range(n)]))
 
 def _dot_product2(v1, v2):
     return sum(map(operator.mul, v1, v2))
 
 def _log_vec(msg, v):
-    logging.debug(u"cos_sim %s: %s", msg,
-                  u'\n'.join(u"%s: %d" % (u",".join(ngram), cnt) for ngram, cnt in v.most_common()))
+    logging.debug("cos_sim %s: %s", msg,
+                  '\n'.join("%s: %d" % (",".join(ngram), cnt) for ngram, cnt in v.most_common()))
 
 
 def cos_sim(ng1, ng2):
@@ -39,8 +39,8 @@ def cos_sim(ng1, ng2):
     if not v1 or not v2:
         return 0.0
 
-    len1 = math.sqrt(_dot_product2(v1.itervalues(), v1.itervalues()))
-    len2 = math.sqrt(_dot_product2(v2.itervalues(), v2.itervalues()))
+    len1 = math.sqrt(_dot_product2(iter(v1.values()), iter(v1.values())))
+    len2 = math.sqrt(_dot_product2(iter(v2.values()), iter(v2.values())))
 
     total = 0.0
     for ngram in v1:
@@ -104,7 +104,7 @@ class BasicSimProcessor(object):
         return self._get_percentiles(self._sims)
 
     def results_per_type(self):
-        return {k: self._get_percentiles(v) for k,v in self._sims_per_type.iteritems()}
+        return {k: self._get_percentiles(v) for k,v in self._sims_per_type.items()}
 
     def get_sims(self):
         return self._sims
@@ -147,18 +147,18 @@ def calc_cos_sim(opts):
 
     calc_sims(opts, [proc])
 
-    print proc.results()
-    print "\n".join("%s: %s" % (mod_type_to_str(t), s)
-                    for t,s in proc.results_per_type().iteritems())
+    print(proc.results())
+    print("\n".join("%s: %s" % (mod_type_to_str(t), s)
+                    for t,s in proc.results_per_type().items()))
 
 def calc_jaccard_sim(opts):
     proc = BasicNGramSimProcessor('jaccard', jaccard)
 
     calc_sims(opts, [proc])
 
-    print proc.results()
-    print "\n".join("%s: %s" % (mod_type_to_str(t), s)
-                    for t,s in proc.results_per_type().iteritems())
+    print(proc.results())
+    print("\n".join("%s: %s" % (mod_type_to_str(t), s)
+                    for t,s in proc.results_per_type().items()))
 
 
 def calc_impact_of_morph(opts):
@@ -169,7 +169,7 @@ def calc_impact_of_morph(opts):
 
         calc_sims(local_opts, procs)
 
-        rows = itertools.izip(*[p.get_sims() for p in procs])
+        rows = zip(*[p.get_sims() for p in procs])
         for row in rows:
             writer.writerow(row + (run_tag, ))
 
@@ -199,7 +199,7 @@ def _write_sim_by_types(filename, procs):
         writer = csv.writer(csvfile)
         writer.writerow(mod_types + ['ngram'])
         for proc in procs:
-            rows = itertools.izip_longest(
+            rows = itertools.zip_longest(
                 *[proc.get_sims_by_types()[_create_mod_type(t)]
                   for t in mod_types])
             for row in rows:
@@ -208,13 +208,13 @@ def _write_sim_by_types(filename, procs):
 
 
 def calc_for_various_ngrams(opts):
-    ngrams = range(1,9)
+    ngrams = list(range(1,9))
     procs = [BasicNGramSimProcessor(str(ng), cos_sim, ng) for ng in ngrams]
     calc_sims(opts, procs)
     with open('cos_ngrams.csv', 'w') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(ngrams)
-        rows = itertools.izip(*[p.get_sims() for p in procs])
+        rows = zip(*[p.get_sims() for p in procs])
         for row in rows:
             writer.writerow(row)
     _write_sim_by_types('cos_ngrams_by_type.csv', procs)

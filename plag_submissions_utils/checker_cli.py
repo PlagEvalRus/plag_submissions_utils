@@ -18,8 +18,8 @@ def run_v1(opts):
 
 def fix_v1(opts):
     common_runner.fix(
-        opts.archive.decode("utf8"), opts.output_file, "1",
-        spell_checker_whitelist = [s.decode('utf8') for s in opts.spell_checker_whitelist])
+        opts.archive, opts.output_file, "1",
+        spell_checker_whitelist = [s for s in opts.spell_checker_whitelist])
 
 
 def run_v2(opts):
@@ -29,15 +29,15 @@ def run_v3(opts):
     common_run(opts, "3")
 
 def common_run(opts, version):
-    metrics, errors, stat = common_runner.run(opts.archive.decode("utf8"), version)
+    metrics, errors, stat = common_runner.run(opts.archive, version)
 
-    print "Статистика"
+    print("Статистика")
     for m in metrics:
-        print "%s %s"  % ("!" * m.get_violation_level(), m)
+        print("%s %s"  % ("!" * m.get_violation_level(), m))
 
-    print
-    print "Ошибки"
-    print "\n".join(str(e) for e in errors)
+    print()
+    print("Ошибки")
+    print("\n".join(str(e) for e in errors))
 
 
 def collect_stat(opts):

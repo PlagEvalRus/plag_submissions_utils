@@ -36,7 +36,7 @@ class SubmissionStat(object):
         self.src_sents_cnt     = src_sents_cnt
 
     def _defdict_to_str(self, defdict, val_trans = lambda v: v, key_trans = lambda k : k):
-        return "\n".join("%s : %s" % (key_trans(k), val_trans(v)) for k, v in defdict.iteritems())
+        return "\n".join("%s : %s" % (key_trans(k), val_trans(v)) for k, v in defdict.items())
 
     def __str__(self):
         len_parts = []
@@ -54,7 +54,7 @@ Docs frequencies: %s""" %(self.chunks_cnt,
                           "\n".join(len_parts),
                           self._defdict_to_str(self.mod_type_freqs),
                           self._defdict_to_str(self.translation_type_freqs),
-                          self._defdict_to_str(self.docs_freqs, key_trans = lambda k: k.encode("utf8")))
+                          self._defdict_to_str(self.docs_freqs, key_trans = lambda k: k))
 
 
 
@@ -72,7 +72,7 @@ class StatCollector(object):
         return self._stat
 
     def mod_types_stat(self):
-        items = self._stat.mod_type_co_occur.items()
+        items = list(self._stat.mod_type_co_occur.items())
         items.sort(key = lambda t : t[1], reverse=True)
         return items, self._stat.mod_type_freqs
 
@@ -121,10 +121,10 @@ class SrcStatCollector(object):
 
     def __call__(self, chunks):
         docs_freqs = Counter(c.get_orig_doc_filename() for c in chunks
-                             if c.get_mod_type() != ModType.ORIG)
+                             if c.get_mod_type() != ModType.ORIG and c.get_orig_doc_filename())
 
         self._docs_cnt_stat[len(docs_freqs)] += 1
-        self._sents_in_src_stat.update(min(x, 100) / 10 for x in docs_freqs.itervalues()
+        self._sents_in_src_stat.update(min(x, 100) // 10 for x in docs_freqs.values()
                                        if x >= 4)
 
     def print_stat(self, out):

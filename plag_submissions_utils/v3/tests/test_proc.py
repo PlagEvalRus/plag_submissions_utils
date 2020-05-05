@@ -16,7 +16,7 @@ class ProcessorTestCase(unittest.TestCase):
         metrics, errors, stat = self._process_file("data/test_data_v3/test.zip")
 
 
-        print stat
+        print(stat)
         self.assertEqual(3, len(errors), "errors:\n%s" % '\n'.join(str(e) for e in errors))
         self.assertEqual(8, stat.chunks_cnt)
 

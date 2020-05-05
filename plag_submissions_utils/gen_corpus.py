@@ -104,7 +104,7 @@ class SimilarDocumentsMetaGenerator(SrcRetrievalMetaGenerator):
     def on_susp_end(self, susp_doc):
         susp_id = susp_doc.get_susp_id()
 
-        items = list(self._src_map.iteritems())
+        items = list(self._src_map.items())
         items.sort(key = lambda t : -t[1])
 
         with open(self._out_path, 'a') as outf:
@@ -306,7 +306,7 @@ class SuspDocGenerator(object):
     def add_text(self, text_id, text):
 
         suffix = '\n'
-        self._out.write(text.encode("utf-8") + suffix)
+        self._out.write(text + suffix)
         text_offs = self._cur_offset
         self._offsets_dict[text_id] = text_offs
         self._cur_offset += len(text) + len(suffix)

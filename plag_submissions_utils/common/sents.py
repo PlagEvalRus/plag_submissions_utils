@@ -23,7 +23,7 @@ class SentsHolder(object):
     def __init__(self, text, opts, segment = False):
         super(SentsHolder, self).__init__()
         self._opts = opts
-        if isinstance(text, (list, )):
+        if isinstance(text, list):
             #It is possible in essays of version 2.
             #Original text is already segmented by writer!
             self._sents = [s.strip() for s in text]

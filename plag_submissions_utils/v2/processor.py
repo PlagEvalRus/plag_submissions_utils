@@ -94,25 +94,25 @@ class Processor(BasicProcessor):
         return create_chunks(inp_file)
 
 def _check_headers(first_row):
-    if first_row[0].lower().find(u"номер") == -1:
+    if first_row[0].lower().find("номер") == -1:
         return "Failed to find a column with row number!"
 
-    if first_row[1].lower().find(u"файла документа") == -1:
+    if first_row[1].lower().find("файла документа") == -1:
         return "Failed to find a column with source filename!"
 
-    if first_row[2].lower().find(u"типы сокрытия") == -1:
+    if first_row[2].lower().find("типы сокрытия") == -1:
         return "Failed to find a column with type of obfuscation!"
 
-    if first_row[3].lower().find(u"эссе") == -1:
+    if first_row[3].lower().find("эссе") == -1:
         return "Failed to find a column with modified text!"
 
-    if first_row[4].lower().find(u"исходное предложение") == -1:
+    if first_row[4].lower().find("исходное предложение") == -1:
         return "Failed to find a column with original text!"
 
     return None
 
 def _try_to_extract_sent_num(row_val):
-    if isinstance(row_val, types.StringTypes):
+    if isinstance(row_val, (str,)):
         m = re.search(r"(\d+)", row_val)
         if m is None:
             raise RuntimeError("Failed to extract sent number from 0 column")
@@ -160,7 +160,7 @@ def create_chunks(inp_file, opts = ChunkOpts()):
 
 def _try_create_chunk(row_vals, sent_num, opts):
     def check_str_cell(cell_val):
-        if not isinstance(cell_val, (str, unicode)):
+        if not isinstance(cell_val, str):
             raise RuntimeError("Sent # %d; Wrong value of the cell: %s"
                                % (sent_num, str(cell_val)))
         return cell_val

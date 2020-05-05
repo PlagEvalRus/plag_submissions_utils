@@ -3,4 +3,4 @@
                                        (cur-python-path (getenv "PYTHONPATH"))
                                        (missing (not (s-contains-p path cur-python-path))))
                              (setenv "PYTHONPATH" (concat path ":" cur-python-path)))
-                           (pyvenv-workon "psu"))))))
+                           (pyvenv-workon "psu3"))))))

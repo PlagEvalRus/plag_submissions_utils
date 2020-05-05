@@ -27,5 +27,7 @@ class SrcMapTestCase(unittest.TestCase):
 
     def test_generated_id(self):
         src_mapping.add_src_from_dir("1", self.sources_dir, self.mapping)
-        src1 = self.mapping.get_src_by_filename("1", "1")
-        self.assertEqual(64, src1.get_ext_id())
+        susp_id = "1"
+        src1 = self.mapping.get_src_by_filename(susp_id, "1")
+        self.assertGreaterEqual(src1.get_ext_id(), 64)
+        self.assertLessEqual(src1.get_ext_id(), 71)

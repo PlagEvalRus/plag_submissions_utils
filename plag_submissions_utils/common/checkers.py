@@ -210,25 +210,25 @@ class CyrillicAlphabetChecker(IFixableChecker):
 
         returns:
         [{'alias': u'CHEROKEE',
-        'character': u'\u13df',
-        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0421'}},
+        'character': u'\\u13df',
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\\u0421'}},
         {'alias': u'LISU',
-        'character': u'\ua4da',
-        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0421'}},
+        'character': u'\\ua4da',
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\\u0421'}},
         {'alias': u'LATIN',
         'character': u'C',
-        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0421'}},
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\\u0421'}},
         {'alias': u'LATIN',
         'character': u'T',
-        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\u0422'}}]
+        'homoglyphs': {'a': u'CYRILLIC', 'c': u'\\u0422'}}]
         """
 
         found = []
         for sent_num, s in enumerate(chunk.get_mod_sents()):
-            for m in regex.finditer(ur"[\w']+", s, regex.UNICODE):
+            for m in regex.finditer(r"[\w']+", s, regex.UNICODE):
                 token = m.group()
                 #do not check words in latin or other alphabet
-                if not regex.search(u'[а-яА-Я]', token, regex.UNICODE):
+                if not regex.search('[а-яА-Я]', token, regex.UNICODE):
                     continue
                 confusable_chars = homoglyphs.find_homoglyphs(token, ['CYRILLIC'])
                 if confusable_chars:
@@ -252,10 +252,10 @@ class CyrillicAlphabetChecker(IFixableChecker):
 
         for char_info in found:
             reports.append('В слове "{}" заменена буква "{}" на "{}" ({}).'.format(
-                char_info['word'].encode('utf-8'),
-                char_info['homoglyphs']['c'].encode('utf8'),
-                char_info['character'].encode('utf8'),
-                char_info['alias'].encode('utf8')))
+                char_info['word'],
+                char_info['homoglyphs']['c'],
+                char_info['character'],
+                char_info['alias']))
 
         if reports:
             self._errors.append(
@@ -286,7 +286,7 @@ class CyrillicAlphabetChecker(IFixableChecker):
                         char_info = found[char_info_num]
                 else:
                     new_sent.append(char)
-            new_sents.append(u''.join(new_sent))
+            new_sents.append(''.join(new_sent))
 
         chunk.get_mod_sents()[:] = new_sents
 
@@ -316,8 +316,7 @@ class ORIGModTypeChecker(IChecher):
                     found_sents += 1
             if found_sents == len(sents):
                 self._errors.append(ChunkError(
-                    "Оригинальное предложение было найдено в документе '%s'" % \
-                    src.encode("utf8"),
+                    "Оригинальное предложение было найдено в документе '%s'" % src,
                     chunk.get_chunk_id(),
                     ErrSeverity.HIGH))
                 break
@@ -398,7 +397,7 @@ class SourceDocsChecker(IChecher):
 
     def _init_sources_dict(self, sources_dir):
         sources_dict = source_doc.find_src_paths(sources_dir)
-        logging.debug("found sources: %s", ", ".join(k.encode("utf8") for k in sources_dict))
+        logging.debug("found sources: %s", ", ".join(k for k in sources_dict))
         return sources_dict
 
     def _check_existance(self, orig_doc):
@@ -421,7 +420,7 @@ class SourceDocsChecker(IChecher):
 
                 logging.debug("this doc does not exist!! %s", chunk.get_orig_doc_filename())
                 self._errors.append(ChunkError("Документ '%s' не существует " %
-                                               chunk.get_orig_doc().encode("utf-8"),
+                                               chunk.get_orig_doc(),
                                                chunk.get_chunk_id(),
                                                ErrSeverity.HIGH))
 
@@ -518,7 +517,7 @@ class SentCorrectnessChecker(IFixableChecker):
             first_token = s.split(None, 1)[0]
 
             #allow up to 2 punctuation characters before upper letter or digit.
-            m = regex.search(ur"^\p{P}{0,2}(\p{Lu}|\d)", first_token)
+            m = regex.search(r"^\p{P}{0,2}(\p{Lu}|\d)", first_token)
             if m is None:
                 sents_with_errors.append(num)
 
@@ -601,8 +600,8 @@ class SpellChecker(IFixableChecker):
         if input_whitelist is None:
             return
         for w in input_whitelist:
-            if u':' in w:
-                k, s = w.split(u':')
+            if ':' in w:
+                k, s = w.split(':')
                 self._suggest_list[k] = s
             else:
                 self._white_list.add(w)
@@ -611,21 +610,21 @@ class SpellChecker(IFixableChecker):
     def _drop_most_common(self):
         """ "typos" that are encountered more than typo_max_tf times are not typos...
         """
-        for typo in self._counter.keys():
+        for typo in list(self._counter.keys()):
             if self._counter[typo] >= self._typo_max_tf:
                 del self._typo_sents_dict[typo]
                 del self._counter[typo]
 
     def _get_stat(self):
         sents_set =  set(i['chunk_id']
-                         for i in itertools.chain(*self._typo_sents_dict.itervalues()))
+                         for i in itertools.chain(*iter(self._typo_sents_dict.values())))
         wrong_spelled_tokens = len(self._counter)
         return sents_set, wrong_spelled_tokens
 
     def _make_err_msg(self):
-        typo_with_sents = self._typo_sents_dict.items()
-        typo_with_sents.sort(key= lambda p : p[1][0])
-        typo_with_sents_str = [u"%s: № %s" % (t, u", ".join(str(i['chunk_id']) for i in infos))
+        typo_with_sents = list(self._typo_sents_dict.items())
+        typo_with_sents.sort(key= lambda p : p[1][0]['chunk_id'])
+        typo_with_sents_str = ["%s: № %s" % (t, ", ".join(str(i['chunk_id']) for i in infos))
                                for t, infos in typo_with_sents]
         err_msg = "Слишком много опечаток в заимствованном тексте! " \
                   "Проверьте следующие предложения:\n"
@@ -708,9 +707,9 @@ class SpellChecker(IFixableChecker):
 
         tokens = [self._strip_accents(t)
                   for s in chunk.get_mod_sents()
-                  for t in regex.findall(ur"[\w.]+", s, regex.UNICODE)]
+                  for t in regex.findall(r"[\w.]+", s, regex.UNICODE)]
 
-        logging.debug(u" ".join(tokens))
+        logging.debug(" ".join(tokens))
 
         for token in tokens:
             #yeah we're gonna skip the first word in the sentence.
@@ -721,7 +720,7 @@ class SpellChecker(IFixableChecker):
                 continue
 
             #skip abbreviations ... and last word in a sentence
-            if token[-1] == u'.':
+            if token[-1] == '.':
                 continue
 
             self._tokens_cnt += 1
@@ -736,7 +735,13 @@ class SpellChecker(IFixableChecker):
                     suggestions = [self._suggest_list[token]]
                 else:
                     suggestions = spell_dict.suggest(enc_token)
-                    suggestions = [s.decode(spell_dict.get_dic_encoding()) for s in suggestions]
+                    #dont even ask what is going on here
+                    #see HunSpell_suggest https://github.com/blatinier/pyhunspell/blob/master/hunspell.cpp#L171
+                    suggestions = spell_dict.suggest(enc_token)
+                    suggestions = [ss.encode('latin1').decode(spell_dict.get_dic_encoding())
+                                   for ss in suggestions]
+                    # suggestions = [s.decode(spell_dict.get_dic_encoding()) for s in suggestions]
+
                 if not suggestions:
                     continue
 
@@ -759,7 +764,7 @@ class SpellChecker(IFixableChecker):
         self._drop_most_common()
 
         typos_per_chunk_dict = defaultdict(lambda:[])
-        for typo_occs in self._typo_sents_dict.itervalues():
+        for typo_occs in self._typo_sents_dict.values():
             for i in typo_occs:
                 typos_per_chunk_dict[i['chunk_id']].append(i)
 

@@ -7,7 +7,7 @@ import mock
 from plag_submissions_utils.common.source_doc import SourceDoc
 
 def dummy_doc(path):
-    return u"""text
+    return """text
 немного 1рашн1 текст.
 Sentence for 'simple' test!
 
@@ -22,9 +22,9 @@ Text.
 Sentence for <many trash> sequence matcher <many trash> test!
 """
 
-SIMPLE_SENT=u"Sentence for 'simple' test!"
-SEQ_MATCHER_SENT=u"Предложение для проверки sequence matcher test!"
-SEQ_MATCHER_SENT2=u"Sentence for hyphen test!"
+SIMPLE_SENT="Sentence for 'simple' test!"
+SEQ_MATCHER_SENT="Предложение для проверки sequence matcher test!"
+SEQ_MATCHER_SENT2="Sentence for hyphen test!"
 
 class FindSentInSrcTestCase(unittest.TestCase):
 
@@ -45,11 +45,11 @@ class FindSentInSrcTestCase(unittest.TestCase):
 
 
     def test_seq_matcher_case2(self):
-        text = u"немного 1рашн1 текст simple'"
+        text = "немного 1рашн1 текст simple'"
         self.assertTrue(self.source_doc.is_sent_in_doc(text))
 
     def test_limit_of_seq_matcher(self):
-        text = u"немного 1рашн1 текст <trash>"
+        text = "немного 1рашн1 текст <trash>"
         self.assertFalse(self.source_doc.is_sent_in_doc(text))
 
     def test_offs_simple_case(self):
@@ -78,7 +78,7 @@ class FindSentInSrcTestCase(unittest.TestCase):
         self.assertEqual(172, offs_end)
         self.assertEqual(16, err)
 
-        self.assertEqual(u"Предложение для проверки <trash> sequence matcher <trash> test!",
+        self.assertEqual("Предложение для проверки <trash> sequence matcher <trash> test!",
                          dummy_doc("temp")[offs_beg:offs_end])
 
 
@@ -95,7 +95,7 @@ class FindSentInSrcTestCase(unittest.TestCase):
         self.assertEqual(172, offs_end)
         self.assertEqual(16, err)
 
-        self.assertEqual(u"Предложение для проверки <trash> sequence matcher <trash> test!",
+        self.assertEqual("Предложение для проверки <trash> sequence matcher <trash> test!",
                          dummy_doc("temp")[offs_beg:offs_end])
 
 
@@ -126,11 +126,11 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
     def test1(self):
         #Fixed by adding max_length_delta = 4 to SourceDoc
-        text = u"7разрядной и 8разрядной кодировки ASCII."
+        text = "7разрядной и 8разрядной кодировки ASCII."
 
         src_doc = self.create_source_doc(text)
 
-        sent = u"""7 разрядной и 8 разрядной кодировки ASCII."""
+        sent = """7 разрядной и 8 разрядной кодировки ASCII."""
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
         self.assertEqual(0, offs_beg)
@@ -140,12 +140,12 @@ class SpecificSeqMatcherCases(unittest.TestCase):
         #leading whitespace in sent
         #bun it is absent in text
         #Fixed by adding strip() to received sent in get_sent_offs
-        text = u"""приблизительно неделю.
+        text = """приблизительно неделю.
 
 В этом году вышел релиз версии 2.0 Pebble SDK, наряду
 """
 
-        sent = u""" В этом году вышел релиз версии 2.0 Pebble SDK, наряду
+        sent = """ В этом году вышел релиз версии 2.0 Pebble SDK, наряду
 """
         src_doc = self.create_source_doc(text)
 
@@ -157,10 +157,10 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
     def test3(self):
         #fixed by replacing non-breaking spaces in src and sent
-        text = u"""косметических
+        text = """косметических
 (Oriflame, Avon, Faberlic, Mary Kay) и медицинских"""
 
-        sent = u"""косметических
+        sent = """косметических
 (Oriflame, Avon, Faberlic, Mary Kay) и медицинских"""
 
         src_doc = self.create_source_doc(text)
@@ -172,9 +172,9 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
     def test4(self):
         #fixed by replacing unicode hyphens (\u2010) with simple ones (\u002d)
-        text = u"""Сетевые продажи (Multilevel Marketing ‐ MLM) ‐ такой способ ‐‐‐
+        text = """Сетевые продажи (Multilevel Marketing ‐ MLM) ‐ такой способ ‐‐‐
 """
-        sent = u"""Сетевые продажи (Multilevel Marketing - MLM) - такой способ ---
+        sent = """Сетевые продажи (Multilevel Marketing - MLM) - такой способ ---
 """
         src_doc = self.create_source_doc(text)
 
@@ -185,10 +185,10 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
     def test5(self):
         #fixed by removing double spaces in src text
-        text = u"""Другой текст... обязательно другой текст....
+        text = """Другой текст... обязательно другой текст....
 бизнеса. Не  обязательно  сам  участник  бизнеса  должен  привлекать  других
 участников."""
-        sent = u"""Не обязательно сам участник бизнеса должен привлекать других участников."""
+        sent = """Не обязательно сам участник бизнеса должен привлекать других участников."""
         src_doc = self.create_source_doc(text, 4)
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
@@ -199,7 +199,7 @@ class SpecificSeqMatcherCases(unittest.TestCase):
         self.assertEqual(sent, src_doc.get_text()[54:133-7])
 
     def test6(self):
-        text = u"""Информация о полезных добавках
+        text = """Информация о полезных добавках
 получила широкое распространение
 (у каждого из знакомых Ренборга
 нашлось много своих знакомых),
@@ -214,7 +214,7 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 новом продукте.
 """
 
-        sent= u"""Информация о полезных добавках получила широкое распространение (у каждого из знакомых Ренборга нашлось много своих знакомых), люди просили Ренборга о встречах, чтобы получить больше информации о новом продукте.
+        sent= """Информация о полезных добавках получила широкое распространение (у каждого из знакомых Ренборга нашлось много своих знакомых), люди просили Ренборга о встречах, чтобы получить больше информации о новом продукте.
 """
 
 

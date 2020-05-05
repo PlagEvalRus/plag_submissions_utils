@@ -13,7 +13,7 @@ class SimpleDetectorTestCase(unittest.TestCase):
         self.detector = SimpleDetector(opts)
 
     def test_literal_case(self):
-        susp_text = u"Тест text!!!!"
+        susp_text = "Тест text!!!!"
         src_text = susp_text
 
         detections = self.detector(susp_text, src_text)
@@ -31,8 +31,8 @@ class SimpleDetectorTestCase(unittest.TestCase):
 
 
     def test_changed_case(self):
-        susp_text = u"Тест text!!!!Text Other bla-bla!"
-        src_text = u"Good text!!Test Another code!"
+        susp_text = "Тест text!!!!Text Other bla-bla!"
+        src_text = "Good text!!Test Another code!"
 
         detections = self.detector(susp_text, src_text)
 

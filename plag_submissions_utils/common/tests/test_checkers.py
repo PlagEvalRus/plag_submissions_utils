@@ -4,7 +4,6 @@
 import logging
 import unittest
 
-import pyfakefs.fake_filesystem_unittest
 
 import plag_submissions_utils.common.checkers  as chks
 from plag_submissions_utils.common.chunks import Chunk
@@ -28,7 +27,7 @@ class LexicalSimCheckerTestCase(unittest.TestCase):
     def setUp(self):
         self.checker = chks.LexicalSimChecker(Opts())
 
-    def simple_test(self):
+    def test_simple(self):
         chunk = Chunk("Text about animals.",
                       "Text - about = animals.",
                       "LPR,ADD", "rvan'", 1)
@@ -38,7 +37,7 @@ class LexicalSimCheckerTestCase(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertEqual(ErrSeverity.HIGH, errors[0].sev)
 
-    def simple_test2(self):
+    def test_simple2(self):
         chunk = Chunk("Text about animals in the wild.",
                       "Text - about = animals in a wild.",
                       "LPR", "rvan'", 1)
@@ -87,24 +86,24 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
 
     def test_title_case(self):
         checker = chks.SentCorrectnessChecker(['title_case'])
-        chunk = Chunk("", u"Корректное предложение!", "", "", 1)
+        chunk = Chunk("", "Корректное предложение!", "", "", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
 
-        chunk = Chunk("", u"Из-за дефиса не работает str.istitle.", "", "", 1)
+        chunk = Chunk("", "Из-за дефиса не работает str.istitle.", "", "", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", u'"Цитата: текст"', "", "", 1)
+        chunk = Chunk("", '"Цитата: текст"', "", "", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", u'2009 number is ok.', "", "", 1)
+        chunk = Chunk("", '2009 number is ok.', "", "", 1)
         checker(chunk, None)
         self.assertEqual(0, len(checker.get_errors()))
 
-        chunk = Chunk("", u"маленькая буква.", "", "", 1)
+        chunk = Chunk("", "маленькая буква.", "", "", 1)
         checker(chunk, None)
         self.assertEqual(1, len(checker.get_errors()))
 
@@ -126,14 +125,14 @@ class SentCorrectnessCheckerTestCase(unittest.TestCase):
     def test_fix_title_case(self):
         checker = chks.SentCorrectnessChecker(['title_case'])
 
-        chunk = Chunk("", u"маленькая буква.", "", "", 1)
+        chunk = Chunk("", "маленькая буква.", "", "", 1)
         checker.fix(chunk)
-        self.assertEqual(u"Маленькая буква.", chunk.get_mod_text())
+        self.assertEqual("Маленькая буква.", chunk.get_mod_text())
 
-        chunk = Chunk("", u". В основном токсин из организма выводится через почки.", "", "", 1)
+        chunk = Chunk("", ". В основном токсин из организма выводится через почки.", "", "", 1)
         checker.fix(chunk)
         self.assertEqual(1, len(chunk.get_mod_sents()))
-        self.assertEqual(u"В основном токсин из организма выводится через почки.",
+        self.assertEqual("В основном токсин из организма выводится через почки.",
                          chunk.get_mod_text())
 
 
@@ -143,12 +142,12 @@ class SpellCheckerTestCase(unittest.TestCase):
         self.checker = chks.SpellChecker()
 
     def test_without_typos(self):
-        chunk = Chunk("", u"Этот текст точно без ошибок!", "", "", 1)
+        chunk = Chunk("", "Этот текст точно без ошибок!", "", "", 1)
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
     def test_with_typos(self):
-        chunk = Chunk("", u"я визиал и атправил вам я нарушел", "", "", 1)
+        chunk = Chunk("", "я визиал и атправил вам я нарушел", "", "", 1)
         logging.debug(chunk)
         self.checker(chunk, None)
         errors = self.checker.get_errors()
@@ -157,39 +156,39 @@ class SpellCheckerTestCase(unittest.TestCase):
         self.assertEqual(ErrSeverity.HIGH, errors[0].sev)
 
     def test_named_entities(self):
-        chunk = Chunk("", u"не учитываем имена собственные:"\
-                          u" Кишенев, Кипелов, Чубайс, МЭИ", "", "", 1)
+        chunk = Chunk("", "не учитываем имена собственные:"\
+                          " Кишенев, Кипелов, Чубайс, МЭИ", "", "", 1)
         logging.debug(chunk)
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
     def test_eng(self):
-        chunk = Chunk("", u"This is a sentence without any error!", "", "", 1)
+        chunk = Chunk("", "This is a sentence without any error!", "", "", 1)
         logging.debug(chunk)
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
 
     def test_yo(self):
-        chunk = Chunk("", u"также превращён в музей", "", "", 1)
+        chunk = Chunk("", "также превращён в музей", "", "", 1)
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
     def test_years(self):
-        chunk = Chunk("", u"В 60-ых годах началось резкое развитие", "", "", 1)
+        chunk = Chunk("", "В 60-ых годах началось резкое развитие", "", "", 1)
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
     def test_eng_with_typos(self):
-        chunk = Chunk("", u"I failed to wite good english, shame on me!", "", "", 1)
+        chunk = Chunk("", "I failed to wite good english, shame on me!", "", "", 1)
         logging.debug(chunk)
         self.checker(chunk, None)
         self.assertEqual(1, len(self.checker.get_errors()))
 
     def test_tf(self):
         self.checker._typo_max_tf = 5
-        chunk = Chunk("", u"Это не ашибка, это не ашибка, это не ашибка", "", "", 1)
-        chunk_cpy = Chunk("", u"Это не ашибка, это не ашибка, это не ашибка", "CPY", "", 2)
+        chunk = Chunk("", "Это не ашибка, это не ашибка, это не ашибка", "", "", 1)
+        chunk_cpy = Chunk("", "Это не ашибка, это не ашибка, это не ашибка", "CPY", "", 2)
 
         logging.debug(chunk)
         self.checker(chunk, None)
@@ -197,42 +196,42 @@ class SpellCheckerTestCase(unittest.TestCase):
         self.assertEqual(0, len(self.checker.get_errors()))
 
     def test_fix(self):
-        text = u"Ещётакже искуССТвенно содзано биологиеское оржуие (бубоны)."
+        text = "Ещётакже искуССТвенно содзано биологиеское оржуие (бубоны)."
         chunk = Chunk("", text, "", "", 1)
-        text2 = u"Нет ошибок"
+        text2 = "Нет ошибок"
         chunk2 = Chunk("", text2, "", "", 2)
         #NO fixes for CPY
-        text3 = u"Выливные и распыливающие авиационные приборы"
+        text3 = "Выливные и распыливающие авиационные приборы"
         chunk3 = Chunk("", text3, "CPY", "", 1)
 
         self.checker.fix_all([chunk, chunk2, chunk3])
         self.assertEqual(
-            u"Ещётакже искусственно создано биологическое оружие (бубоны).",
+            "Ещётакже искусственно создано биологическое оружие (бубоны).",
             chunk.get_mod_text())
 
-        self.assertEqual(u"Нет ошибок", chunk2.get_mod_text())
+        self.assertEqual("Нет ошибок", chunk2.get_mod_text())
 
-        self.assertEqual(u"Выливные и распыливающие авиационные приборы", chunk3.get_mod_text())
+        self.assertEqual("Выливные и распыливающие авиационные приборы", chunk3.get_mod_text())
 
     def test_whitelist(self):
-        text = u"ошибкл, не ашибка."
+        text = "ошибкл, не ашибка."
         chunk = Chunk("", text, "", "", 1)
-        checker = chks.SpellChecker(whitelist = [u"ашибка"])
+        checker = chks.SpellChecker(whitelist = ["ашибка"])
         checker.fix_all([chunk])
-        self.assertEqual(u"ошибка, не ашибка.", chunk.get_mod_text())
+        self.assertEqual("ошибка, не ашибка.", chunk.get_mod_text())
 
 
     def test_abbr(self):
-        text = u"(совр. Гаити)"
+        text = "(совр. Гаити)"
         chunk = Chunk("", text, "", "", 1)
         self.checker.fix_all([chunk])
-        self.assertEqual(u"(совр. Гаити)", chunk.get_mod_text())
+        self.assertEqual("(совр. Гаити)", chunk.get_mod_text())
 
     def test_wiki(self):
-        text = u"Уи́льям Си́дни - тонкий"
+        text = "Уи́льям Си́дни - тонкий"
         chunk = Chunk("", text, "", "", 1)
         self.checker.fix_all([chunk])
-        self.assertEqual(u"Уи́льям Си́дни - тонкий", chunk.get_mod_text())
+        self.assertEqual("Уи́льям Си́дни - тонкий", chunk.get_mod_text())
 
 
 
@@ -241,148 +240,144 @@ class CyrillicAlphabetChecker(unittest.TestCase):
         self.checker = chks.CyrillicAlphabetChecker(Opts())
 
     def test_basic(self):
-        chunk = Chunk([], u"Здесь замен нет.", "ADD", "filename", 1)
+        chunk = Chunk([], "Здесь замен нет.", "ADD", "filename", 1)
         self.checker(chunk, None)
         self.assertEqual(0, len(self.checker.get_errors()))
 
-        chunk = Chunk([], u"Здeсь есть одна замена.", "ADD", "filename", 1)
+        chunk = Chunk([], "Здeсь есть одна замена.", "ADD", "filename", 1)
         self.checker(chunk, None)
         self.assertEqual(1, len(self.checker.get_errors()))
         # print self.checker.get_errors()[0]
 
 
     def test_fix(self):
-        chunk = Chunk("", [u"искуᏟꓚCСTвенный.", u"искуᏟꓚCСTвенный cнeг."], "", "", 1)
+        chunk = Chunk("", ["искуᏟꓚCСTвенный.", "искуᏟꓚCСTвенный cнeг."], "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"искуССССТвенный. искуССССТвенный снег.", chunk.get_mod_text())
+        self.assertEqual("искуССССТвенный. искуССССТвенный снег.", chunk.get_mod_text())
 
         # Tор -> first letter is latin
-        chunk = Chunk("", u"Tор, HTTP-траффик", "", "", 1)
+        chunk = Chunk("", "Tор, HTTP-траффик", "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"Тор, HTTP-траффик", chunk.get_mod_text())
+        self.assertEqual("Тор, HTTP-траффик", chunk.get_mod_text())
 
-        chunk = Chunk("", u"Пpoтoкoл Http; шкoлa - école.", "", "", 1)
+        chunk = Chunk("", "Пpoтoкoл Http; шкoлa - école.", "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"Протокол Http; школа - école.", chunk.get_mod_text())
+        self.assertEqual("Протокол Http; школа - école.", chunk.get_mod_text())
 
-        chunk = Chunk("", u"Замен нет.", "", "", 1)
+        chunk = Chunk("", "Замен нет.", "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"Замен нет.", chunk.get_mod_text())
+        self.assertEqual("Замен нет.", chunk.get_mod_text())
 
-        chunk = Chunk("", [u"Замен нет.", u"Зaмeны есть.", u"Замен нет."], "", "", 1)
+        chunk = Chunk("", ["Замен нет.", "Зaмeны есть.", "Замен нет."], "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"Замен нет. Замены есть. Замен нет.", chunk.get_mod_text())
+        self.assertEqual("Замен нет. Замены есть. Замен нет.", chunk.get_mod_text())
 
 
     def test_NOT_fix_numbers(self):
-        chunk = Chunk("", u"1982г.", "", "", 1)
+        chunk = Chunk("", "1982г.", "", "", 1)
         self.checker.fix(chunk)
-        self.assertEqual(u"1982г.", chunk.get_mod_text())
+        self.assertEqual("1982г.", chunk.get_mod_text())
+
+def test_source_docs_checker_basic(fs):
+    src_dir = '/test/sources/'
+    fs.create_dir(src_dir)
+    fs.create_file(src_dir + "1.html")
+    fs.create_file(src_dir + "wiki.html")
+    fs.create_file(src_dir + "lenovo")
+    fs.create_file(src_dir + "я_рюзский.pdf")
+
+    checker = chks.SourceDocsChecker(None, src_dir)
+    chunk = Chunk("", "", "", "1", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "1.html", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "wiki.html", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "wiki", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "lenovo", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "lenovo.html", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "я_рюзский.pdf", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "я_рюзский", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "я_рюзский.txt", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "2.html", 1)
+    checker(chunk, None)
+    assert len(checker.get_errors()) == 1
+
+def test_source_docs_checker_with_whitespace(fs):
+    src_dir = '/test/sources/'
+    fs.create_dir(src_dir)
+    fs.create_file(src_dir + "title kek.html")
+    fs.create_file(src_dir + "знакомый ваш.html")
+
+    checker = chks.SourceDocsChecker(None, src_dir)
+
+    chunk = Chunk("", "", "", "title kek", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "title kek.html", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "знакомый ваш", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "знакомый ваш", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "знакомый ваш.html", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+def test_with_dot_and_space_in_the_end(fs):
+    src_dir = '/test/sources/'
+    fs.create_dir(src_dir)
+    fs.create_file(src_dir + "знакомый.ваш.html")
+
+    checker = chks.SourceDocsChecker(None, src_dir)
+
+    chunk = Chunk("", "", "", "знакомый.ваш.html ", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "знакомый.ваш ", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
 
 
-class SourceDocsCheckerTestCase(pyfakefs.fake_filesystem_unittest.TestCase):
-    def setUp(self):
-        self.setUpPyfakefs()
+def test_with_wrong_ext(fs):
+    src_dir = '/test/sources/'
+    fs.create_dir(src_dir)
+    fs.create_file(src_dir + "test.hmtl")
 
-    def test_basic(self):
-        src_dir = '/test/sources/'
-        self.fs.create_dir(src_dir)
-        self.fs.create_file(src_dir + "1.html")
-        self.fs.create_file(src_dir + "wiki.html")
-        self.fs.create_file(src_dir + "lenovo")
-        self.fs.create_file(src_dir + "я_рюзский.pdf")
+    checker = chks.SourceDocsChecker(None, src_dir)
 
-        checker = chks.SourceDocsChecker(None, src_dir)
-        chunk = Chunk("", "", "", "1", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", "1.html", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", "wiki.html", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", "wiki", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", "lenovo", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", "lenovo.html", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", u"я_рюзский.pdf", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", u"я_рюзский", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", u"я_рюзский.txt", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", "2.html", 1)
-        checker(chunk, None)
-        self.assertEqual(1, len(checker.get_errors()))
-
-    def test_with_whitespace(self):
-        src_dir = '/test/sources/'
-        self.fs.create_dir(src_dir)
-        self.fs.create_file(src_dir + "title kek.html")
-        self.fs.create_file(src_dir + "знакомый ваш.html")
-
-        checker = chks.SourceDocsChecker(None, src_dir)
-
-        chunk = Chunk("", "", "", "title kek", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", "title kek.html", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", u"знакомый ваш", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", u"знакомый ваш", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", u"знакомый ваш.html", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-    def test_with_dot_and_space_in_the_end(self):
-        src_dir = '/test/sources/'
-        self.fs.create_dir(src_dir)
-        self.fs.create_file(src_dir + "знакомый.ваш.html")
-
-        checker = chks.SourceDocsChecker(None, src_dir)
-
-        chunk = Chunk("", "", "", u"знакомый.ваш.html ", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-        chunk = Chunk("", "", "", u"знакомый.ваш ", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
-
-    def test_with_wrong_ext(self):
-        src_dir = '/test/sources/'
-        self.fs.create_dir(src_dir)
-        self.fs.create_file(src_dir + "test.hmtl")
-
-        checker = chks.SourceDocsChecker(None, src_dir)
-
-        chunk = Chunk("", "", "", "test.hmtl", 1)
-        checker(chunk, None)
-        self.assertEqual(0, len(checker.get_errors()))
+    chunk = Chunk("", "", "", "test.hmtl", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
