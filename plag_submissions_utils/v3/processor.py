@@ -6,7 +6,7 @@ import types
 import logging
 import re
 
-
+import openpyxl
 import xlrd
 
 from plag_submissions_utils.common.processor import BasicProcessor
@@ -15,6 +15,7 @@ from plag_submissions_utils.common.errors import ErrSeverity
 from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common.chunks import mod_type_to_str
 from plag_submissions_utils.common.translated_chunks import TranslatorType
 from plag_submissions_utils.common.translated_chunks import TranslatedChunk
 import plag_submissions_utils.common.checkers as chks
@@ -78,11 +79,11 @@ def create_checkers(opts, sources_dir):
         # chks.AddChecker(opts),
         # chks.DelChecker(opts),
         # chks.CPYChecker(opts),
-            chks.CctChecker(opts),
+        chks.CctChecker(opts),
         # chks.SspChecker(opts),
-            chks.SHFChecker(opts),
+        chks.SHFChecker(opts),
         # chks.SYNChecker(opts),
-            chks.LexicalSimChecker(opts),
+        chks.LexicalSimChecker(opts),
         trans_chks.ORIGModTypeChecker(),
         chks.SentCorrectnessChecker(),
         trans_chks.TranslationChecker(opts),
@@ -113,38 +114,35 @@ class Processor(BasicProcessor):
     def _create_chunks(self, inp_file):
         return create_chunks(inp_file)
 
-def _check_headers(first_row):
-    if first_row[0].lower().find(u"номер") == -1:
-        return "Failed to find a column with row number!"
+def _is_number_first_col(headers):
+    return headers[0].lower().find(u"номер") != -1
 
-    if first_row[1].lower().find(u"файла документа") == -1:
+def _check_headers(first_row):
+    offs = 0
+    if _is_number_first_col(first_row):
+        offs = 1
+
+    if first_row[0 + offs].lower().find(u"файла документа") == -1:
         return "Failed to find a column with source filename!"
 
-    if first_row[2].lower().find(u"типы сокрытия") == -1:
+    if first_row[1 + offs].lower().find(u"типы сокрытия") == -1:
         return "Failed to find a column with type of obfuscation!"
 
-    if first_row[3].lower().find(u"переводчик") == -1:
+    if first_row[2 + offs].lower().find(u"переводчик") == -1:
         return "Failed to find a column with translator!"
 
-    if first_row[4].lower().find(u"эссе") == -1:
+    if first_row[3 + offs].lower().find(u"эссе") == -1:
         return "Failed to find a column with modified text!"
 
-    if first_row[5].lower().find(u"исходный фрагмент") == -1:
+    if first_row[4 + offs].lower().find(u"исходный фрагмент") == -1:
         return "Failed to find a column with translated text!"
 
-    if first_row[6].lower().find(u"исходное предложение") == -1:
+    if first_row[5 + offs].lower().find(u"исходное предложение") == -1:
         return "Failed to find a column with original text!"
 
     return None
 
-def _try_to_extract_sent_num(row_val):
-    if isinstance(row_val, types.StringTypes):
-        m = re.search(r"(\d+)", row_val)
-        if m is None:
-            raise RuntimeError("Failed to extract sent number from 0 column")
-        return int(m.group(1))
-    else:
-        return int(row_val)
+
 
 def create_chunks(inp_file, opts = ChunkOpts()):
     errors = []
@@ -155,18 +153,22 @@ def create_chunks(inp_file, opts = ChunkOpts()):
                             ErrSeverity.HIGH))
         return [], errors
 
-    first_row = sheet.row_values(0)
-    err = _check_headers(first_row)
+    headers = sheet.row_values(0)
+    err = _check_headers(headers)
     if err is not None:
         errors.append(Error(err,
                             ErrSeverity.HIGH))
         return [], errors
 
     chunks = []
+    delete_first_column = _is_number_first_col(headers)
     for rownum in range(1, sheet.nrows):
         row_vals = sheet.row_values(rownum)
         try:
-            sent_num = _try_to_extract_sent_num(row_vals[0])
+            sent_num = rownum + 1
+
+            if delete_first_column:
+                row_vals = row_vals[1:]
             chunk = _try_create_chunk(
                 row_vals,
                 sent_num, opts)
@@ -184,6 +186,12 @@ def create_chunks(inp_file, opts = ChunkOpts()):
     return chunks, errors
 
 
+def _get_filename(cell_value):
+    #filename can be interpreted as float if the fullname is e.g. 1.html and ext is skipped.
+    if isinstance(cell_value, float):
+        return str(int(cell_value))
+    return cell_value
+
 def _try_create_chunk(row_vals, sent_num, opts):
     def check_str_cell(cell_val):
         if not isinstance(cell_val, (str, unicode)):
@@ -194,7 +202,7 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
     orig_text = []
     #collect original text
-    orig_text_col = 6
+    orig_text_col = 5
     while True:
         try:
             val = row_vals[orig_text_col]
@@ -206,18 +214,18 @@ def _try_create_chunk(row_vals, sent_num, opts):
         else:
             break
 
-    mod_text = row_vals[4]
+    mod_text = row_vals[3]
     if not mod_text:
         return None
 
-    translated_text = row_vals[5]
+    translated_text = row_vals[4]
     if not translated_text:
        translated_text = '-'
 
-    orig_doc = row_vals[1]
-    mod_type_str = check_str_cell(row_vals[2])
+    orig_doc = _get_filename(row_vals[0])
+    mod_type_str = check_str_cell(row_vals[1])
 
-    translator_type_str = check_str_cell(row_vals[3])
+    translator_type_str = check_str_cell(row_vals[2])
     if not translator_type_str:
         translator_type_str = '-'
 
@@ -237,3 +245,30 @@ def _try_create_chunk(row_vals, sent_num, opts):
         translated_text=translated_text,
         translator_type_str=translator_type_str,
         opts = opts)
+
+
+def chunk_to_row(chunk):
+    mod_type_str = mod_type_to_str(chunk.get_mod_type())
+
+    if mod_type_str == 'ORIG':
+        mod_type_str = ''
+
+
+    orig_colls = tuple(s for s in chunk.get_orig_sents())
+    return (
+        chunk.get_orig_doc_filename(),
+        mod_type_str,
+        chunk.get_translator_type_str(),
+        chunk.get_mod_text(),
+        chunk.get_translated_text(),
+        ) + orig_colls
+
+def create_xlsx_from_chunks(chunks, out_filename):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append((u"название файла документа", u"типы сокрытия", u"переводчик",
+               u"эссе", u"исходный фрагмент", u"исходное предложение"))
+    for chunk in chunks:
+        ws.append(chunk_to_row(chunk))
+
+    wb.save(filename = out_filename)

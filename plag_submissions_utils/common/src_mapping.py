@@ -77,6 +77,7 @@ class SrcMap(object):
             return None
 
     def to_csv(self, out):
+        out.write("susp_id,filename,textapp_id,md5,ext_id\n")
         out.write("\n".join(s.to_csv_record() for s in self._srcs.viewvalues()))
 
     def from_csv(self, file_path):

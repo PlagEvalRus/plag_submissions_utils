@@ -11,7 +11,8 @@ import glob
 from .extract_utils import extract_submission
 from .version import determine_version_by_id
 
-def run_over_submissions(subm_dir, arc_proc, limit_by_version = None):
+def run_over_submissions(subm_dir, arc_proc, limit_by_version = None,
+                         include_ids_set = None):
     entries = os.listdir(subm_dir)
     for entry in entries:
         temp_dir = None
@@ -22,6 +23,9 @@ def run_over_submissions(subm_dir, arc_proc, limit_by_version = None):
             if limit_by_version is not None:
                 if limit_by_version != determine_version_by_id(susp_id):
                     continue
+
+            if include_ids_set and int(susp_id) not in include_ids_set:
+                continue
 
             arc_path = glob.glob(arc_dir + "/*")
             if not arc_path:

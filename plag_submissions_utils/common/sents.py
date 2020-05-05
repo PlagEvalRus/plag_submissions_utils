@@ -22,6 +22,7 @@ class SentsHolder(object):
     """
     def __init__(self, text, opts, segment = False):
         super(SentsHolder, self).__init__()
+        self._opts = opts
         if isinstance(text, (list, )):
             #It is possible in essays of version 2.
             #Original text is already segmented by writer!
@@ -48,6 +49,16 @@ class SentsHolder(object):
 
     def get_sent_info(self, sent_num):
         return self._sent_infos[sent_num]
+
+    def add_sent(self, sent, tokenize = True):
+        self._sents.append(sent)
+        if tokenize:
+            tokens = text_proc.tok_sent(sent,
+                                        normalize = self._opts.normalize,
+                                        skip_stop_words = self._opts.skip_stop_words)
+            self._sent_tokens.append(tokens)
+            self._sent_infos.append(SentInfo(len(tokens)))
+
 
     def get_sents(self):
         return self._sents

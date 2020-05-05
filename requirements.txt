@@ -9,6 +9,7 @@ Jinja2==2.9.6
 hunspell==0.4.1
 langdetect==1.0.7
 confusable_homoglyphs==3.2.0
+yandex_translate
 pymorphy2
 pymorphy2-dicts-ru
 requests

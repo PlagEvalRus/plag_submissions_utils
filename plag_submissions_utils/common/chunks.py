@@ -108,6 +108,8 @@ class Chunk(object):
 
         self._orig_doc            = orig_doc
 
+    def get_id(self):
+        return self.get_chunk_id()
 
     def get_chunk_id(self):
         return self._chunk_num
@@ -120,8 +122,12 @@ class Chunk(object):
             return self._mod_types[0]
         return ModType.UNK
 
+    def set_mod_types(self, mod_types):
+        self._mod_types = mod_types
+
     def get_all_mod_types(self):
         return self._mod_types
+
 
     def has_mod_type(self, mod_type):
         return mod_type in self._mod_types

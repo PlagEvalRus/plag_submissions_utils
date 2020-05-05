@@ -37,14 +37,13 @@ def _create_translation_type(translation_str, orig_str):
     tls = translation_str.strip().lower()
     if tls == "yandex":
         return TranslatorType.YANDEX
-    elif tls == "google":
+    if tls == "google":
         return TranslatorType.GOOGLE
-    elif tls == "-" and len(orig_str) == 0:
+    if tls == "original" or (tls == '-' and not orig_str):
         return TranslatorType.ORIGINAL
-    elif tls == "-":
+    if tls == "manual" or tls == '-':
         return TranslatorType.MANUAL
-    else:
-        return chunks.ModType.UNK
+    return chunks.ModType.UNK
 
 
 class TranslatedChunk(chunks.Chunk):
@@ -66,12 +65,7 @@ class TranslatedChunk(chunks.Chunk):
         return TranslatorType.UNK
 
     def get_translator_type_str(self):
-
-        if self.get_translator_type() == TranslatorType.GOOGLE:
-            return 'google'
-        if self.get_translator_type() == TranslatorType.YANDEX:
-            return 'yandex'
-        return 'unk'
+        return translation_types_to_str(self._translator_types)
 
     def get_all_translator_types(self):
         return self._translator_types
@@ -101,3 +95,6 @@ class TranslatedChunk(chunks.Chunk):
 
     def get_translated_tokens(self):
         return self._translated_sents.get_all_tokens()
+
+    def get_translated_text(self):
+        return self._translated_sents.get_text()

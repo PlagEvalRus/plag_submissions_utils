@@ -119,9 +119,13 @@ class SourceDoc(object):
     def is_sent_in_doc(self, sent):
         return self.get_sent_offs(sent) is not None
 
-    def get_sent_offs(self, sent):
+    def get_sent_offs(self, sent,
+                      preproc_sent = True):
 
-        text = text_proc.preprocess_text(sent.strip())
+        text = sent
+        if preproc_sent:
+            text = text_proc.preprocess_text(text.strip())
+
         if not text:
             raise RuntimeError("no text left after text preprocessing")
         logging.debug("stripped text: %s", text)

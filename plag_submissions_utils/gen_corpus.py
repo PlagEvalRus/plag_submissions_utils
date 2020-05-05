@@ -34,8 +34,10 @@ class SrcRetrievalMetaGenerator(object):
             self._mapping = src_mapping.SrcMap()
             self._mapping.from_csv(opts.mapping)
         else:
+            ids = _load_ids(opts.ids_file)
             self._mapping = create_mapping(opts.subm_dir,
-                                           use_filename_as_id = opts.use_filename_as_id)
+                                           use_filename_as_id = opts.use_filename_as_id,
+                                           ids = ids)
 
         self._src_map = None
         self._init_src_map()
@@ -88,6 +90,35 @@ class SrcRetrievalMetaGenerator(object):
     def get_name(self):
         return 'SrcRetrievalMetaGenerator'
 
+class SimilarDocumentsMetaGenerator(SrcRetrievalMetaGenerator):
+    def __init__(self, opts):
+        super(SimilarDocumentsMetaGenerator, self).__init__(opts)
+
+        self._out_path = fs.join(
+            self._opts.src_retr_out_dir, "retrieval_data.csv")
+
+        with open(self._out_path, 'w') as outf:
+            outf.write("srcID,srcTitle,dstID,dstTitle,rank,reused_sent_cnt\n")
+
+
+    def on_susp_end(self, susp_doc):
+        susp_id = susp_doc.get_susp_id()
+
+        items = list(self._src_map.iteritems())
+        items.sort(key = lambda t : -t[1])
+
+        with open(self._out_path, 'a') as outf:
+            for num, (src_id, reused_sent_cnt) in enumerate(items):
+                if reused_sent_cnt < self._opts.min_sent_cnt:
+                    continue
+                outf.write("%s,,%s,,%d,%d\n" % (susp_id, src_id, num + 1, reused_sent_cnt))
+
+
+        self._init_src_map()
+
+
+    def get_name(self):
+        return 'SimilarDocumentsMetaGenerator'
 
 class TextAlignmentMetaGenerator(object):
     def __init__(self, opts):
@@ -204,7 +235,7 @@ class Generator(object):
         self._out_pipes = out_pipes
 
     def process_chunk(self, susp_doc, chunk, sources):
-        if chunk.get_mod_type() == ModType.ORIG:
+        if chunk.get_mod_type() == ModType.ORIG or not chunk.get_orig_doc_filename():
             return
         source = sources[chunk.get_orig_doc_filename()]
         for sent in chunk.get_orig_sents():
@@ -251,9 +282,11 @@ class Generator(object):
 
 
     def process_submissions(self):
+        ids = _load_ids(self._opts.ids_file)
         run_over_submissions(self._opts.subm_dir,
                              self.process_extracted_archive,
-                             self._opts.limit_by_version)
+                             self._opts.limit_by_version,
+                             include_ids_set = ids)
 
 
 class SuspDocGenerator(object):
@@ -306,17 +339,24 @@ def write_sources_to_files(mapping, susp_id, sources, out_dir,
 
 
 def create_mapping(subm_dir, limit_by_version = None,
-                   use_filename_as_id = False):
+                   use_filename_as_id = False, ids = None):
     mapping = src_mapping.SrcMap()
 
     def arc_proc(susp_id, sources_dir, _):
         src_mapping.add_src_from_dir(susp_id, sources_dir, mapping,
                                      use_filename_as_id)
 
-    run_over_submissions(subm_dir, arc_proc, limit_by_version)
+    run_over_submissions(subm_dir, arc_proc, limit_by_version,
+                         include_ids_set = ids)
     return mapping
 
 #cli support
+def _load_ids(ids_file):
+    if ids_file:
+        with open(ids_file, 'r') as f:
+            return frozenset([int(l) for l in f])
+    return None
+
 
 def create_text_align_meta(opts):
     pipes = [TextAlignmentMetaGenerator(opts)]
@@ -325,6 +365,12 @@ def create_text_align_meta(opts):
 
 def create_src_retr_meta(opts):
     pipes = [SrcRetrievalMetaGenerator(opts)]
+    gener = Generator(opts, pipes)
+    gener.process_submissions()
+
+
+def create_doc_sim_meta(opts):
+    pipes = [SimilarDocumentsMetaGenerator(opts)]
     gener = Generator(opts, pipes)
     gener.process_submissions()
 
@@ -341,12 +387,14 @@ def dumb_dump(opts):
     gener.process_submissions()
 
 def gen_map(opts):
+    ids = _load_ids(opts.ids_file)
     mapping = create_mapping(opts.subm_dir, opts.limit_by_version,
-                             opts.use_filename_as_id)
+                             opts.use_filename_as_id, ids)
     with open(opts.mapping_file, 'w') as f:
         mapping.to_csv(f)
 
 def create_sources(opts):
+    ids = _load_ids(opts.ids_file)
     mapping = src_mapping.SrcMap()
     mapping.from_csv(opts.mapping)
 
@@ -355,7 +403,8 @@ def create_sources(opts):
         write_sources_to_files(mapping, susp_id, sources, opts.out_dir,
                                opts.ext_id_as_filename)
 
-    run_over_submissions(opts.subm_dir, arc_proc, opts.limit_by_version)
+    run_over_submissions(opts.subm_dir, arc_proc, opts.limit_by_version,
+                         include_ids_set = ids)
 
 def create_susp_docs(opts):
     def arc_proc(susp_id, _, meta_file_path):
@@ -368,7 +417,9 @@ def create_susp_docs(opts):
     if not fs.exists(opts.out_dir):
         os.makedirs(opts.out_dir)
 
-    run_over_submissions(opts.subm_dir, arc_proc, opts.limit_by_version)
+    ids = _load_ids(opts.ids_file)
+    run_over_submissions(opts.subm_dir, arc_proc, opts.limit_by_version,
+                         include_ids_set = ids)
 
 
 def main():
@@ -401,6 +452,9 @@ def main():
     gen_map_parser.add_argument("--mapping_file", "-o", default = "src_mapping.csv",
                                 help = "mapping file path")
     gen_map_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
+    gen_map_parser.add_argument("--ids_file", "-I", default='',
+                                help = "use only those ids, otherwise process everything")
+
 
     gen_map_parser.set_defaults(func = gen_map)
 
@@ -413,6 +467,8 @@ def main():
                                    help = "mapping file path")
     create_src_parser.add_argument("--out_dir", "-o", default="essay_src")
     create_src_parser.add_argument("--ext_id_as_filename", "-e", action="store_true")
+    create_src_parser.add_argument("--ids_file", "-I", default='',
+                                   help = "use only those ids, otherwise process everything")
     create_src_parser.set_defaults(func = create_sources)
 
     create_susp_parser = subparsers.add_parser('create_susp',
@@ -420,6 +476,8 @@ def main():
     create_susp_parser.add_argument("--subm_dir", "-i", required = True,
                                     help = "directory with submissions")
     create_susp_parser.add_argument("--out_dir", "-o", default="essay_susp")
+    create_susp_parser.add_argument("--ids_file", "-I", default='',
+                                    help = "use only those ids, otherwise process everything")
     create_susp_parser.set_defaults(func = create_susp_docs)
 
     text_align_parser = subparsers.add_parser('text_align',
@@ -431,6 +489,8 @@ def main():
     text_align_parser.add_argument("--mapping", "-m", default = "src_mapping.csv",
                                    help = "mapping file path")
     text_align_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
+    text_align_parser.add_argument("--ids_file", "-I", default='',
+                                   help = "use only those ids, otherwise process everything")
     text_align_parser.set_defaults(func = create_text_align_meta)
 
     src_retr_parser = subparsers.add_parser('src_retr',
@@ -442,7 +502,22 @@ def main():
                                  help = "mapping file path")
     src_retr_parser.add_argument("--min_sent_cnt", "-s", default=4, type=int)
     src_retr_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
+    src_retr_parser.add_argument("--ids_file", "-I", default='',
+                                 help = "use only those ids, otherwise process everything")
     src_retr_parser.set_defaults(func = create_src_retr_meta)
+
+    dos_sim_parser = subparsers.add_parser('doc_sim',
+                                           help='help of src_retr')
+    dos_sim_parser.add_argument("--subm_dir", "-i", required = True,
+                                help = "directory with submissions")
+    dos_sim_parser.add_argument("--src_retr_out_dir", "-o", default="doc_sim")
+    dos_sim_parser.add_argument("--mapping", "-m", default = "src_mapping.csv",
+                                help = "mapping file path")
+    dos_sim_parser.add_argument("--min_sent_cnt", "-s", default=2, type=int)
+    dos_sim_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
+    dos_sim_parser.add_argument("--ids_file", "-I", default='',
+                                help = "use only those ids, otherwise process everything")
+    dos_sim_parser.set_defaults(func = create_doc_sim_meta)
 
     pan_parser = subparsers.add_parser('pan',
                                        help='help of pan')
@@ -455,6 +530,8 @@ def main():
     pan_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
     pan_parser.add_argument("--text_align_out_dir", "-t",
                             default="01-manual-plagiarism")
+    pan_parser.add_argument("--ids_file", "-I", default='',
+                            help = "use only those ids, otherwise process everything")
     pan_parser.set_defaults(func = create_pan_meta)
     args = parser.parse_args()
 
