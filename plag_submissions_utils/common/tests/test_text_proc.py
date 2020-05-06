@@ -3,8 +3,6 @@
 
 import unittest
 
-import segtok.segmenter as seg
-import segtok.tokenizer as tok
 
 import plag_submissions_utils.common.text_proc as text_proc
 
@@ -20,8 +18,8 @@ class SegTestCase(unittest.TestCase):
         text = "простое предложение. «второе« 1990 предложение, (и т.д.). 3-е предл."
         sents = text_proc.seg_text_as_list(text)
         self.assertEqual(3, len(sents))
-        self.assertEqual("простое предложение.", sents[0])
-        self.assertEqual("«второе« 1990 предложение, (и т.д.).", sents[1])
+        self.assertEqual("простое предложение.", sents[0][0])
+        self.assertEqual("«второе« 1990 предложение, (и т.д.).", sents[1][0])
 
 
     def test_year(self):
@@ -32,13 +30,41 @@ class SegTestCase(unittest.TestCase):
         text = "В 1982г. перестало."
         sents = text_proc.seg_text_as_list(text)
         self.assertEqual(1, len(sents))
-        self.assertEqual("В 1982 г. перестало.", sents[0])
+        self.assertEqual("В 1982г. перестало.", sents[0][0])
+
+    def test_abbrevs(self):
+        text = "На ул. Горького в д. 9 проживает И.В. Ильич с пн. по пт."
+        sents = text_proc.seg_text_as_list(text)
+        self.assertEqual(1, len(sents))
 
     def test_joint(self):
         text = "заповеди Пифагора.Нравственные устои."
         sents = text_proc.seg_text_as_list(text)
         self.assertEqual(2, len(sents))
-        self.assertEqual("заповеди Пифагора.", sents[0])
+        self.assertEqual("заповеди Пифагора.", sents[0][0])
+
+
+    def test_newline_in_sent(self):
+        text = "Перенос\r\nстроки\n на ул. Горь-\nкого. "
+        sents = text_proc.seg_text_as_list(text)
+        print(sents)
+        self.assertEqual(1, len(sents))
+        self.assertEqual("Перенос строки на ул. Горького.", sents[0][0])
+
+        #text with Unicode Character 'HYPHEN'
+        text = "Перенос стр\u2010\nоки."
+        sents = text_proc.seg_text_as_list(text)
+        self.assertEqual(1, len(sents))
+        self.assertEqual("Перенос строки.", sents[0][0])
+
+    def test_preproces(self):
+        text = """Текст\nс пере-\nносами.
+        Предложение с\tтабуляцие   и    пробелами."""
+
+        print(list(text_proc.seg_text(text)))
+        new_text = text_proc.preprocess_text(text)
+        self.assertEqual("Текст с переносами.\nПредложение с табуляцие и пробелами.", new_text)
+
 
 
 class MorphTestCase(unittest.TestCase):

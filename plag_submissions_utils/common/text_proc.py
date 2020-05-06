@@ -4,10 +4,24 @@
 import pipes
 import subprocess
 
-import segtok.segmenter as seg
-import segtok.tokenizer as tok
 import pymorphy2
 import regex
+from syntok.tokenizer import Tokenizer
+import syntok._segmentation_states
+#add common Russian abbrevations
+SYNTOK_ORIG_ABBREV = syntok._segmentation_states.State.abbreviations
+CYR_ABBREVS = frozenset(
+    ['г', 'ул', 'д', 'кв', 'им',
+     'см', 'мм', 'км', 'м', 'л',
+     'янв', 'фев', 'мар', 'апр', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
+     'пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс',
+    ])
+syntok._segmentation_states.State.abbreviations = (SYNTOK_ORIG_ABBREV | frozenset(CYR_ABBREVS))
+
+SENTENCE_TERMINALS = syntok._segmentation_states.State.terminals
+HYPHENS = [h for h in Tokenizer._hyphens if h is not '-']
+
+import syntok.segmenter as seg
 
 MORPH_ANALYZER = None
 STOP_POS = ['PREP', 'CONJ', 'PRCL', 'INTJ']
@@ -23,24 +37,24 @@ def ispunct(st):
     # return all(ch in string.punctuation for ch in st)
     return not st.isalnum()
 
+
 def seg_text_as_list(text):
     # convert from generator to list
     return [s for s in seg_text(text)]
 
 def seg_text(text):
-    text = text.strip()
+    # text = text.strip()
     #clean all shitty \r\n and so on...
-    text = seg.to_unix_linebreaks(text)
+    # text = seg.to_unix_linebreaks(text)
 
-    # This cases are supported by segtok-2 (syntok)
-    #TODO migrate to python3 and syntok
-    text = regex.sub(r"\b(\d+)г.?\s", r"\1 г. ", text)
+    for paragraph in syntok.segmenter.process(text):
+        for sent in paragraph:
+            #skip newlines inside the sent
+            sent_as_str = ''.join( (' ' if '\n' in t.spacing else t.spacing) + t.value
+                                   for t in sent).lstrip()
 
-    #some documents contain "заповеди Пифагора.Нравственные"
-    # or "психотерапии . Они"
-    #regex supports unicode uppercase letters - \p{Lu}
-    text = regex.sub(r"(\p{Ll})\s?\.\s?(\p{Lu})", r"\1. \2", text)
-    return seg.split_multi(text)
+            # sent_as_str += '\n'
+            yield sent_as_str, sent
 
 def _normalize(analyzer_results, token):
     if analyzer_results:
@@ -51,27 +65,30 @@ def _normalize(analyzer_results, token):
 
         if norm is not None:
             return norm.word
-        else:
-            return analyzer_results[0].normal_form
-    else:
-        return token
+        return analyzer_results[0].normal_form
 
-def tok_sent(sent, make_lower = True, normalize = False,
+    return token
+
+def tok_sent(sent = None, tokens = None, make_lower = True, normalize = False,
              skip_stop_words = False):
-    tokens = tok.symbol_tokenizer(sent)
+    tok = Tokenizer()
+    if tokens is None:
+        tokens = tok.split(sent)
 
     if normalize or skip_stop_words:
         analyzer = _get_morph_analyzer()
         norm_tokens = []
         for token in tokens:
-            results = analyzer.parse(token)
-            normal_form = _normalize(results, token)
+            results = analyzer.parse(token.value)
+            normal_form = _normalize(results, token.value)
             if skip_stop_words and results:
                 if results[0].tag.POS in STOP_POS:
                     continue
 
             norm_tokens.append(normal_form)
         tokens = norm_tokens
+    else:
+        tokens = [t.value for t in tokens]
 
 
     proc = lambda s : s
@@ -93,15 +110,11 @@ def convert_doc(doc_path):
     return text.decode("utf8")
 
 def preprocess_text(text):
-    #convert various unicode hyphens
-    text = text.replace("\u2010", "\u002d")
-    text = text.replace("\u00ad", "\u002d")
+    for hyphen in HYPHENS:
+        text = text.replace(hyphen, "\u002d")
 
     #remove unnecessary \n inside sentences
-    text_spans = seg.rewrite_line_separators(
-        seg.to_unix_linebreaks(text),
-        seg.MAY_CROSS_ONE_LINE)
-    text = "".join(text_spans)
+    text = "\n".join(s for s, _ in seg_text(text))
 
     #remove double spaces '  ' or ' \t' and non-breaking spaces
     text = " ".join(p for p in regex.split(r'\p{Blank}', text) if p)

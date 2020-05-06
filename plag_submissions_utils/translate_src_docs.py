@@ -278,8 +278,7 @@ class Translator(object):
             # nonlocal new_text_blocks
             block_size = offs_end - offs_beg
             if block_size > self._opts.min_block_size:
-                #remove excessive blank lines
-                text = re.sub(r'\n\s*\n', '\n\n', source_text[offs_beg:offs_end])
+                text = source_text[offs_beg:offs_end]
                 new_text_blocks.append(TextForTrans(text,
                                                     offs_tuple = (offs_beg, offs_end, 0)))
 

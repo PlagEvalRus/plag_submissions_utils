@@ -59,27 +59,28 @@ class FindSentInSrcTestCase(unittest.TestCase):
         self.assertEqual(54, offs_end)
         self.assertEqual(0, err)
 
-        self.assertEqual(SIMPLE_SENT, dummy_doc("temp")[offs_beg:offs_end])
+        self.assertEqual(SIMPLE_SENT, self.source_doc.get_text()[offs_beg:offs_end])
 
     def test_offs_hyphen_case(self):
         offs_beg, offs_end, err = self.source_doc.get_sent_offs(SEQ_MATCHER_SENT2)
 
-        self.assertEqual(73, offs_beg)
-        self.assertEqual(100, offs_end)
-        self.assertEqual(2, err)
+        self.assertEqual(71, offs_beg)
+        self.assertEqual(96, offs_end)
+        self.assertEqual(0, err)
 
-        self.assertEqual("Sentence for hyp-\nhen test!",
-                         dummy_doc("temp")[offs_beg:offs_end])
+        self.assertEqual("Sentence for hyphen test!",
+                         self.source_doc.get_text()[offs_beg:offs_end])
 
     def test_offs_seq_matcher(self):
         offs_beg, offs_end, err = self.source_doc.get_sent_offs(SEQ_MATCHER_SENT)
 
-        self.assertEqual(109, offs_beg)
-        self.assertEqual(172, offs_end)
+        self.assertEqual(103, offs_beg)
+        self.assertEqual(166, offs_end)
         self.assertEqual(16, err)
 
+        print(self.source_doc.get_text())
         self.assertEqual("Предложение для проверки <trash> sequence matcher <trash> test!",
-                         dummy_doc("temp")[offs_beg:offs_end])
+                         self.source_doc.get_text()[offs_beg:offs_end])
 
 
     @mock.patch("plag_submissions_utils.common.text_proc.convert_doc",
@@ -91,12 +92,12 @@ class FindSentInSrcTestCase(unittest.TestCase):
         offs_beg, offs_end, err = source_doc.get_sent_offs(
             SEQ_MATCHER_SENT)
 
-        self.assertEqual(109, offs_beg)
-        self.assertEqual(172, offs_end)
+        self.assertEqual(103, offs_beg)
+        self.assertEqual(166, offs_end)
         self.assertEqual(16, err)
 
         self.assertEqual("Предложение для проверки <trash> sequence matcher <trash> test!",
-                         dummy_doc("temp")[offs_beg:offs_end])
+                         source_doc.get_text()[offs_beg:offs_end])
 
 
     @unittest.skip("current limitation")
@@ -150,10 +151,9 @@ class SpecificSeqMatcherCases(unittest.TestCase):
         src_doc = self.create_source_doc(text)
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
-        self.assertEqual(24, offs_beg)
-        self.assertEqual(77, offs_end)
+        self.assertEqual(23, offs_beg)
+        self.assertEqual(76, offs_end)
         self.assertEqual(0, err)
-        # print text[offs_beg:offs_end]
 
     def test3(self):
         #fixed by replacing non-breaking spaces in src and sent
@@ -222,5 +222,5 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
         self.assertEqual(0, offs_beg)
-        self.assertEqual(248, offs_end)
-        self.assertEqual(37, err)
+        self.assertEqual(246, offs_end)
+        self.assertEqual(35, err)

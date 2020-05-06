@@ -23,22 +23,31 @@ class SentsHolder(object):
     def __init__(self, text, opts, segment = False):
         super(SentsHolder, self).__init__()
         self._opts = opts
+        self._sents = []
+        self._sent_tokens = []
         if isinstance(text, list):
             #It is possible in essays of version 2.
             #Original text is already segmented by writer!
-            self._sents = [s.strip() for s in text]
+            self._sents = [s.strip() for s in text if len(s.strip()) > 1]
         else:
             if segment:
-                self._sents = text_proc.seg_text_as_list(text)
+                res = text_proc.seg_text_as_list(text)
+                for sent, tokens in res:
+                    if len(sent) > 1:
+                        self._sents.append(sent)
+                        norm_tokens = text_proc.tok_sent(tokens = tokens,
+                                                         normalize = opts.normalize,
+                                                         skip_stop_words = opts.skip_stop_words)
+                        self._sent_tokens.append(norm_tokens)
             else:
-                self._sents = [text.strip()]
+                if len(text.strip()) > 1:
+                    self._sents = [text.strip()]
 
-        self._sents = [s for s in self._sents if len(s) > 1]
+        if not self._sent_tokens:
 
-
-        self._sent_tokens = [text_proc.tok_sent(s, normalize = opts.normalize,
-                                                skip_stop_words = opts.skip_stop_words)
-                             for s in self._sents]
+            self._sent_tokens = [text_proc.tok_sent(s, normalize = opts.normalize,
+                                                    skip_stop_words = opts.skip_stop_words)
+                                 for s in self._sents]
         self._sent_infos = [SentInfo(len(t)) for t in self._sent_tokens]
 
     def get_avg_words_cnt(self):

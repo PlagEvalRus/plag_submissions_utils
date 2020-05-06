@@ -7,11 +7,11 @@ from collections import defaultdict
 import itertools
 import unicodedata
 
-from segtok import segmenter
 import regex
 import hunspell
 import langdetect
 
+from .text_proc import SENTENCE_TERMINALS
 from . import source_doc
 from . import chunks
 from . import homoglyphs
@@ -502,7 +502,7 @@ class SentCorrectnessChecker(IFixableChecker):
             return sents_with_errors
 
         for num, s in enumerate(chunk.get_mod_sents()):
-            if s[-1] not in segmenter.SENTENCE_TERMINALS:
+            if s[-1] not in SENTENCE_TERMINALS:
                 sents_with_errors.append(num)
 
         return sents_with_errors
