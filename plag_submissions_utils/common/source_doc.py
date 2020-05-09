@@ -73,7 +73,7 @@ class SourceDoc(object):
 
         #we should step back on the size of the prefix of the target sent (longest_match.b)
         #and we should step back on some extra size (max_offs_delta)
-        left_a_pos = longest_match.a - (longest_match.b - 1) - self._max_offs_delta
+        left_a_pos = longest_match.a - longest_match.b - self._max_offs_delta
         left_a_pos = max(0, left_a_pos)
         right_a_pos = longest_match.a + longest_match.size + (len(sent) - longest_match.b) + self._max_offs_delta
         right_a_pos = min(len(self._text), right_a_pos)
@@ -81,30 +81,37 @@ class SourceDoc(object):
         logging.debug("longest match: %s", longest_match)
         logging.debug("left_a_pos: %d", left_a_pos)
         logging.debug("right_a_pos: %d", right_a_pos)
+        logging.debug("set text: %s", self._text[left_a_pos:right_a_pos])
         matcher.set_seq1(self._text[left_a_pos:right_a_pos])
 
-        matches = matcher.get_matching_blocks()
-        if len(matches) == 1:
+        #matches[-1] is reserved by difflib creator
+        matches = [m for m in matcher.get_matching_blocks() if m.size > 1]
+        if len(matches) == 0:
             return None
         logging.debug("all matches: %s", matches)
 
         offs_beg = left_a_pos + matches[0].a
-        #matches[-1] is reserved by difflib creator
-        offs_end = left_a_pos + matches[-2].a + matches[-2].size
+        offs_end = left_a_pos + matches[-1].a + matches[-1].size
         #how many letters between first matches and the last one.
         ofs_diff = offs_end - offs_beg
-        matched_length = sum(m.size for m in matches)
 
-        logging.debug("text length: %d", len(sent))
+        sent_length = sum(1 for c in sent if c.isalnum())
+        matched_length = sum(1
+                             for m in matches
+                             for c in self._text[left_a_pos + m.a:left_a_pos + m.a + m.size]
+                             if c.isalnum())
+
+        logging.debug("sent length: %d", sent_length)
         logging.debug("ofs_diff: %d", ofs_diff)
         logging.debug("matched_length: %d", matched_length)
+        logging.debug("Matched text: %s", self._text[offs_beg:offs_end])
 
         if max(ofs_diff - self._max_offs_delta, 0) < len(sent):
-            if abs(len(sent) - matched_length) <= self._max_length_delta:
+            if abs(sent_length - matched_length) <= self._max_length_delta:
                 return (offs_beg, offs_end,
                         # this is count of erroneous symbols
                         # (ofs_diff - len(sent)) + (len(sent) - matched_length)
-                        ofs_diff - matched_length)
+                        ofs_diff - sum(m.size for m in matches))
 
         return None
 

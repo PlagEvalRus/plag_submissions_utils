@@ -49,7 +49,8 @@ class FindSentInSrcTestCase(unittest.TestCase):
         self.assertTrue(self.source_doc.is_sent_in_doc(text))
 
     def test_limit_of_seq_matcher(self):
-        text = "немного 1рашн1 текст <trash>"
+        #'<many trash>'  is in the end of the source_doc
+        text = "немного 1рашн1 текст <many trash>"
         self.assertFalse(self.source_doc.is_sent_in_doc(text))
 
     def test_offs_simple_case(self):
@@ -127,11 +128,11 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
     def test1(self):
         #Fixed by adding max_length_delta = 4 to SourceDoc
-        text = "7разрядной и 8разрядной кодировки ASCII."
+        text = "В 7разрядной и 8разрядной кодировки ASCII."
 
         src_doc = self.create_source_doc(text)
 
-        sent = """7 разрядной и 8 разрядной кодировки ASCII."""
+        sent = """В 7 разрядной и 8 разрядной кодировки ASCII."""
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
         self.assertEqual(0, offs_beg)
@@ -223,4 +224,31 @@ class SpecificSeqMatcherCases(unittest.TestCase):
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
         self.assertEqual(0, offs_beg)
         self.assertEqual(246, offs_end)
-        self.assertEqual(35, err)
+        self.assertEqual(36, err)
+
+    def test7(self):
+        text = """Пред1 Конец1.
+Пред2..."""
+
+        sent= """. Пред2.."""
+
+
+        src_doc = self.create_source_doc(text)
+
+        offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
+        print(err)
+        self.assertEqual("Пред2..", src_doc.get_text()[offs_beg:offs_end])
+
+    def test8(self):
+        text = """Коби
+        сент
+        сент
+        сент
+        Коб Брайант присоединился к «Лос-Анджелес Лейкерз» в 1996, став играть вместе с центровым Шакилом О’Нил."""
+
+        sent = "Коби Брайант присоединился к «Лос-Анджелес Лейкерз» в 1996, став играть вместе с центровым Шакилом О’Нил."
+        src_doc = self.create_source_doc(text)
+
+        offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
+        self.assertEqual(0, offs_beg)
+        self.assertEqual(len(src_doc.get_text()), offs_end)

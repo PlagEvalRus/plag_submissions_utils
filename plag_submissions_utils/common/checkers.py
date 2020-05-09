@@ -323,7 +323,7 @@ class ORIGModTypeChecker(IChecher):
 
 
     def _should_run(self, chunk):
-        return chunk.get_mod_type() == ModType.ORIG
+        return chunk.get_mod_type() == ModType.ORIG or not chunk.get_orig_doc_filename()
 
 
     def __call__(self, chunk, src_docs):

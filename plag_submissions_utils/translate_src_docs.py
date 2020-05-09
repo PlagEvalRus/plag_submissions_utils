@@ -340,7 +340,7 @@ def main():
     trans_parser.add_argument("--ids_file", "-I", default='',
                               help = "translate only those ids, otherwise process everything")
     trans_parser.add_argument("--out_dir", "-o", required = True)
-    trans_parser.add_argument("--max_block_size", "-s", default=8000, type=int)
+    trans_parser.add_argument("--max_block_size", "-s", default=9500, type=int)
     trans_parser.add_argument("--min_block_size", "-m", default=42, type=int)
     trans_parser.add_argument("--save_src_blocks_dir", "-S", default='',
                               help='Path to dir. Useful for debug and total size estimation')

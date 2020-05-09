@@ -23,13 +23,13 @@ import plag_submissions_utils.common.metrics as mtrks
 class ProcessorOpts(BasicProcesssorOpts):
     def __init__(self):
         super(ProcessorOpts, self).__init__()
-        self.min_src_docs      = 5
+        self.min_src_docs      = 4
         self.min_sent_per_src  = 4
         self.min_sent_size     = 5
         self.min_real_sent_cnt = 150
         self.mod_type_ratios   = {
             ModType.UNK : (0,0),
-            ModType.CPY : (0, 10),
+            ModType.CPY : (0, 14),
             ModType.LPR : (10, 30),
             ModType.HPR : (10, 20),
             ModType.ORIG : (0, 30),
