@@ -3,6 +3,7 @@
 
 import pipes
 import subprocess
+import os
 
 import pymorphy2
 import regex
@@ -96,6 +97,8 @@ def tok_sent(sent = None, tokens = None, make_lower = True, normalize = False,
         proc = lambda s: s.lower()
     return [proc(s) for s in tokens if not ispunct(s)]
 
+TIKA_PREFIX=os.environ.get("TIKA_PREFIX", "/compiled")
+
 def convert_doc(doc_path):
     #tika's pdf converter is not very good
     if doc_path.endswith("pdf"):
@@ -103,7 +106,7 @@ def convert_doc(doc_path):
     elif doc_path.endswith("txt"):
         cmd = "enca -Lrussian -x utf-8 %s && cat %s" % ((pipes.quote(doc_path), )*2)
     else:
-        cmd = "/compiled/bin/tika --text %s" % pipes.quote(doc_path)
+        cmd = "%s/bin/tika --text %s" % (TIKA_PREFIX, pipes.quote(doc_path))
     # textract html converter is not very good
     # cmd = "textract %s" % pipes.quote(doc_path)
     text = subprocess.check_output(cmd, shell=True)
