@@ -33,8 +33,8 @@ class ProcessorOpts(BasicProcesssorOpts):
             ModType.LPR : (10, 30),
             ModType.HPR : (10, 20),
             ModType.ORIG : (0, 30),
-            ModType.DEL : (20, 30),
-            ModType.ADD : (15, 25),
+            ModType.DEL : (13, 30),
+            ModType.ADD : (13, 25),
             ModType.CCT : (5, 15),
             ModType.SSP : (5, 15)
         }
