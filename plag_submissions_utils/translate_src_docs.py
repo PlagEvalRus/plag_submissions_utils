@@ -2,21 +2,20 @@
 # coding: utf-8
 
 import os
-import re
 import collections
 import argparse
 import logging
 import shutil
 
-from yandex_translate import YandexTranslate
+import requests
 
-from .common.chunks import ModType
-from .common.source_doc import load_sources_docs
-from .common.submissions import run_over_submissions
-from .common import text_proc
-from .common.translated_chunks import TranslatedChunk
-from . import common_runner
-from .v3.processor import create_xlsx_from_chunks
+from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common.source_doc import load_sources_docs
+from plag_submissions_utils.common.submissions import run_over_submissions
+from plag_submissions_utils.common import text_proc
+from plag_submissions_utils.common.translated_chunks import TranslatedChunk
+from plag_submissions_utils import common_runner
+from plag_submissions_utils.v3.processor import create_xlsx_from_chunks
 
 
 
@@ -57,31 +56,78 @@ class TextForTrans(object):
             self.text
         )
 
-class YandexTranslator(object):
+class YandexTranslator:
     def __init__(self, opts):
+        self._translate_via_cloud = opts.use_yacloud
         self._from = 'ru'
         self._to = 'en'
-        #10k request limit
-        self._max_chars = 9500
-        self._lang = '%s-%s' % (self._from, self._to)
-        with open(opts.ya_key_file, 'r') as f:
-            key = f.read()
-        self._yatrans = YandexTranslate(key)
+        #10k request limit for API
+        self._max_chars = 9600
 
-    def _trans_batch(self, text_for_trans_list):
+        with open(opts.ya_key_file, 'r', encoding='ascii') as f:
+            self._key = f.read().strip()
+
+
+    def _trans_batch_via_api(self, text_for_trans_list):
         try:
 
-            resp = self._yatrans.translate([t.text for t in text_for_trans_list],
-                                           self._lang)
-            if len(resp['text']) != len(text_for_trans_list):
+            data = {
+                "text": [t.text for t in text_for_trans_list],
+                "format": "plain",
+                "lang": '%s-%s' % (self._from, self._to),
+                "key": self._key
+            }
+
+            response = requests.post("https://translate.yandex.net/api/v1.5/tr.json/translate",
+                                     data=data)
+            response = response.json()
+            status_code = response.get("code", 200)
+            if not status_code == 200:
+                raise RuntimeError("Yandex translate error [%d]" % status_code)
+
+            if len(response['text']) != len(text_for_trans_list):
                 raise RuntimeError("Resp and Req sizes mismatch!")
-            for tinfo, ts in zip(text_for_trans_list, resp['text']):
+            for tinfo, ts in zip(text_for_trans_list, response['text']):
                 tinfo.translated_text = ts
         except Exception as e:
             logging.error("Failed to process batch (size %d): %s", len(text_for_trans_list), str(e))
 
 
+    def _trans_batch_via_cloud(self, text_for_trans_list):
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer %s" % self._key
+        }
 
+        body = {
+            "folder_id": "b1g9t9hp3m9avduh4vq7",
+            "texts": [t.text for t in text_for_trans_list],
+            "targetLanguageCode": self._to,
+            "languageCodeHints":[self._from]
+        }
+
+
+        response = requests.post("https://translate.api.cloud.yandex.net/translate/v2/translate",
+                                 json=body, headers=headers)
+        if response.status_code != 200:
+            raise RuntimeError("Failed to translate [%d]: %s" % (response.status_code,
+                                                                 response.content))
+        response = response.json()
+
+
+        if len(response['translations']) != len(text_for_trans_list):
+            raise RuntimeError("Resp and Req sizes mismatch!")
+        for tinfo, tsinfo in zip(text_for_trans_list, response['translations']):
+            tinfo.translated_text = tsinfo['text']
+            if tsinfo['detectedLanguageCode'] != self._from:
+                logging.warning("detected lang is %s for '%s'", tsinfo['detectedLanguageCode'],
+                                tinfo.text)
+
+    def _trans_batch(self, batch):
+        if self._translate_via_cloud:
+            self._trans_batch_via_cloud(batch)
+        else:
+            self._trans_batch_via_api(batch)
 
 
     def translate(self, text_for_trans_list):
@@ -346,8 +392,9 @@ def main():
                               help='Path to dir. Useful for debug and total size estimation')
     trans_parser.add_argument("--dry_run", "-d", default=False, action='store_true',
                               help="Do not invoke MT service.")
+    trans_parser.add_argument("--use_yacloud", default=False, action='store_true')
     trans_parser.add_argument("--ya_key_file", "-k", required=True,
-                              help="Yandex translate API key.")
+                              help="Yandex translate API key or IAM-token if use_yacloud is true.")
 
     trans_parser.set_defaults(func = translate_cli)
 
