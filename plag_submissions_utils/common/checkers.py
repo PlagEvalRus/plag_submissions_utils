@@ -11,18 +11,18 @@ import regex
 import hunspell
 import langdetect
 
-from .text_proc import SENTENCE_TERMINALS
-from . import source_doc
-from . import chunks
-from . import homoglyphs
-from .chunks import ModType
-from .errors import ErrSeverity
-from .errors import ChunkError
-from .errors import Error
-from .simple_detector import calc_originality
+from plag_submissions_utils.common.text_proc import SENTENCE_TERMINALS
+from plag_submissions_utils.common import source_doc
+from plag_submissions_utils.common import chunks
+from plag_submissions_utils.common import homoglyphs
+from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common.errors import ErrSeverity
+from plag_submissions_utils.common.errors import ChunkError
+from plag_submissions_utils.common.errors import Error
+from plag_submissions_utils.common.simple_detector import calc_originality
 
 
-class IChecher(object):
+class IChecher:
     def get_errors(self):
         raise NotImplementedError("Should implement this!")
 
@@ -147,12 +147,29 @@ class CPYChecker(BaseChunkSimChecker):
 class SspChecker(BaseChunkSimChecker):
     def __init__(self, opts, fluctuation_delta=3):
         super(SspChecker, self).__init__(opts, fluctuation_delta)
+        self._prev_ssp = None
 
     def __call__(self, chunk, src_docs):
         if chunk.get_mod_type() != ModType.SSP and \
            chunk.get_mod_type() != ModType.SEP:
             return
         super(SspChecker, self).__call__(chunk, src_docs)
+
+
+        if self._prev_ssp and self._prev_ssp.get_id() + 1 == chunk.get_id():
+            if self._prev_ssp.get_orig_text() != chunk.get_orig_text():
+
+                self._errors.append(
+                    ChunkError("Тип сокрытия SSP: Разные предложения в поле "
+                               "оригинальное предложение для ряда %d и %d. "
+                               "Это может быть ложной ошибкой." % (
+                                   self._prev_ssp.get_id(), chunk.get_id()),
+                               chunk.get_chunk_id(),
+                               ErrSeverity.NORM))
+            # self._prev_ssp = None
+        self._prev_ssp = chunk
+
+
 
 
 

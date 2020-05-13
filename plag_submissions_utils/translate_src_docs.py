@@ -40,14 +40,23 @@ class TransStat(object):
 
 
 class TextForTrans(object):
-    def __init__(self, text, chunk = None, offs_tuple = None):
+    def __init__(self, text = '', chunk = None, offs_tuple = None,
+                 use_translation_of = None):
         self.text = text
         self.translated_text = ''
         self.chunk = chunk
-        self.offs_beg = offs_tuple[0]
-        self.offs_end = offs_tuple[1]
-        self.err_symbols = offs_tuple[2]
+        if offs_tuple:
+            self.offs_beg = offs_tuple[0]
+            self.offs_end = offs_tuple[1]
+            self.err_symbols = offs_tuple[2]
+        else:
+            self.offs_beg = float('inf')
+            self.offs_end = float('inf')
+            self.err_symbols = float('inf')
 
+        #use translation of other chunk
+        #useful for SSP chunks
+        self.use_translation_of = use_translation_of
 
     def __str__(self):
         return "ChunkId %s; src offs beg %d, end %d, err %d;text:\n %s" % (
@@ -135,6 +144,10 @@ class YandexTranslator:
         cur_chars = 0
 
         for text_info in text_for_trans_list:
+            if not text_info.text:
+                #Not for translation
+                continue
+
             if cur_chars + len(text_info.text) > self._max_chars:
                 if cur_chars == 0:
                     raise RuntimeError("Too large block (%d) for even one request!" %
@@ -187,8 +200,21 @@ class Translator(object):
                           "\n".join(str(e) for e in chunks_errors))
         sources = load_sources_docs(sources_dir)
         sources_map = collections.defaultdict(lambda : [])
+        prev_chunk = None
         for chunk in chunks:
             try:
+                if prev_chunk is not None and \
+                   prev_chunk.get_mod_type() == ModType.SSP and \
+                   chunk.get_mod_type() == ModType.SSP:
+                    if prev_chunk.get_orig_text() == chunk.get_orig_text():
+                        sources_map[chunk.get_orig_doc_filename()].append(
+                            TextForTrans(chunk = chunk, use_translation_of = prev_chunk.get_id()) )
+
+                        continue
+                    logging.warning("Two SSP (%d, %d) with not identical orig texts."
+                                    "It may be false positive!",
+                                    prev_chunk.get_id(), chunk.get_id())
+                prev_chunk = chunk
                 self._process_chunk(chunk, sources, sources_map)
             except Exception as e:
                 logging.exception("Id: %s - Failed to process chunk %s: %s",
@@ -235,14 +261,17 @@ class Translator(object):
                     chunks_dict[chunk.get_id()] = self._create_trans_chunk(chunk)
 
                 trans_chunk = chunks_dict[chunk.get_id()]
-
-                assert source_id == trans_chunk.get_orig_doc_filename(), \
-                    "One chunk from different sources!"
-
-                #we write translated to original to mimic the Translated Essays structure,
-                # where original text is in English and the translated one is in Russian.
-                trans_chunk.get_orig_sent_holder().add_sent(tinfo.translated_text, tokenize = False)
-                trans_chunk.get_translated_sent_holder().add_sent(tinfo.text, tokenize = False)
+                if tinfo.use_translation_of:
+                    chunk_with_trans = chunks_dict[tinfo.use_translation_of]
+                    trans_chunk._original_sents = chunk_with_trans.get_orig_sent_holder()
+                    trans_chunk._translated_sents = chunk_with_trans.get_translated_sent_holder()
+                else:
+                    assert source_id == trans_chunk.get_orig_doc_filename(), \
+                        "One chunk from different sources!"
+                    #we write translated to original to mimic the Translated Essays structure,
+                    # where original text is in English and the translated one is in Russian.
+                    trans_chunk.get_orig_sent_holder().add_sent(tinfo.translated_text, tokenize = False)
+                    trans_chunk.get_translated_sent_holder().add_sent(tinfo.text, tokenize = False)
 
         translated_chunks = list(chunks_dict.values())
         translated_chunks.sort(key = lambda c : c.get_id())
@@ -263,6 +292,9 @@ class Translator(object):
         if self._opts.dry_run:
             for _, text_for_trans_list in list(sources_map.items()):
                 for num, t in enumerate(text_for_trans_list):
+                    if not t.text:
+                        #Not for translation
+                        continue
                     self._stat.translated_chars += len(t.text)
                     pref = 'W/o chunk '
                     if t.chunk is not None:
@@ -274,6 +306,10 @@ class Translator(object):
             logging.info("Translating: susp %s, src %s", susp_id, source_id)
             self._yatrans.translate(text_for_trans_list)
             for text_info in text_for_trans_list:
+                if not text_info.text:
+                    #Not for translation
+                    continue
+
                 self._stat.chars_to_translate += len(text_info.text)
                 if text_info.translated_text:
                     self._stat.translated_chars += len(text_info.text)
@@ -330,6 +366,9 @@ class Translator(object):
 
         cur_offs = 0
         for reused_text_info in text_for_trans_list:
+            if not reused_text_info.text:
+                #Not for translation
+                continue
             real_offs = max(cur_offs, reused_text_info.offs_beg - self._opts.max_block_size)
             logging.debug("curr_offs: %d; real_offs: %d", cur_offs, real_offs)
             _add_block(real_offs, reused_text_info.offs_beg)
