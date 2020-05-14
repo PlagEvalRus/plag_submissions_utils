@@ -6,11 +6,11 @@ import shutil
 import logging
 import importlib
 
-from .common.metrics import ViolationLevel
-from .common.errors import ErrSeverity
-from .common.version import determine_version_by_id
-from .common.chunks import ChunkOpts
-from .common.extract_utils import extract_submission
+from plag_submissions_utils.common.metrics import ViolationLevel
+from plag_submissions_utils.common.errors import ErrSeverity
+from plag_submissions_utils.common.version import determine_version_by_id
+from plag_submissions_utils.common.chunks import ChunkOpts
+from plag_submissions_utils.common.extract_utils import extract_submission
 
 def _metrics_violations_cnt(metrics, level):
     return len([1 for m in metrics if m.get_violation_level() == level] )

@@ -2,11 +2,9 @@
 # coding: utf-8
 
 
-import types
 import logging
-import re
 
-
+import openpyxl
 import xlrd
 
 from plag_submissions_utils.common.processor import BasicProcessor
@@ -16,6 +14,7 @@ from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import Chunk
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
+from plag_submissions_utils.common.chunks import mod_types_to_str
 import plag_submissions_utils.common.checkers as chks
 import plag_submissions_utils.common.metrics as mtrks
 
@@ -57,7 +56,8 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.min_lexical_dist = 25 #%
         self.min_originality = 0.77
 
-def create_checkers(opts, sources_dir):
+def create_checkers(opts, sources_dir,
+                    spell_checker_whitelist = None):
     return [
         chks.OriginalityChecker(opts),
         chks.OrigSentChecker(opts),
@@ -74,7 +74,7 @@ def create_checkers(opts, sources_dir):
         chks.ORIGModTypeChecker(),
         chks.SentCorrectnessChecker(),
         chks.CyrillicAlphabetChecker(opts),
-        chks.SpellChecker()
+        chks.SpellChecker(whitelist = spell_checker_whitelist)
     ]
 
 
@@ -93,32 +93,27 @@ class Processor(BasicProcessor):
     def _create_chunks(self, inp_file):
         return create_chunks(inp_file)
 
-def _check_headers(first_row):
-    if first_row[0].lower().find("номер") == -1:
-        return "Failed to find a column with row number!"
+def _is_number_first_col(headers):
+    return headers[0].lower().find("номер") != -1
 
-    if first_row[1].lower().find("файла документа") == -1:
+def _check_headers(first_row):
+    offs = 0
+    if _is_number_first_col(first_row):
+        offs = 1
+
+    if first_row[0 + offs].lower().find("файла документа") == -1:
         return "Failed to find a column with source filename!"
 
-    if first_row[2].lower().find("типы сокрытия") == -1:
+    if first_row[1 + offs].lower().find("типы сокрытия") == -1:
         return "Failed to find a column with type of obfuscation!"
 
-    if first_row[3].lower().find("эссе") == -1:
+    if first_row[2 + offs].lower().find("эссе") == -1:
         return "Failed to find a column with modified text!"
 
-    if first_row[4].lower().find("исходное предложение") == -1:
+    if first_row[3 + offs].lower().find("исходное предложение") == -1:
         return "Failed to find a column with original text!"
 
     return None
-
-def _try_to_extract_sent_num(row_val):
-    if isinstance(row_val, (str,)):
-        m = re.search(r"(\d+)", row_val)
-        if m is None:
-            raise RuntimeError("Failed to extract sent number from 0 column")
-        return int(m.group(1))
-    else:
-        return int(row_val)
 
 def create_chunks(inp_file, opts = ChunkOpts()):
     errors = []
@@ -137,10 +132,14 @@ def create_chunks(inp_file, opts = ChunkOpts()):
         return [], errors
 
     chunks = []
+    delete_first_column = _is_number_first_col(first_row)
     for rownum in range(1, sheet.nrows):
         row_vals = sheet.row_values(rownum)
         try:
-            sent_num = _try_to_extract_sent_num(row_vals[0])
+            sent_num = rownum + 1
+            if delete_first_column:
+                row_vals = row_vals[1:]
+
             chunk = _try_create_chunk(
                 row_vals,
                 sent_num, opts)
@@ -157,6 +156,11 @@ def create_chunks(inp_file, opts = ChunkOpts()):
 
     return chunks, errors
 
+def _get_filename(cell_value):
+    #filename can be interpreted as float if the fullname is e.g. 1.html and ext is skipped.
+    if isinstance(cell_value, float):
+        return str(int(cell_value))
+    return cell_value
 
 def _try_create_chunk(row_vals, sent_num, opts):
     def check_str_cell(cell_val):
@@ -168,7 +172,7 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
     orig_text = []
     #collect original text
-    orig_text_col = 4
+    orig_text_col = 3
     while True:
         try:
             val = row_vals[orig_text_col]
@@ -180,12 +184,12 @@ def _try_create_chunk(row_vals, sent_num, opts):
         else:
             break
 
-    mod_text = row_vals[3]
+    mod_text = row_vals[2]
     if not mod_text:
         return None
 
-    orig_doc = row_vals[1]
-    mod_type_str = check_str_cell(row_vals[2])
+    orig_doc = _get_filename(row_vals[0])
+    mod_type_str = check_str_cell(row_vals[1])
 
     defined_cols = 0
     defined_cols += bool(orig_doc) + bool(mod_type_str) + bool(orig_text)
@@ -199,3 +203,27 @@ def _try_create_chunk(row_vals, sent_num, opts):
                  mod_type_str = mod_type_str,
                  chunk_num = sent_num,
                  opts = opts)
+
+
+def chunk_to_row(chunk):
+    mod_type_str = mod_types_to_str(chunk.get_all_mod_types())
+
+    if mod_type_str == 'ORIG':
+        mod_type_str = ''
+
+
+    orig_colls = tuple(s for s in chunk.get_orig_sents())
+    return (
+        chunk.get_orig_doc_filename(),
+        mod_type_str,
+        chunk.get_mod_text(),
+        ) + orig_colls
+
+def create_xlsx_from_chunks(chunks, out_filename):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(("название файла документа", "типы сокрытия", "эссе", "исходное предложение"))
+    for chunk in chunks:
+        ws.append(chunk_to_row(chunk))
+
+    wb.save(filename = out_filename)

@@ -2,9 +2,7 @@
 # coding: utf-8
 
 
-import types
 import logging
-import re
 
 import openpyxl
 import xlrd
@@ -15,7 +13,7 @@ from plag_submissions_utils.common.errors import ErrSeverity
 from plag_submissions_utils.common.errors import Error
 from plag_submissions_utils.common.chunks import ChunkOpts
 from plag_submissions_utils.common.chunks import ModType
-from plag_submissions_utils.common.chunks import mod_type_to_str
+from plag_submissions_utils.common.chunks import mod_types_to_str
 from plag_submissions_utils.common.translated_chunks import TranslatorType
 from plag_submissions_utils.common.translated_chunks import TranslatedChunk
 import plag_submissions_utils.common.checkers as chks
@@ -248,7 +246,7 @@ def _try_create_chunk(row_vals, sent_num, opts):
 
 
 def chunk_to_row(chunk):
-    mod_type_str = mod_type_to_str(chunk.get_mod_type())
+    mod_type_str = mod_types_to_str(chunk.get_all_mod_types())
 
     if mod_type_str == 'ORIG':
         mod_type_str = ''
