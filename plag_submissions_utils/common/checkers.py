@@ -11,7 +11,7 @@ import regex
 import hunspell
 import langdetect
 
-from plag_submissions_utils.common.text_proc import SENTENCE_TERMINALS
+from plag_submissions_utils.common import text_proc
 from plag_submissions_utils.common import source_doc
 from plag_submissions_utils.common import chunks
 from plag_submissions_utils.common import homoglyphs
@@ -53,7 +53,6 @@ class BaseChunkSimChecker(IChecher):
                 ChunkError("Пустое модифицированное предложение.", chunk.get_chunk_id(),
                            ErrSeverity.HIGH))
             return
-
 
         diff_perc = chunk.measure_dist()
         diff_perc *= 100
@@ -399,6 +398,27 @@ class OrigSentChecker(IChecher):
                 ErrSeverity.HIGH))
 
 
+class ModSentChecker(IChecher):
+    def __init__(self, opts):
+        self._opts = opts
+        self._errors = []
+
+    def get_errors(self):
+        return self._errors
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_mod_type() == ModType.ORIG:
+            return
+
+        res = text_proc.seg_text_as_list(chunk.get_mod_text())
+        if not chunk.has_mod_type(ModType.SEP) and not chunk.has_mod_type(ModType.SSP) and\
+           not chunk.has_mod_type(ModType.HPR) and len(res) > 1:
+
+            self._errors.append(ChunkError(
+                "Модифицированный фрагмент содержит несколько предложений, но его тип не SSP/SEP",
+                chunk.get_chunk_id(),
+                ErrSeverity.HIGH))
+
 # sources
 
 
@@ -519,7 +539,7 @@ class SentCorrectnessChecker(IFixableChecker):
             return sents_with_errors
 
         for num, s in enumerate(chunk.get_mod_sents()):
-            if s[-1] not in SENTENCE_TERMINALS:
+            if s[-1] not in text_proc.SENTENCE_TERMINALS:
                 sents_with_errors.append(num)
 
         return sents_with_errors

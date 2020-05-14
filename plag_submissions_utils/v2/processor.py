@@ -61,6 +61,7 @@ def create_checkers(opts, sources_dir,
     return [
         chks.OriginalityChecker(opts),
         chks.OrigSentChecker(opts),
+        chks.ModSentChecker(opts),
         chks.SourceDocsChecker(opts, sources_dir),
         chks.PRChecker(opts),
         chks.AddChecker(opts),
