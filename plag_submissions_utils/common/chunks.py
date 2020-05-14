@@ -56,7 +56,9 @@ def mod_type_to_str(mod_type):
     return MOD_TYPE_DICT.get(mod_type, "unk")
 
 def _create_mod_types(mods_str):
-    return [_create_mod_type(m) for m in mods_str.split(',')]
+    if not mods_str:
+        return [ModType.ORIG]
+    return [_create_mod_type(m) for m in mods_str.split(',') if m.strip()]
 
 def _create_mod_type(mod_str):
     mls = mod_str.strip().lower()

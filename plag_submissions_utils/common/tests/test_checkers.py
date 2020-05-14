@@ -332,6 +332,7 @@ def test_source_docs_checker_with_whitespace(fs):
     fs.create_dir(src_dir)
     fs.create_file(src_dir + "title kek.html")
     fs.create_file(src_dir + "знакомый ваш.html")
+    fs.create_file(src_dir + "kek .html")
 
     checker = chks.SourceDocsChecker(None, src_dir)
 
@@ -352,6 +353,14 @@ def test_source_docs_checker_with_whitespace(fs):
     assert not checker.get_errors()
 
     chunk = Chunk("", "", "", "знакомый ваш.html", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "kek .html", 1)
+    checker(chunk, None)
+    assert not checker.get_errors()
+
+    chunk = Chunk("", "", "", "kek ", 1)
     checker(chunk, None)
     assert not checker.get_errors()
 

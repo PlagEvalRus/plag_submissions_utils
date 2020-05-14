@@ -175,8 +175,7 @@ class ModTypeRatioMetric(IMetric):
         if self._mod_type == ModType.UNK:
             return common + " (UNK означает неизвестный тип сокрытия. "\
                 "Скорее всего в названии некоторых типов сокрытий опечатка.)"
-        else:
-            return common
+        return common
 
 class MeanSentLenMetric(IMetric):
     def __init__(self, min_mean_sent_len, fluctuation_delta = 3):

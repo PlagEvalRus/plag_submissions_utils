@@ -20,7 +20,7 @@ def get_src_filename(path):
         return name
     if ext[1:].lower() in WHITELIST_EXTENSIONS:
         #this is good extension
-        return name
+        return name.strip()
     #otherwise its part of basename
     # logging.warning("Unknown extension: %s", ext)
     return basename
