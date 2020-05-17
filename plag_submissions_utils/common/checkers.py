@@ -353,6 +353,14 @@ class OrigSentChecker(IChecher):
     def get_errors(self):
         return self._errors
 
+    def _check_duplicates(self, chunk):
+        unique_sents = frozenset(chunk.get_orig_sents())
+        if len(unique_sents) != len(chunk.get_orig_sents()):
+            self._errors.append(ChunkError(
+                "Исходные предложения дублируются!",
+                chunk.get_id(),
+                ErrSeverity.HIGH))
+
     def __call__(self, chunk, src_docs):
 
         if chunk.get_mod_type() == ModType.ORIG:
@@ -362,6 +370,8 @@ class OrigSentChecker(IChecher):
         if not src_filename  in src_docs:
             #this another error, that is checked in another place
             return
+
+        self._check_duplicates(chunk)
 
         parsed_doc = src_docs[src_filename]
         not_found_cnt = 0
@@ -404,6 +414,27 @@ class ModSentChecker(IChecher):
                 "Модифицированный фрагмент содержит несколько предложений, но его тип не SSP/SEP",
                 chunk.get_chunk_id(),
                 ErrSeverity.HIGH))
+
+
+class OrigSentsCheckerV2(IChecher):
+    def __init__(self, opts):
+        self._opts = opts
+        self._errors = []
+
+    def get_errors(self):
+        return self._errors
+
+    def __call__(self, chunk, src_docs):
+        if chunk.get_mod_type() == ModType.ORIG:
+            return
+        for sent in chunk.get_orig_sents():
+            res = text_proc.seg_text_as_list(sent)
+
+            if len(res) > 1:
+                self._errors.append(ChunkError(
+                    "Ячейка Оригинальный фрагмент содержит больше 1ого предложения",
+                    chunk.get_chunk_id(),
+                    ErrSeverity.HIGH))
 
 # sources
 
