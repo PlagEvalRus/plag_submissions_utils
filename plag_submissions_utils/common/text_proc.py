@@ -12,12 +12,22 @@ import syntok._segmentation_states
 #add common Russian abbrevations
 SYNTOK_ORIG_ABBREV = syntok._segmentation_states.State.abbreviations
 CYR_ABBREVS = frozenset(
-    ['г', 'ул', 'д', 'кв', 'им',
+    ['г', 'гг', 'ул', 'д', 'кв', 'им',
      'см', 'мм', 'км', 'м', 'л',
      'янв', 'фев', 'мар', 'апр', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
      'пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс',
+     'фр', 'лат', 'анг', 'рус',
+     'св',
+     'дж'
+
     ])
 syntok._segmentation_states.State.abbreviations = (SYNTOK_ORIG_ABBREV | frozenset(CYR_ABBREVS))
+#TODO problem with unbalanced quotes see test_parens_quotes
+# syntok._segmentation_states.State.opening_brackets = \
+#     syntok._segmentation_states.State.opening_brackets | {"«"}
+# syntok._segmentation_states.State.closing_brackets = \
+#     syntok._segmentation_states.State.closing_brackets | {"»"}
+
 
 SENTENCE_TERMINALS = syntok._segmentation_states.State.terminals
 HYPHENS = [h for h in Tokenizer._hyphens if h is not '-']

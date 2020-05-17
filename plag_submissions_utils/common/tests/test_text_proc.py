@@ -66,6 +66,21 @@ class SegTestCase(unittest.TestCase):
         self.assertEqual("Текст с переносами.\nПредложение с табуляцие и пробелами.", new_text)
 
 
+    def test_parens_quotes(self):
+        text = "изложены им в брошюре-манифесте (От кубизма к супрематизму. Новый живописный реализм)."
+
+        sents = text_proc.seg_text_as_list(text)
+        self.assertEqual(1, len(sents))
+
+        # text = "изложены им в брошюре-манифесте «От кубизма к супрематизму. Новый живописный реализм»."
+        # sents = text_proc.seg_text_as_list(text)
+        # self.assertEqual(1, len(sents))
+
+        #Unbalanced quote
+        # text = "Последним пиком творчества была техника «абстракций» («Доминирующая кривая)."
+        # sents = text_proc.seg_text_as_list(text)
+        # print([s[0] for s in sents])
+        # self.assertEqual(1, len(sents))
 
 class MorphTestCase(unittest.TestCase):
     def test_morph(self):
