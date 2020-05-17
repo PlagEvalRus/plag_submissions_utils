@@ -146,7 +146,6 @@ class CPYChecker(BaseChunkSimChecker):
 class SspChecker(BaseChunkSimChecker):
     def __init__(self, opts, fluctuation_delta=3):
         super(SspChecker, self).__init__(opts, fluctuation_delta)
-        self._prev_ssp = None
 
     def __call__(self, chunk, src_docs):
         if chunk.get_mod_type() != ModType.SSP and \
@@ -154,19 +153,6 @@ class SspChecker(BaseChunkSimChecker):
             return
         super(SspChecker, self).__call__(chunk, src_docs)
 
-
-        if self._prev_ssp and self._prev_ssp.get_id() + 1 == chunk.get_id():
-            if self._prev_ssp.get_orig_text() != chunk.get_orig_text():
-
-                self._errors.append(
-                    ChunkError("Тип сокрытия SSP: Разные предложения в поле "
-                               "оригинальное предложение для ряда %d и %d. "
-                               "Это может быть ложной ошибкой." % (
-                                   self._prev_ssp.get_id(), chunk.get_id()),
-                               chunk.get_chunk_id(),
-                               ErrSeverity.NORM))
-            # self._prev_ssp = None
-        self._prev_ssp = chunk
 
 
 
