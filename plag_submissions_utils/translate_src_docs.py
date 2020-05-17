@@ -192,6 +192,9 @@ class Translator(object):
 
 
     def _process_extracted_archive(self, susp_id, sources_dir, meta_file_path):
+        def _is_ssp(chunk):
+            return chunk.has_mod_type(ModType.SSP) or chunk.has_mod_type(ModType.SEP)
+
         chunks, chunks_errors = common_runner.create_chunks(susp_id, meta_file_path,
                                                             self._opts.version)
 
@@ -204,8 +207,7 @@ class Translator(object):
         for chunk in chunks:
             try:
                 if prev_chunk is not None and \
-                   prev_chunk.get_mod_type() == ModType.SSP and \
-                   chunk.get_mod_type() == ModType.SSP:
+                   _is_ssp(prev_chunk) and  _is_ssp(chunk):
                     if prev_chunk.get_orig_text() == chunk.get_orig_text():
                         sources_map[chunk.get_orig_doc_filename()].append(
                             TextForTrans(chunk = chunk, use_translation_of = prev_chunk.get_id()) )
