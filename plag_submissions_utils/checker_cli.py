@@ -32,6 +32,11 @@ def fix_v2(opts):
 def run_v3(opts):
     common_run(opts, "3")
 
+def fix_v3(opts):
+    common_runner.fix(
+        opts.archive, opts.output_file, "3",
+        spell_checker_whitelist = opts.spell_checker_whitelist)
+
 def common_run(opts, version):
     metrics, errors, stat = common_runner.run(opts.archive, version)
 
@@ -99,6 +104,10 @@ def main():
 
     v3_parser.add_argument("--archive", "-a", required=True)
     v3_parser.set_defaults(func = run_v3)
+
+    fix_v3_parser = subparsers.add_parser('fix_v3')
+    common_fix_args(fix_v3_parser)
+    fix_v3_parser.set_defaults(func = fix_v3)
 
     stat_parser = subparsers.add_parser('stat')
     stat_parser.add_argument("--archive_dir", "-d", required=True)

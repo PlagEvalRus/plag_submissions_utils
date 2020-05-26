@@ -68,10 +68,12 @@ class ProcessorOpts(BasicProcesssorOpts):
         self.min_lexical_dist = 15 #%
         self.min_originality = 0.77
 
-def create_checkers(opts, sources_dir):
+def create_checkers(opts, sources_dir,
+                    spell_checker_whitelist = None):
     return [
         chks.OriginalityChecker(opts),
         chks.OrigSentChecker(opts),
+        chks.ModSentChecker(opts),
         chks.SourceDocsChecker(opts, sources_dir),
         chks.PRChecker(opts),
         # chks.AddChecker(opts),
@@ -87,7 +89,7 @@ def create_checkers(opts, sources_dir):
         trans_chks.TranslationChecker(opts),
         trans_chks.ManualTranslationChecker(opts),
         chks.CyrillicAlphabetChecker(opts),
-        chks.SpellChecker()
+        chks.SpellChecker(whitelist = spell_checker_whitelist)
     ]
 
 def create_metrics(opts, sources_dir):
