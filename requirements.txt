@@ -5,7 +5,7 @@ regex==2020.4.4
 xlrd==1.2.0
 openpyxl==3.0.3
 patool==1.12
-Jinja2==2.11.2
+Jinja2==2.11.3
 hunspell==0.5.5
 langdetect==1.0.8
 confusable-homoglyphs==3.2.0
