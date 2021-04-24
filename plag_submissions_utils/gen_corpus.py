@@ -11,6 +11,7 @@ import os.path as fs
 import logging
 import tempfile
 import shutil
+import hashlib
 import sys
 
 from .common.chunks import ModType
@@ -19,6 +20,7 @@ from .common.extract_utils import extract_submission
 from .common.source_doc import load_sources_docs
 from .common import src_mapping
 from .common.submissions import run_over_submissions
+from .common.text_proc import seg_text
 from . import common_runner
 
 
@@ -48,8 +50,8 @@ class SrcRetrievalMetaGenerator(object):
     def _init_src_map(self):
         self._src_map = collections.defaultdict(lambda: 0)
 
-    def __call__(self, susp_doc, chunk, ofs_info):
-        if ofs_info is None:
+    def __call__(self, susp_doc, chunk, offsets):
+        if not offsets:
             return
 
         susp_id = susp_doc.get_susp_id()
@@ -59,7 +61,7 @@ class SrcRetrievalMetaGenerator(object):
 
         self._src_map[src_id] += len(chunk.get_mod_sents())
 
-    def on_susp_end(self, susp_doc):
+    def on_susp_end(self, susp_doc, _):
         #TODO lang
         #TODO version
         susp_id = susp_doc.get_susp_id()
@@ -101,7 +103,7 @@ class SimilarDocumentsMetaGenerator(SrcRetrievalMetaGenerator):
             outf.write("srcID,srcTitle,dstID,dstTitle,rank,reused_sent_cnt\n")
 
 
-    def on_susp_end(self, susp_doc):
+    def on_susp_end(self, susp_doc, _):
         susp_id = susp_doc.get_susp_id()
 
         items = list(self._src_map.items())
@@ -139,8 +141,8 @@ class TextAlignmentMetaGenerator(object):
             os.remove(fs.join(self._opts.text_align_out_dir, "pairs"))
 
 
-    def __call__(self, susp_doc, chunk, ofs_info):
-        if ofs_info is None:
+    def __call__(self, susp_doc, chunk, offsets):
+        if not offsets:
             return
 
         susp_id = susp_doc.get_susp_id()
@@ -155,22 +157,24 @@ class TextAlignmentMetaGenerator(object):
             self._xml_map[src_id] = ET.Element('document', reference=susp_filename)
             self._pairs.append((susp_filename, src_filename))
 
-        src_offs_beg, src_offs_end,err = ofs_info
-
-        e = ET.Element('feature',
-                       name='plagiarism',
-                       this_offset=str(susp_doc.get_offs_for_text(chunk.get_chunk_id())),
-                       this_length=str(len(chunk.get_mod_text())),
-                       source_reference=src_filename,
-                       source_offset=str(src_offs_beg),
-                       source_length=str(src_offs_end - src_offs_beg),
-                       type="manual",
-                       obfuscation=mod_types_to_str(chunk.get_all_mod_types()),
-                       #TODO
-                       this_language="ru",
-                       source_language="ru",
-                       txt_extraction_err=str(err))
-        self._xml_map[src_id].append(e)
+        for t in offsets:
+            if t is None:
+                continue
+            src_offs_beg, src_offs_end, err = t
+            e = ET.Element('feature',
+                           name='plagiarism',
+                           this_offset=str(susp_doc.get_offs_for_text(chunk.get_chunk_id())),
+                           this_length=str(len(chunk.get_mod_text())),
+                           source_reference=src_filename,
+                           source_offset=str(src_offs_beg),
+                           source_length=str(src_offs_end - src_offs_beg),
+                           type="manual",
+                           obfuscation=mod_types_to_str(chunk.get_all_mod_types()),
+                           #TODO
+                           this_language="ru",
+                           source_language="ru",
+                           txt_extraction_err=str(err))
+            self._xml_map[src_id].append(e)
 
 
     def _get_as_xml(self, src_id):
@@ -190,7 +194,7 @@ class TextAlignmentMetaGenerator(object):
         with open(out_path, 'w') as out:
             out.write(pretty_xml)
 
-    def on_susp_end(self, susp_doc):
+    def on_susp_end(self, susp_doc, _):
         #TODO
         #self._join_adjacent_chunks()
         susp_id = susp_doc.get_susp_id()
@@ -207,6 +211,81 @@ class TextAlignmentMetaGenerator(object):
     def get_name(self):
         return 'TextAligmentMetaGenerator'
 
+class SentRetrievalTaskGenerator:
+    def __init__(self, opts):
+        self._opts = opts
+        self._src_sents = []
+        self._tgt_sents = []
+        self._seen_target_sents = set()
+        self._pairs = []
+
+    def _make_src_sent_id(self, prefix, susp_doc, chunk, num):
+        return f'{prefix}_{susp_doc.get_susp_id()}_{chunk.get_id()}_{num}'
+
+    def _make_tgt_sent_id(self, sent_text):
+        sha1 = hashlib.sha1()
+        sha1.update(sent_text.encode('utf8'))
+        return sha1.hexdigest()
+
+    def _clean_sent(self, text):
+        return text.strip().replace('\t', ' ').replace('\n', ' ')
+
+
+    def __call__(self, susp_doc, chunk, offsets):
+        src_ids = []
+
+        # print('chunk with id ', chunk.get_id(), 'num mods', len(chunk.get_mod_sents()), ' num origs', len(chunk.get_orig_sents()) )
+        for num, s in enumerate(chunk.get_mod_sents()):
+            src_id = self._make_src_sent_id('src', susp_doc, chunk, num)
+            src_ids.append(src_id)
+            self._src_sents.append((src_id, self._clean_sent(s)))
+
+        tgt_ids = []
+        for num, s in enumerate(chunk.get_orig_sents()):
+            tgt_sent = self._clean_sent(s)
+            tgt_id = self._make_tgt_sent_id(tgt_sent)
+            tgt_ids.append(tgt_id)
+            if tgt_id not in self._seen_target_sents:
+                self._seen_target_sents.add(tgt_id)
+                self._tgt_sents.append((tgt_id, tgt_sent))
+
+
+        for src_id in src_ids:
+            for tgt_id in tgt_ids:
+                self._pairs.append((src_id, tgt_id))
+
+    def _add_sents_from_sources(self, sources):
+        for source in sources.values():
+            for s, _ in seg_text(source.get_text()):
+                tgt_sent = self._clean_sent(s)
+                tgt_id = self._make_tgt_sent_id(tgt_sent)
+                if tgt_id not in self._seen_target_sents:
+                    self._seen_target_sents.add(tgt_id)
+                    self._tgt_sents.append((tgt_id, tgt_sent))
+
+
+    def on_susp_end(self, _, sources):
+
+        self._add_sents_from_sources(sources)
+
+        with open(f'{self._opts.out_prefix}.src', 'a') as f:
+            for t in self._src_sents:
+                f.write("%s\n" % '\t'.join(t))
+        with open(f'{self._opts.out_prefix}.tgt', 'a') as f:
+            for t in self._tgt_sents:
+                f.write("%s\n" % '\t'.join(t))
+        with open(f'{self._opts.out_prefix}.gold', 'a') as f:
+            for t in self._pairs:
+                f.write("%s\n" % '\t'.join(t))
+
+        self._src_sents = []
+        self._tgt_sents = []
+        self._pairs = []
+
+
+    def get_name(self):
+        return 'SentRetrievalTaskGenerator'
+
 
 class DumbDumper(object):
     def __init__(self, out_path = None):
@@ -215,15 +294,16 @@ class DumbDumper(object):
         else:
             self._out = open(out_path, 'w')
 
-    def __call__(self, susp_doc, chunk, ofs_info):
-        if ofs_info is None:
-            b,e,er = -1,-1,-1
-        else:
-            b,e,er = ofs_info
-        self._out.write("%s,%s,%d,%d,%d\n" % (susp_doc.get_susp_id(),
-                                              chunk.get_chunk_id(), b,e,er))
+    def __call__(self, susp_doc, chunk, offsets):
+        for t in offsets:
+            if t is None:
+                b,e,er = -1,-1,-1
+            else:
+                b,e,er = t
+            self._out.write("%s,%s,%d,%d,%d\n" % (susp_doc.get_susp_id(),
+                                                  chunk.get_chunk_id(), b,e,er))
 
-    def on_susp_end(self, susp_doc):
+    def on_susp_end(self, susp_doc, sources):
         pass
 
     def get_name(self):
@@ -238,14 +318,16 @@ class Generator(object):
         if chunk.get_mod_type() == ModType.ORIG or not chunk.get_orig_doc_filename():
             return
         source = sources[chunk.get_orig_doc_filename()]
+        offsets = []
         for sent in chunk.get_orig_sents():
-            res = source.get_sent_offs(sent)
-            for pipe in self._out_pipes:
-                try:
-                    pipe(susp_doc, chunk, res)
-                except Exception as e:
-                    logging.warning("Id: %s - Failed to send offsets to %s: %s",
-                                    susp_doc.get_susp_id(), pipe.get_name(), e)
+            offsets.append(source.get_sent_offs(sent))
+
+        for pipe in self._out_pipes:
+            try:
+                pipe(susp_doc, chunk, offsets)
+            except Exception as e:
+                logging.warning("Id: %s - Failed to process offsets by %s: %s",
+                                susp_doc.get_susp_id(), pipe.get_name(), e)
 
     def process_extracted_archive(self, susp_id, sources_dir, meta_file_path):
         chunks, chunks_errors = common_runner.create_chunks(susp_id, meta_file_path,
@@ -266,7 +348,7 @@ class Generator(object):
 
         for pipe in self._out_pipes:
             try:
-                pipe.on_susp_end(susp_doc)
+                pipe.on_susp_end(susp_doc, sources)
             except Exception as e:
                 logging.warning("Id: %s - Failed to finalize susp: %s",
                                 susp_doc.get_susp_id(), e)
@@ -362,6 +444,12 @@ def create_text_align_meta(opts):
     pipes = [TextAlignmentMetaGenerator(opts)]
     gener = Generator(opts, pipes)
     gener.process_submissions()
+
+def create_sent_retrieval_meta(opts):
+    pipes = [SentRetrievalTaskGenerator(opts)]
+    gener = Generator(opts, pipes)
+    gener.process_submissions()
+
 
 def create_src_retr_meta(opts):
     pipes = [SrcRetrievalMetaGenerator(opts)]
@@ -492,6 +580,14 @@ def main():
     text_align_parser.add_argument("--ids_file", "-I", default='',
                                    help = "use only those ids, otherwise process everything")
     text_align_parser.set_defaults(func = create_text_align_meta)
+
+    sent_retr_parser = subparsers.add_parser('sent_retr')
+    sent_retr_parser.add_argument("--subm_dir", "-i", required = True,
+                                   help = "directory with submissions")
+    sent_retr_parser.add_argument("--out_prefix", "-o", required=True)
+    sent_retr_parser.add_argument("--ids_file", "-I", default='',
+                                   help = "use only those ids, otherwise process everything")
+    sent_retr_parser.set_defaults(func = create_sent_retrieval_meta)
 
     src_retr_parser = subparsers.add_parser('src_retr',
                                             help='help of src_retr')
