@@ -61,9 +61,9 @@ class SegTestCase(unittest.TestCase):
         text = """Текст\nс пере-\nносами.
         Предложение с\tтабуляцие   и    пробелами."""
 
-        print(list(text_proc.seg_text(text)))
-        new_text = text_proc.preprocess_text(text)
-        self.assertEqual("Текст с переносами.\nПредложение с табуляцие и пробелами.", new_text)
+        # print(list(text_proc.seg_text(text)))
+        new_text = text_proc.preprocess_text(text, split_on_paragraphs=True)
+        self.assertEqual("Текст с переносами.\nПредложение с табуляцие и пробелами.\n", new_text)
 
 
     def test_parens_quotes(self):

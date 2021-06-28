@@ -57,7 +57,7 @@ class SourceDoc(object):
         logging.debug("trying to parse %s", doc_path)
         # self._filename         = get_src_filename(doc_path)
         self._text             = text_proc.convert_doc(doc_path)
-        self._text             = text_proc.preprocess_text(self._text)
+        self._text             = text_proc.preprocess_text(self._text, split_on_paragraphs=True)
         logging.debug("stripped source doc: %s", self._text)
 
         self._max_length_delta = max_length_delta

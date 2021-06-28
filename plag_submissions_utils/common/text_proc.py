@@ -32,7 +32,7 @@ syntok._segmentation_states.State.abbreviations = (SYNTOK_ORIG_ABBREV | frozense
 SENTENCE_TERMINALS = syntok._segmentation_states.State.terminals
 HYPHENS = [h for h in Tokenizer._hyphens if h is not '-']
 
-import syntok.segmenter as seg
+import syntok.segmenter
 
 MORPH_ANALYZER = None
 STOP_POS = ['PREP', 'CONJ', 'PRCL', 'INTJ']
@@ -51,21 +51,17 @@ def ispunct(st):
 
 def seg_text_as_list(text):
     # convert from generator to list
-    return [s for s in seg_text(text)]
+    return list(seg_text(text))
 
-def seg_text(text):
-    # text = text.strip()
-    #clean all shitty \r\n and so on...
-    # text = seg.to_unix_linebreaks(text)
-
+def seg_text(text, yield_paragraph=False):
     for paragraph in syntok.segmenter.process(text):
         for sent in paragraph:
-            #skip newlines inside the sent
-            sent_as_str = ''.join( (' ' if '\n' in t.spacing else t.spacing) + t.value
-                                   for t in sent).lstrip()
-
-            # sent_as_str += '\n'
+            #skip newlines inside the sent and
+            #remove double spaces '  ' or ' \t' and non-breaking spaces
+            sent_as_str = ''.join( (' ' if t.spacing else '') + t.value for t in sent).lstrip()
             yield sent_as_str, sent
+        if yield_paragraph:
+            yield '', []
 
 def _normalize(analyzer_results, token):
     if analyzer_results:
@@ -122,13 +118,11 @@ def convert_doc(doc_path):
     text = subprocess.check_output(cmd, shell=True)
     return text.decode("utf8")
 
-def preprocess_text(text):
+def preprocess_text(text, split_on_paragraphs=False):
     for hyphen in HYPHENS:
         text = text.replace(hyphen, "\u002d")
 
-    #remove unnecessary \n inside sentences
-    text = "\n".join(s for s, _ in seg_text(text))
+    #remove unnecessary \n\t nbsp and other blank symbols inside sentences
+    text = "\n".join(s for s, _ in seg_text(text, yield_paragraph=split_on_paragraphs))
 
-    #remove double spaces '  ' or ' \t' and non-breaking spaces
-    text = " ".join(p for p in regex.split(r'\p{Blank}', text) if p)
     return text

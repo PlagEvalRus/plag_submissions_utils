@@ -65,18 +65,17 @@ class FindSentInSrcTestCase(unittest.TestCase):
     def test_offs_hyphen_case(self):
         offs_beg, offs_end, err = self.source_doc.get_sent_offs(SEQ_MATCHER_SENT2)
 
-        self.assertEqual(71, offs_beg)
-        self.assertEqual(96, offs_end)
+        self.assertEqual(73, offs_beg)
+        self.assertEqual(98, offs_end)
         self.assertEqual(0, err)
 
-        self.assertEqual("Sentence for hyphen test!",
-                         self.source_doc.get_text()[offs_beg:offs_end])
+        assert "Sentence for hyphen test!" == self.source_doc.get_text()[offs_beg:offs_end]
 
     def test_offs_seq_matcher(self):
         offs_beg, offs_end, err = self.source_doc.get_sent_offs(SEQ_MATCHER_SENT)
 
-        self.assertEqual(103, offs_beg)
-        self.assertEqual(166, offs_end)
+        self.assertEqual(106, offs_beg)
+        self.assertEqual(169, offs_end)
         self.assertEqual(16, err)
 
         print(self.source_doc.get_text())
@@ -93,8 +92,8 @@ class FindSentInSrcTestCase(unittest.TestCase):
         offs_beg, offs_end, err = source_doc.get_sent_offs(
             SEQ_MATCHER_SENT)
 
-        self.assertEqual(103, offs_beg)
-        self.assertEqual(166, offs_end)
+        self.assertEqual(106, offs_beg)
+        self.assertEqual(169, offs_end)
         self.assertEqual(16, err)
 
         self.assertEqual("Предложение для проверки <trash> sequence matcher <trash> test!",
@@ -152,8 +151,8 @@ class SpecificSeqMatcherCases(unittest.TestCase):
         src_doc = self.create_source_doc(text)
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
-        self.assertEqual(23, offs_beg)
-        self.assertEqual(76, offs_end)
+        self.assertEqual(24, offs_beg)
+        self.assertEqual(77, offs_end)
         self.assertEqual(0, err)
 
     def test3(self):
@@ -223,8 +222,8 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
         self.assertEqual(0, offs_beg)
-        self.assertEqual(246, offs_end)
-        self.assertEqual(36, err)
+        self.assertEqual(248, offs_end)
+        self.assertEqual(38, err)
 
     def test7(self):
         text = """Пред1 Конец1.
@@ -251,4 +250,4 @@ class SpecificSeqMatcherCases(unittest.TestCase):
 
         offs_beg, offs_end, err = src_doc.get_sent_offs(sent)
         self.assertEqual(0, offs_beg)
-        self.assertEqual(len(src_doc.get_text()), offs_end)
+        self.assertEqual(len(src_doc.get_text())-1, offs_end)
