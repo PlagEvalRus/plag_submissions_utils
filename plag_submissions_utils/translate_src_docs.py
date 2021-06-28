@@ -292,7 +292,7 @@ class Translator(object):
 
     def _translate_sources(self, susp_id, sources_map):
         if self._opts.dry_run:
-            for _, text_for_trans_list in list(sources_map.items()):
+            for _, text_for_trans_list in sources_map.items():
                 for num, t in enumerate(text_for_trans_list):
                     if not t.text:
                         #Not for translation
@@ -304,7 +304,7 @@ class Translator(object):
                     t.translated_text = pref + "trans_%d. " % num
             return
 
-        for source_id, text_for_trans_list in list(sources_map.items()):
+        for source_id, text_for_trans_list in sources_map.items():
             logging.info("Translating: susp %s, src %s", susp_id, source_id)
             self._yatrans.translate(text_for_trans_list)
             for text_info in text_for_trans_list:
@@ -324,7 +324,7 @@ class Translator(object):
         out_dir = os.path.join(base_out_dir, susp_id, 'sources')
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
-        for source_id, text_for_trans_list in list(sources_map.items()):
+        for source_id, text_for_trans_list in sources_map.items():
             with open(os.path.join(out_dir, '%s.txt' % source_id), 'w') as outf:
                 text_for_trans_list.sort(key = lambda t : t.offs_beg)
                 for t in text_for_trans_list:

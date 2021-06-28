@@ -24,12 +24,8 @@ from .common.text_proc import seg_text
 from . import common_runner
 
 
-class DummyWriter(object):
-    def write(self, _):
-        pass
 
-
-class SrcRetrievalMetaGenerator(object):
+class SrcRetrievalMetaGenerator:
     def __init__(self, opts):
         self._opts = opts
         if opts.mapping is not None:
@@ -44,8 +40,9 @@ class SrcRetrievalMetaGenerator(object):
         self._src_map = None
         self._init_src_map()
 
-        if not fs.exists(opts.src_retr_out_dir):
-            os.makedirs(opts.src_retr_out_dir)
+        self._out_dir = fs.join(opts.src_retr_out_dir, 'meta')
+        if not fs.exists(self._out_dir):
+            os.makedirs(self._out_dir)
 
     def _init_src_map(self):
         self._src_map = collections.defaultdict(lambda: 0)
@@ -81,7 +78,7 @@ class SrcRetrievalMetaGenerator(object):
 
 
         out_path = fs.join(
-            self._opts.src_retr_out_dir,
+            self._out_dir,
             "%s.json" % susp_id)
         with open(out_path, 'w') as out:
             json.dump(meta, out,
@@ -94,7 +91,7 @@ class SrcRetrievalMetaGenerator(object):
 
 class SimilarDocumentsMetaGenerator(SrcRetrievalMetaGenerator):
     def __init__(self, opts):
-        super(SimilarDocumentsMetaGenerator, self).__init__(opts)
+        super().__init__(opts)
 
         self._out_path = fs.join(
             self._opts.src_retr_out_dir, "retrieval_data.csv")
@@ -122,7 +119,7 @@ class SimilarDocumentsMetaGenerator(SrcRetrievalMetaGenerator):
     def get_name(self):
         return 'SimilarDocumentsMetaGenerator'
 
-class TextAlignmentMetaGenerator(object):
+class TextAlignmentTaskGenerator(object):
     def __init__(self, opts):
         self._opts = opts
         if opts.mapping is not None:
@@ -135,10 +132,15 @@ class TextAlignmentMetaGenerator(object):
         self._xml_map = {}
         self._pairs = []
 
-        if not fs.exists(opts.text_align_out_dir):
-            os.makedirs(opts.text_align_out_dir)
-        if fs.exists(fs.join(self._opts.text_align_out_dir, "pairs")):
-            os.remove(fs.join(self._opts.text_align_out_dir, "pairs"))
+        susp_dir = fs.join(opts.text_align_out_dir, 'susp')
+        src_dir = fs.join(opts.text_align_out_dir, 'src')
+        meta_dir = fs.join(opts.text_align_out_dir, 'meta')
+        for d in [susp_dir, src_dir, meta_dir]:
+            if not fs.exists(d):
+                os.makedirs(d)
+
+        if fs.exists(fs.join(meta_dir, "pairs")):
+            os.remove(fs.join(meta_dir, "pairs"))
 
 
     def __call__(self, susp_doc, chunk, offsets):
@@ -188,21 +190,34 @@ class TextAlignmentMetaGenerator(object):
 
         pretty_xml = ugly_xml.toprettyxml()
 
+
         out_path = fs.join(
             self._opts.text_align_out_dir,
+            "meta",
             "suspicious-document%s-source-document%s.xml" % (susp_id, src_id))
         with open(out_path, 'w') as out:
             out.write(pretty_xml)
 
-    def on_susp_end(self, susp_doc, _):
+    def on_susp_end(self, susp_doc, sources):
         #TODO
         #self._join_adjacent_chunks()
+
         susp_id = susp_doc.get_susp_id()
+        #write susp text
+        susp_file = fs.join(self._opts.text_align_out_dir, 'susp', "%s.txt" % susp_id)
+        with open(susp_file, 'w') as f:
+            susp_doc.write_susp_doc(f)
+
+        #write sources
+        src_dir = fs.join(self._opts.text_align_out_dir, 'src')
+        write_sources_to_files(self._mapping, susp_id, sources, src_dir,
+                               ext_id_as_filename=True)
+
         for src_id in self._xml_map:
             self._finalize_pair(susp_id, src_id)
         self._xml_map = {}
         #update pairs
-        with open(fs.join(self._opts.text_align_out_dir, "pairs"), 'a') as f:
+        with open(fs.join(self._opts.text_align_out_dir, "meta", "pairs"), 'a') as f:
             for pair in self._pairs:
                 f.write("%s %s\n" % pair)
         self._pairs = []
@@ -337,7 +352,7 @@ class Generator(object):
             logging.error("Id: %s - Errors while creating chunks:\n%s", susp_id,
                           "\n".join(str(e) for e in chunks_errors))
         sources = load_sources_docs(sources_dir)
-        susp_doc = SuspDocGenerator(susp_id, DummyWriter())
+        susp_doc = SuspDocGenerator(susp_id)
         susp_doc.add_chunks(chunks)
         for chunk in chunks:
             try:
@@ -371,16 +386,13 @@ class Generator(object):
                              include_ids_set = ids)
 
 
-class SuspDocGenerator(object):
-    """Documentation for SuspDocGenerator
-
-    """
-    def __init__(self, susp_id, out):
-        super(SuspDocGenerator, self).__init__()
+class SuspDocGenerator:
+    def __init__(self, susp_id):
+        super().__init__()
         self._susp_id = susp_id
-        self._out = out
         self._cur_offset = 0
         self._offsets_dict = {}
+        self._text_parts = []
 
     def get_susp_id(self):
         return self._susp_id
@@ -388,7 +400,8 @@ class SuspDocGenerator(object):
     def add_text(self, text_id, text):
 
         suffix = '\n'
-        self._out.write(text + suffix)
+        self._text_parts.append(text)
+        self._text_parts.append(suffix)
         text_offs = self._cur_offset
         self._offsets_dict[text_id] = text_offs
         self._cur_offset += len(text) + len(suffix)
@@ -401,6 +414,12 @@ class SuspDocGenerator(object):
         for chunk in chunks:
             self.add_text(chunk.get_chunk_id(),
                           chunk.get_mod_text())
+
+    def write_susp_doc(self, out):
+        for t in self._text_parts:
+            out.write(t)
+
+
 
 def write_sources_to_files(mapping, susp_id, sources, out_dir,
                            ext_id_as_filename = False):
@@ -440,8 +459,8 @@ def _load_ids(ids_file):
     return None
 
 
-def create_text_align_meta(opts):
-    pipes = [TextAlignmentMetaGenerator(opts)]
+def create_text_align_task(opts):
+    pipes = [TextAlignmentTaskGenerator(opts)]
     gener = Generator(opts, pipes)
     gener.process_submissions()
 
@@ -464,7 +483,7 @@ def create_doc_sim_meta(opts):
 
 def create_pan_meta(opts):
     pipes = [SrcRetrievalMetaGenerator(opts),
-             TextAlignmentMetaGenerator(opts)]
+             TextAlignmentTaskGenerator(opts)]
     gener = Generator(opts, pipes)
     gener.process_submissions()
 
@@ -500,8 +519,9 @@ def create_susp_docs(opts):
             susp_id, meta_file_path, opts.version)
         out_path = fs.join(opts.out_dir, "%s.txt" % susp_id)
         with open(out_path, 'w') as f:
-            susp_gen = SuspDocGenerator(susp_id, f)
+            susp_gen = SuspDocGenerator(susp_id)
             susp_gen.add_chunks(chunks)
+            susp_gen.write_susp_doc(f)
     if not fs.exists(opts.out_dir):
         os.makedirs(opts.out_dir)
 
@@ -579,7 +599,7 @@ def main():
     text_align_parser.add_argument("--use_filename_as_id", "-u", action='store_true')
     text_align_parser.add_argument("--ids_file", "-I", default='',
                                    help = "use only those ids, otherwise process everything")
-    text_align_parser.set_defaults(func = create_text_align_meta)
+    text_align_parser.set_defaults(func = create_text_align_task)
 
     sent_retr_parser = subparsers.add_parser('sent_retr')
     sent_retr_parser.add_argument("--subm_dir", "-i", required = True,
