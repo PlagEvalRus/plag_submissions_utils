@@ -6,6 +6,7 @@ import collections
 import argparse
 import logging
 import shutil
+import json
 
 import requests
 
@@ -71,11 +72,15 @@ class YandexTranslator:
         self._from = 'ru'
         self._to = 'en'
         #10k request limit for API
-        self._max_chars = 9600
+        self._max_chars = 9400
 
         with open(opts.ya_key_file, 'r', encoding='ascii') as f:
-            self._key = f.read().strip()
+            obj = json.load(f)
+            self._key = obj['iam']
+            self._folder = obj['folder']
 
+    def max_chars(self):
+        return self._max_chars
 
     def _trans_batch_via_api(self, text_for_trans_list):
         try:
@@ -109,12 +114,11 @@ class YandexTranslator:
         }
 
         body = {
-            "folder_id": "b1g9t9hp3m9avduh4vq7",
+            "folder_id": self._folder,
             "texts": [t.text for t in text_for_trans_list],
             "targetLanguageCode": self._to,
             "languageCodeHints":[self._from]
         }
-
 
         response = requests.post("https://translate.api.cloud.yandex.net/translate/v2/translate",
                                  json=body, headers=headers)
@@ -361,10 +365,13 @@ class Translator(object):
         def _add_block(offs_beg, offs_end):
             # nonlocal new_text_blocks
             block_size = offs_end - offs_beg
-            if block_size > self._opts.min_block_size:
-                text = source_text[offs_beg:offs_end]
-                new_text_blocks.append(TextForTrans(text,
-                                                    offs_tuple = (offs_beg, offs_end, 0)))
+            if block_size < self._opts.min_block_size:
+                return
+
+            for b in range(offs_beg, offs_end, self._yatrans.max_chars()):
+                e = min(offs_end, b + self._yatrans.max_chars())
+                text = source_text[b:e]
+                new_text_blocks.append(TextForTrans(text, offs_tuple = (b, e, 0)))
 
         cur_offs = 0
         for reused_text_info in text_for_trans_list:
@@ -427,7 +434,7 @@ def main():
     trans_parser.add_argument("--ids_file", "-I", default='',
                               help = "translate only those ids, otherwise process everything")
     trans_parser.add_argument("--out_dir", "-o", required = True)
-    trans_parser.add_argument("--max_block_size", "-s", default=9500, type=int)
+    trans_parser.add_argument("--max_block_size", "-s", default=22400, type=int)
     trans_parser.add_argument("--min_block_size", "-m", default=42, type=int)
     trans_parser.add_argument("--save_src_blocks_dir", "-S", default='',
                               help='Path to dir. Useful for debug and total size estimation')
