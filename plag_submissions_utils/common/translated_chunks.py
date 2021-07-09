@@ -51,8 +51,8 @@ class TranslatedChunk(chunks.Chunk):
                  mod_type_str, orig_doc, chunk_num,
                  translator_type_str=None, translated_text=None, opts = chunks.ChunkOpts()):
 
-        super(TranslatedChunk, self).__init__(orig_text, mod_text, mod_type_str,
-                                              orig_doc, chunk_num, opts)
+        super().__init__(orig_text, mod_text, mod_type_str,
+                         orig_doc, chunk_num, opts)
 
         self._translated_sents    = sents.SentsHolder(translated_text, opts)
 

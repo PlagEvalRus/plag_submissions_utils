@@ -269,6 +269,10 @@ def create_xlsx_from_chunks(chunks, out_filename):
     ws.append(("название файла документа", "типы сокрытия", "переводчик",
                "эссе", "исходный фрагмент", "исходное предложение"))
     for chunk in chunks:
-        ws.append(chunk_to_row(chunk))
+        try:
+            row = chunk_to_row(chunk)
+            ws.append(row)
+        except Exception as e:
+            logging.error("Failed to append chunk to xlsx: %s\nchunk: %s", e, row)
 
     wb.save(filename = out_filename)

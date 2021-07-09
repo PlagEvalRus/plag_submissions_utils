@@ -231,13 +231,14 @@ class SentRetrievalTaskGenerator:
         self._opts = opts
         self._src_sents = []
         self._tgt_sents = []
+        self._seen_src_sents = set()
         self._seen_target_sents = set()
         self._pairs = []
 
     def _make_src_sent_id(self, prefix, susp_doc, chunk, num):
         return f'{prefix}_{susp_doc.get_susp_id()}_{chunk.get_id()}_{num}'
 
-    def _make_tgt_sent_id(self, sent_text):
+    def _make_sent_hash(self, sent_text):
         sha1 = hashlib.sha1()
         sha1.update(sent_text.encode('utf8'))
         return sha1.hexdigest()
@@ -245,20 +246,30 @@ class SentRetrievalTaskGenerator:
     def _clean_sent(self, text):
         return text.strip().replace('\t', ' ').replace('\n', ' ')
 
+    def _susps_sents(self, chunk):
+        if chunk.has_mod_type(ModType.SSP) or chunk.has_mod_type(ModType.SEP):
+            for s, _ in seg_text(chunk.get_mod_text()):
+                yield s
+        else:
+            yield from chunk.get_mod_sents()
 
     def __call__(self, susp_doc, chunk, offsets):
         src_ids = []
 
         # print('chunk with id ', chunk.get_id(), 'num mods', len(chunk.get_mod_sents()), ' num origs', len(chunk.get_orig_sents()) )
-        for num, s in enumerate(chunk.get_mod_sents()):
-            src_id = self._make_src_sent_id('src', susp_doc, chunk, num)
-            src_ids.append(src_id)
-            self._src_sents.append((src_id, self._clean_sent(s)))
+        for num, s in enumerate(self._susps_sents(chunk)):
+            src_sent = self._clean_sent(s)
+            src_hash = self._make_sent_hash(src_sent)
+            if src_hash not in self._seen_src_sents:
+                self._seen_src_sents.add(src_hash)
+                src_id = self._make_src_sent_id('src', susp_doc, chunk, num)
+                src_ids.append(src_id)
+                self._src_sents.append((src_id, src_sent))
 
         tgt_ids = []
         for num, s in enumerate(chunk.get_orig_sents()):
             tgt_sent = self._clean_sent(s)
-            tgt_id = self._make_tgt_sent_id(tgt_sent)
+            tgt_id = self._make_sent_hash(tgt_sent)
             tgt_ids.append(tgt_id)
             if tgt_id not in self._seen_target_sents:
                 self._seen_target_sents.add(tgt_id)
@@ -273,7 +284,7 @@ class SentRetrievalTaskGenerator:
         for source in sources.values():
             for s, _ in seg_text(source.get_text()):
                 tgt_sent = self._clean_sent(s)
-                tgt_id = self._make_tgt_sent_id(tgt_sent)
+                tgt_id = self._make_sent_hash(tgt_sent)
                 if tgt_id not in self._seen_target_sents:
                     self._seen_target_sents.add(tgt_id)
                     self._tgt_sents.append((tgt_id, tgt_sent))

@@ -254,6 +254,12 @@ class Translator(object):
 
 
     def _make_submission_archive(self, susp_id, sources_map, original_chunks):
+        susp_dir = os.path.join(self._opts.out_dir, susp_id)
+        if os.path.isdir(susp_dir):
+            shutil.rmtree(susp_dir)
+
+        os.makedirs(susp_dir)
+
         self._save_sources(susp_id, sources_map, self._opts.out_dir,
                            save_translated_text = True)
 
@@ -281,7 +287,6 @@ class Translator(object):
 
         translated_chunks = list(chunks_dict.values())
         translated_chunks.sort(key = lambda c : c.get_id())
-        susp_dir = os.path.join(self._opts.out_dir, susp_id)
         create_xlsx_from_chunks(translated_chunks,
                                 os.path.join(susp_dir, 'sources_list.xlsx'))
         shutil.make_archive(susp_dir, 'gztar', susp_dir)

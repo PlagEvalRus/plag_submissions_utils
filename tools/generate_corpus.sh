@@ -30,12 +30,11 @@ while [ $# -gt 0 ] ; do
 done
 
 if [ -z "$data_dir" ]; then
-    echo "$0 -i <data_dir> [-o <generated_dir>] [-s 3]"
+    echo "$0 -i <data_dir> [-o <generated_dir>] "
 fi
 
-batch="manually-paraphrased${suffix}"
-SR_dir="$generated_dir"/source_retrieval/"$batch"
-TA_dir="$generated_dir"/text_alignment/"$batch"
+SR_dir="$generated_dir"/source_retrieval/"$suffix"
+TA_dir="$generated_dir"/text_alignment/"$suffix"
 
 echo "generate sources map..."
 ./bin/gen_corpus gen_map -i "$data_dir" "${ids_file[@]}"

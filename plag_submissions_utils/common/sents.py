@@ -21,7 +21,7 @@ class SentsHolder(object):
 
     """
     def __init__(self, text, opts, segment = False):
-        super(SentsHolder, self).__init__()
+        super().__init__()
         self._opts = opts
         self._sents = []
         self._sent_tokens = []
