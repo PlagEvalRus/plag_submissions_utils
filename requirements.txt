@@ -12,5 +12,5 @@ confusable-homoglyphs==3.2.0
 pymorphy2==0.8
 pymorphy2-dicts==2.4.393442.3710985
 pymorphy2-dicts-ru==2.4.404381.4453942
-requests==2.23.0
+requests==2.31.0
 googletrans==2.4.0
